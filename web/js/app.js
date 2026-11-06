@@ -153,6 +153,8 @@
     else if (kind === "calc") window.VPSci.build(body);
     else if (kind === "quiz") data.sub === "tf" ? window.VPQuiz.buildTF(body, data) : window.VPQuiz.buildMCQ(body, data);
     else if (kind === "var") window.VPVar.build(body, data);
+    else if (kind === "timer") window.VPClass.buildTimer(body, data);
+    else if (kind === "picker") window.VPClass.buildPicker(body, data);
     else if (kind === "note") {
       var host = body.closest(".ov"); host.classList.add("ov-note");
       function applyColor(c) { data.color = c; host.style.background = c; }
@@ -228,6 +230,8 @@
   function insertCalc(x, y) { addOverlayData("calc", {}, x, y); }
   function insertNote(x, y) { addOverlayData("note", { text: "", color: "#FFF1A6" }, x, y); }
   function insertVar(data, x, y) { addOverlayData("var", data, x, y); }
+  function insertTimer(x, y) { addOverlayData("timer", { total: 300 }, x, y); }
+  function insertPicker(x, y) { addOverlayData("picker", { names: "" }, x, y); }
   var quizNo = 0;
   function insertQuiz(data, kind, x, y) {
     quizNo += 1; data.no = quizNo; data.sub = kind;
@@ -276,6 +280,8 @@
   $("clear").onclick = function () { if (confirm("Xóa toàn bộ trang?")) { state.items = []; state.overlays = []; overlay.innerHTML = ""; if (window.VPGeo) window.VPGeo.clear(); redraw(); scheduleSave(); } };
   $("btn-calc").onclick = function () { insertCalc(100, 90); };
   $("btn-note").onclick = function () { insertNote(130, 100); };
+  if ($("btn-timer")) $("btn-timer").onclick = function () { insertTimer(120, 90); };
+  if ($("btn-picker")) $("btn-picker").onclick = function () { insertPicker(160, 90); };
   $("btn-var").onclick = function () { showDialog("dlg-var"); $("var-input").focus(); };
   $("var-ok").onclick = function () {
     var expr = $("var-input").value.trim(); if (!expr) return;

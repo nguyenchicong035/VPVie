@@ -156,3 +156,21 @@ table.tf td{border:1px solid var(--line);padding:7px 10px}
 .rb-pane.hidden{display:none}
 .sep{width:1px;height:26px;background:var(--line);margin:0 3px;display:inline-block}
 .colors{display:inline-flex;gap:5px;align-items:center}
+
+/* Tiện ích lớp học */
+.cl-time{font-size:46px;font-weight:800;text-align:center;color:var(--navy);font-variant-numeric:tabular-nums;margin:6px 0}
+.cl-time.done{color:var(--accent,#7a1020)}
+.cl-time.flash{animation:clflash .6s ease-in-out 4}
+@keyframes clflash{50%{color:#fff;background:var(--accent,#7a1020);border-radius:8px}}
+.cl-presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.cl-presets button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:4px 11px;cursor:pointer;font-size:12px}
+.cl-presets button:hover{background:#F2F6F7}
+.ov-timer input{border:1px solid var(--line);border-radius:7px;padding:5px;margin:6px auto;display:block}
+.cl-ctrl{display:flex;gap:8px;justify-content:center;margin-top:4px}
+.cl-ctrl button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font-weight:600}
+.cl-ctrl .cl-start{background:var(--teal);color:#fff;border-color:var(--teal)}
+.cl-name{font-size:30px;font-weight:800;text-align:center;color:var(--teal);min-height:40px;margin:6px 0}
+.cl-name.pop{animation:clpop .35s ease}
+@keyframes clpop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.cl-pick{display:block;width:100%;border:none;background:var(--accent,#7a1020);color:#fff;border-radius:9px;padding:9px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.cl-names{width:260px;min-height:90px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;resize:vertical}

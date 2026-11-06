@@ -20,6 +20,7 @@
     <button class="rb-tab" data-rb="geo">📐 Hình học</button>
     <button class="rb-tab" data-rb="math">∑ Toán học</button>
     <button class="rb-tab" data-rb="ai">🤖 AI nhận dạng</button>
+    <button class="rb-tab" data-rb="util">🧰 Tiện ích</button>
     <button class="rb-tab" data-rb="page">📄 Trang &amp; Xuất</button>
   </div>
   <div class="ribbon">
@@ -89,6 +90,10 @@
       </select>
       <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
       <span id="ai-status" class="ai-status"></span>
+    </div>
+    <div class="rb-pane hidden" data-pane="util">
+      <button id="btn-timer" class="tool">⏱ Đồng hồ đếm ngược</button>
+      <button id="btn-picker" class="tool">🎲 Gọi tên ngẫu nhiên</button>
     </div>
     <div class="rb-pane hidden" data-pane="page">
       <button id="page-prev" class="tool" title="Trang trước">◀</button>
@@ -191,6 +196,7 @@
   <script src="/js/tools-sci.js"></script>
   <script src="/js/tools-geo.js"></script>
   <script src="/js/tools-quiz.js"></script>
+  <script src="/js/tools-class.js"></script>
   <script src="/js/tools-solid.js"></script>
   <script src="/js/tools-var.js"></script>
   <script src="/js/tools-export.js"></script>
