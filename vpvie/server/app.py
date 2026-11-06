@@ -10,6 +10,7 @@ from ..version import __version__, APP_NAME
 from ..ai import recognize as ai_recognize, available as ai_available
 from ..ai.recognize import provider_info
 from ..ai import assist as ai_assist
+from ..ai import slides as ai_slides
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "web")
 
@@ -56,6 +57,21 @@ def assist(body: AssistIn):
         return {"ok": True, "text": ai_assist.assist(body.text, body.task)}
     except Exception as e:  # noqa: BLE001
         return JSONResponse(status_code=500, content={"ok": False, "error": f"Lỗi AI: {e}"})
+
+
+class SlidesIn(BaseModel):
+    topic: str
+    n: int = 6
+
+
+@app.post("/api/slides")
+def slides(body: SlidesIn):
+    if not ai_available():
+        return JSONResponse(status_code=503, content={"ok": False, "error": "Chưa bật AI. Dùng Ollama (miễn phí) hoặc đặt ANTHROPIC_API_KEY."})
+    try:
+        return {"ok": True, **ai_slides.generate(body.topic, body.n)}
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse(status_code=500, content={"ok": False, "error": f"Lỗi tạo slide: {e}"})
 
 
 @app.get("/")

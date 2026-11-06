@@ -71,3 +71,43 @@ input.cell.sel{outline:2px solid var(--teal);background:#F2FAFB}
 .ar-fx{font-family:Consolas,monospace;background:#F3F6F7;border-radius:6px;padding:7px 9px;margin:7px 0;color:var(--teal);word-break:break-all}
 .ar-tbl{border-collapse:collapse;width:100%;margin-top:6px}
 .ar-tbl th,.ar-tbl td{border:1px solid var(--line);padding:4px 8px;text-align:left}
+
+/* Trình chiếu */
+.slides-app{flex:1;display:flex;overflow:hidden}
+.thumb-col{width:200px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#F7F9FA}
+.thumbs{flex:1;overflow:auto;padding:10px}
+.thumb{position:relative;border:2px solid transparent;border-radius:8px;margin-bottom:10px;cursor:pointer;background:#fff;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.thumb.cur{border-color:var(--teal)}
+.thumb .tn{position:absolute;top:3px;left:5px;font-size:11px;color:var(--muted);z-index:1}
+.thumb .tbox{transform:scale(1);pointer-events:none}
+.thumb .tbox .s-title{background:linear-gradient(90deg,var(--navy),var(--teal));color:#fff;padding:6px 8px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb .tbox .s-body{padding:6px 8px;font-size:9px;min-height:60px}
+.thumb .tbox ul{margin:0;padding-left:14px}
+.add-slide{margin:10px}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;background:#e9eef0;overflow:auto;padding:24px}
+.slide-edit{width:760px;max-width:100%;aspect-ratio:16/9;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.14);overflow:hidden;display:flex;flex-direction:column}
+.s-title{background:linear-gradient(90deg,var(--navy),var(--teal));color:#fff;padding:18px 30px;font-size:27px;font-weight:700;outline:none}
+.s-body{flex:1;padding:22px 36px;font-size:20px;color:var(--text);outline:none}
+.s-body ul{margin:0;padding-left:26px;line-height:1.75}
+.present-overlay{position:fixed;inset:0;background:#0b1620;display:none;align-items:center;justify-content:center;z-index:100;flex-direction:column}
+.present-overlay.show{display:flex}
+.present-slide{width:90vw;max-width:1200px;aspect-ratio:16/9;background:#fff;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.present-slide .s-title{font-size:40px;padding:28px 44px}
+.present-slide .s-body{font-size:28px;padding:30px 54px}
+.present-hint{color:#8aa;margin-top:16px;font-size:13px}
+.print-all{display:none}
+@media print{ body.app>*{display:none!important} .print-all{display:block!important} .print-slide{width:100%;height:100vh;page-break-after:always;display:flex;flex-direction:column;border:1px solid #ddd} .print-slide .s-title{font-size:34px;padding:26px 40px} .print-slide .s-body{font-size:24px;padding:28px 48px;flex:1} }
+
+/* Hộp thoại dùng chung cho các app office */
+.dlg{position:fixed;inset:0;background:rgba(20,40,60,.35);display:none;align-items:center;justify-content:center;z-index:200}
+.dlg.show{display:flex}
+.dlg-card{background:#fff;border-radius:14px;width:min(520px,92vw);padding:18px;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.dlg-head{font-weight:700;color:var(--navy);font-size:16px;margin-bottom:12px}
+.dlg-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.lbl{font-size:12px;color:var(--muted)}
+.in{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:14px}
+.in:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+.hint{font-size:12px;color:var(--muted);margin:10px 0 0}
+.btn{background:var(--teal);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--teal-d)}
+.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
