@@ -59,3 +59,18 @@ select{border:1px solid var(--line);border-radius:8px;padding:6px;font-size:13px
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:11px 20px;border-radius:24px;font-size:14px;opacity:0;transition:.25s;z-index:40;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (max-width:720px){.group{border-right:0;padding-right:0}.brand small{display:none}}
+
+/* Máy tính & máy tính đồ thị */
+.calc{font-family:Consolas,monospace;min-width:230px}
+.calc-disp{width:100%;border:1px solid var(--line);border-radius:7px;padding:8px;font-size:15px}
+.calc-out{text-align:right;font-size:18px;font-weight:700;color:var(--teal);margin:5px 0;min-height:22px}
+.calc-pad{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.calc-pad button,.calc-fns button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:8px 0;cursor:pointer;font-size:14px}
+.calc-pad button:hover,.calc-fns button:hover{background:#F2F6F7}
+.calc-fns{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:5px 0}
+.sliders{margin:6px 0}
+.slider{display:flex;align-items:center;gap:6px;font-size:12px;margin:3px 0}
+.slider input[type=range]{flex:1}
+.slider b{color:var(--teal);min-width:34px;display:inline-block}
+.ai-status{font-size:11px;color:var(--muted);min-width:80px}
+.ov-calc .ov-body,.ov-plot .ov-body{min-width:250px}

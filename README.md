@@ -1,37 +1,43 @@
-# VPVie – Bộ ứng dụng văn phòng tiếng Việt có AI (trực tuyến)
+# VPVie – Bộ ứng dụng văn phòng tiếng Việt có AI
 
-Giao diện **tiếng Việt**, thân thiện với người dùng Việt Nam. Module đầu tiên: **Bảng dạy học**
-(trọng tâm AI cho dạy học + nhận diện nét vẽ).
+Giao diện **tiếng Việt**, thân thiện người dùng Việt Nam. AI dùng **mã nguồn mở, miễn phí**.
+Module đầu tiên: **Bảng dạy học** (trọng tâm dạy toán trực tuyến + nhận diện nét vẽ).
 
-## Bảng dạy học – tính năng hiện có
-- ✍️ **Vẽ tay** trên bảng kẻ ô (bút nhiều màu, cỡ nét, tẩy, hoàn tác, xóa bảng).
-- ✨ **Làm đẹp nét (offline)**: nét nguệch ngoạc tự thành **đường thẳng / hình tròn / elip / chữ nhật / tam giác**.
-- 🤖 **Nhận diện nét vẽ bằng AI (trực tuyến)**: gửi hình vẽ → AI trả về **chữ tiếng Việt** hoặc **công thức LaTeX**, chèn lại lên bảng.
-- ∑ **Công thức toán (LaTeX/KaTeX)**: hộp gõ công thức có xem trước, chèn vào bảng (kéo thả được).
-- 📈 **Vẽ đồ thị từ phương trình**: nhập `y = x^2 - 2x - 3`, `sin(x)`… → vẽ đồ thị ngay trên bảng.
+## Tính năng Bảng dạy học
+- ✍️ **Vẽ tay** (bút nhiều màu, cỡ nét, tẩy, hoàn tác, xóa) trên bảng kẻ ô.
+- ✨ **Làm đẹp nét (offline)**: nét nguệch ngoạc → **đường thẳng / tròn / elip / chữ nhật / tam giác**.
+- 🤖 **Nhận diện nét vẽ bằng AI nguồn mở**:
+  - **Tesseract.js** – nhận chữ tiếng Việt, chạy **ngay trong trình duyệt, miễn phí, không cần máy chủ**.
+  - **Ollama** (tùy chọn) – mô hình thị giác mở chạy cục bộ (nhận cả chữ lẫn công thức). Công thức trả về **LaTeX mở ra để sửa** rồi chèn.
+- ∑ **Công thức toán LaTeX** (KaTeX) có xem trước.
+- 📈 **Máy tính đồ thị**: nhập `y = a*x^2 + b*x + c` → tự tạo **thanh trượt tham số** a, b, c, đồ thị đổi theo thời gian thực.
+- 🧮 **Máy tính khoa học** (math.js): sin, cos, log, √, lũy thừa…
 - △ **Mẫu hình học**: tam giác, chữ nhật, đường tròn, hệ trục Oxy.
+- 🖼️ **Xuất PNG** / 📄 **Xuất PDF** cả bảng (html2canvas + jsPDF).
 
-## Chạy thử (cục bộ)
+## Chạy thử
 ```bash
 pip install -r requirements.txt
-python run.py           # mở http://127.0.0.1:8000
+python run.py            # http://127.0.0.1:8000
 ```
+Nhận dạng **Tesseract** chạy ngay (miễn phí, không cần cấu hình).
 
-## Bật AI nhận dạng (trực tuyến)
-Nhận dạng nét vẽ dùng mô hình Claude (thị giác). Đặt khóa API trước khi chạy:
+### Bật nhận dạng bằng Ollama (mô hình mở, mạnh hơn)
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
+# cài Ollama (ollama.com) rồi tải một mô hình thị giác mở, ví dụ:
+ollama pull qwen2.5vl:7b
+export VPVIE_AI_PROVIDER=ollama          # mặc định
+export VPVIE_OLLAMA_MODEL=qwen2.5vl:7b
 python run.py
 ```
-Chưa có khóa thì mọi tính năng khác vẫn chạy; riêng nút **Nhận dạng AI** báo cần cấu hình khóa.
+Chọn "Máy chủ (Ollama/Claude)" ở ô công cụ nhận dạng. (Tùy chọn Claude: `VPVIE_AI_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`.)
 
 ## Thiết kế an toàn
-- AI **chỉ nhận dạng** nội dung có trong hình, không bịa; mọi tính toán/đồ thị do thư viện thật thực hiện.
-- Thư viện KaTeX và function-plot được **đóng gói sẵn** trong `web/vendor/` nên chạy được cả khi không có mạng (chỉ nhận dạng AI cần trực tuyến).
+- AI **chỉ nhận dạng** nội dung trong hình; mọi tính toán/đồ thị do thư viện thật xử lý (không để AI bịa số).
+- Mọi thư viện (KaTeX, function-plot, math.js, jsPDF, html2canvas, Tesseract.js + dữ liệu `vie`/`eng`) đều **nguồn mở**, lấy từ các kho công khai trên GitHub và **đóng gói sẵn** trong `web/vendor/` → chạy được cả khi không có mạng (riêng Ollama/Claude cần dịch vụ tương ứng).
 
 ## Công nghệ
-- Backend: FastAPI (Python) + SDK `anthropic`.
-- Frontend: HTML/JS thuần, Canvas; KaTeX (công thức), function-plot (đồ thị) – đều nguồn mở.
+Backend FastAPI (Python). Frontend HTML/Canvas thuần. Thư viện nguồn mở: KaTeX, function-plot, math.js, Tesseract.js, jsPDF, html2canvas.
 
-## Lộ trình (dự kiến)
-Hỏi Excel tiếng Việt • Tạo slide bằng AI • Soạn thảo Word/PowerPoint/PDF/Markdown/HTML • AI hỗ trợ ở cả 6 ứng dụng.
+## Lộ trình
+Hình học động kéo-thả • Khối câu hỏi trắc nghiệm/Đúng-Sai • Nhiều trang & sổ bài giảng • Bảng biến thiên/xét dấu • Hỏi Excel tiếng Việt • Tạo slide bằng AI • Soạn thảo Word/PowerPoint/PDF/Markdown/HTML.

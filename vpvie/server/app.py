@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from ..version import __version__, APP_NAME
 from ..ai import recognize as ai_recognize, available as ai_available
+from ..ai.recognize import provider_info
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "web")
 
@@ -21,7 +22,7 @@ class RecognizeIn(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "app": APP_NAME, "version": __version__, "ai": ai_available()}
+    return {"ok": True, "app": APP_NAME, "version": __version__, "ai": ai_available(), **provider_info()}
 
 
 @app.post("/api/recognize")

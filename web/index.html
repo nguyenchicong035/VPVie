@@ -38,14 +38,22 @@
       <button id="btn-shapes" class="tool">△ Mẫu hình</button>
       <button id="btn-math" class="tool">∑ Công thức</button>
       <button id="btn-plot" class="tool">📈 Đồ thị</button>
+      <button id="btn-calc" class="tool">🧮 Máy tính</button>
+      <button id="btn-png" class="tool">🖼️ Ảnh</button>
+      <button id="btn-pdf" class="tool">📄 PDF</button>
     </div>
     <div class="group ai">
+      <select id="ai-engine" title="Công cụ nhận dạng">
+        <option value="tesseract">AI Tesseract (miễn phí)</option>
+        <option value="server">Máy chủ (Ollama/Claude)</option>
+      </select>
       <select id="ai-mode" title="Kiểu nhận dạng">
         <option value="auto">Tự động</option>
         <option value="text">Chữ tiếng Việt</option>
         <option value="math">Công thức</option>
       </select>
-      <button id="btn-ai" class="tool primary">🤖 Nhận dạng AI</button>
+      <button id="btn-ai" class="tool primary">🤖 Nhận dạng</button>
+      <span id="ai-status" class="ai-status"></span>
     </div>
   </div>
 
@@ -94,7 +102,12 @@
   <script src="/vendor/function-plot.js"></script>
   <script src="/js/beautify.js"></script>
   <script src="/js/mathplot.js"></script>
+  <script src="/vendor/math.min.js"></script>
+  <script src="/vendor/jspdf.umd.min.js"></script>
+  <script src="/vendor/html2canvas.min.js"></script>
   <script src="/js/recognize.js"></script>
+  <script src="/js/tools-calc.js"></script>
+  <script src="/js/tools-export.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

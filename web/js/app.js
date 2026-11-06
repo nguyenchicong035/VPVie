@@ -168,12 +168,10 @@
   }
   function insertPlot(expr, x, y) {
     if (!expr) return;
-    addOverlay("plot", x, y, function (body) {
-      var cap = document.createElement("div"); cap.className = "ov-cap"; cap.textContent = "y = " + window.VPMathPlot.toFx(expr);
-      var g = document.createElement("div");
-      body.appendChild(cap); body.appendChild(g);
-      window.VPMathPlot.plot(g, expr, 360, 260);
-    });
+    addOverlay("plot", x, y, function (body) { window.VPCalc.buildGraph(body, expr); });
+  }
+  function insertCalc(x, y) {
+    addOverlay("calc", x, y, function (body) { window.VPCalc.buildSciCalc(body); });
   }
 
   // ----- Thanh công cụ
@@ -199,6 +197,9 @@
   bt.onclick = function () { state.beautify = !state.beautify; bt.classList.toggle("on", state.beautify); bt.textContent = state.beautify ? "✨ Làm đẹp nét: BẬT" : "✨ Làm đẹp nét: TẮT"; };
   $("undo").onclick = function () { state.items.pop(); redraw(); };
   $("clear").onclick = function () { if (confirm("Xóa toàn bộ bảng?")) { state.items = []; overlay.innerHTML = ""; redraw(); } };
+  $("btn-calc").onclick = function () { insertCalc(100, 90); };
+  $("btn-png").onclick = async function () { try { toast("Đang tạo ảnh…"); await window.VPExport.png(board); } catch (e) { toast("Lỗi xuất ảnh."); } };
+  $("btn-pdf").onclick = async function () { try { toast("Đang tạo PDF…"); await window.VPExport.pdf(board); } catch (e) { toast("Lỗi xuất PDF."); } };
 
   // Hộp thoại công thức
   $("btn-math").onclick = function () { showDialog("dlg-math"); $("math-input").focus(); };
@@ -223,19 +224,29 @@
     redraw();
   }
 
-  // Nhận dạng AI
+  // Nhận dạng (Tesseract miễn phí hoặc máy chủ Ollama/Claude). Kết quả công thức mở ra để sửa trước khi chèn.
   $("btn-ai").onclick = async function () {
-    var btn = this; var old = btn.textContent;
+    var btn = this; var old = btn.textContent; var statusEl = $("ai-status");
     btn.disabled = true; btn.textContent = "Đang nhận dạng…";
     try {
-      var url = canvas.toDataURL("image/png");
-      var mode = $("ai-mode").value;
-      var data = await window.VPRecognize.recognize(url, mode);
-      if ((data.kind === "math" || data.kind === "mixed") && data.latex) insertMath(data.latex, 90, 90);
-      if ((data.kind === "text" || data.kind === "mixed") && data.text) insertText(data.text, 90, data.latex ? 150 : 90);
-      if (!data.latex && !data.text) toast("AI không nhận ra nội dung.");
+      var engine = $("ai-engine").value, data;
+      if (engine === "tesseract") {
+        statusEl.textContent = "Đang tải mô hình…";
+        data = await window.VPRecognize.recognizeTesseract(canvas, function (st) { statusEl.textContent = st; });
+      } else {
+        data = await window.VPRecognize.recognizeServer(canvas.toDataURL("image/png"), $("ai-mode").value);
+      }
+      statusEl.textContent = "";
+      if ((data.kind === "math" || data.kind === "mixed") && data.latex) {
+        $("math-input").value = data.latex;
+        window.VPMathPlot.renderMath($("math-preview"), data.latex, true);
+        showDialog("dlg-math");             // mở ra để sửa LaTeX rồi chèn
+      }
+      if (data.text) insertText(data.text, 100, 100);
+      if (!data.latex && !data.text) toast("Không nhận ra nội dung. Hãy viết rõ hơn.");
       else toast("Đã nhận dạng xong.");
     } catch (e) {
+      statusEl.textContent = "";
       toast(e.message || "Lỗi nhận dạng.");
     } finally { btn.disabled = false; btn.textContent = old; }
   };

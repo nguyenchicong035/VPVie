@@ -1,1 +1,1 @@
-from .recognize import recognize, available, MODEL
+from .recognize import recognize, available, provider_info
