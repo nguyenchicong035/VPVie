@@ -206,6 +206,8 @@
     else if (kind === "var") window.VPVar.build(body, data);
     else if (kind === "timer") window.VPClass.buildTimer(body, data);
     else if (kind === "picker") window.VPClass.buildPicker(body, data);
+    else if (kind === "ptable") window.VPScience.buildPTable(body);
+    else if (kind === "chem") window.VPScience.buildChem(body);
     else if (kind === "table") {
       var tb = document.createElement("table"); tb.className = "ov-table";
       data.cells = data.cells || [];
@@ -363,6 +365,17 @@
   $("clear").onclick = function () { if (confirm("Xóa toàn bộ trang?")) { state.items = []; state.overlays = []; overlay.innerHTML = ""; if (window.VPGeo) window.VPGeo.clear(); redraw(); scheduleSave(); } };
   if ($("btn-calc")) $("btn-calc").onclick = function () { insertCalc(100, 90); };
   $("btn-note").onclick = function () { insertNote(130, 100); };
+  // Công cụ môn học (Lý/Hoá/Sinh) qua nút ★
+  if ($("btn-shapes-fav")) $("btn-shapes-fav").onclick = function () { showDialog("dlg-sci"); };
+  document.querySelectorAll("[data-sci]").forEach(function (b) {
+    b.onclick = function () {
+      var k = b.dataset.sci;
+      if (k === "ptable") addOverlayData("ptable", {}, 70, 90);
+      else if (k === "chem") addOverlayData("chem", {}, 120, 110);
+      else toast("Công cụ này đang được phát triển.");
+      hideDialog("dlg-sci");
+    };
+  });
   // Thước kẻ / đo góc
   if ($("btn-ruler")) $("btn-ruler").onclick = function () { var on = window.VPRuler.toggle(board); this.classList.toggle("active", on); };
   // Hiện/ẩn danh sách trang
