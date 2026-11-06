@@ -1,190 +1,20 @@
 <!doctype html>
-<html lang="vi">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VPVie – Bảng dạy học</title>
-  <link rel="stylesheet" href="/vendor/katex/katex.min.css" />
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
-  <header class="appbar">
-    <div class="brand"><span class="logo">VP</span> VPVie <small>· Bảng dạy học</small></div>
-    <div class="appbar-right">
-      <span id="ai-note" class="ai-note">⚠ Chưa bật AI (đặt ANTHROPIC_API_KEY)</span>
-    </div>
-  </header>
-
-  <div class="ribbon-tabs">
-    <button class="rb-tab active" data-rb="draw">✏️ Vẽ</button>
-    <button class="rb-tab" data-rb="geo">📐 Hình học</button>
-    <button class="rb-tab" data-rb="math">∑ Toán học</button>
-    <button class="rb-tab" data-rb="ai">🤖 AI nhận dạng</button>
-    <button class="rb-tab" data-rb="page">📄 Trang &amp; Xuất</button>
+<html lang="vi"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>VPVie – Bộ ứng dụng văn phòng tiếng Việt</title>
+<link rel="stylesheet" href="/office.css"/>
+</head><body>
+<div class="appbar"><span class="logo">VP</span><span class="title">VPVie</span><span style="opacity:.85">· Bộ ứng dụng văn phòng tiếng Việt có AI</span></div>
+<div class="home-wrap">
+  <div class="home-head"><h1>Chào mừng đến VPVie</h1><p>Bộ ứng dụng văn phòng tiếng Việt, AI nguồn mở – chọn ứng dụng để bắt đầu.</p></div>
+  <div class="apps">
+    <a class="appcard" href="/bang.html"><span class="badge live">Hoạt động</span><div class="ic">🧑‍🏫</div><h3>Bảng dạy học</h3><p>Vẽ, công thức, đồ thị, hình học, nhận dạng chữ viết tay, câu hỏi…</p></a>
+    <a class="appcard" href="/soanthao.html"><span class="badge live">Hoạt động</span><div class="ic">📝</div><h3>Soạn thảo (Word)</h3><p>Soạn thảo văn bản định dạng, AI hỗ trợ, xuất PDF/HTML.</p></a>
+    <a class="appcard" href="/markdown.html"><span class="badge live">Hoạt động</span><div class="ic">📘</div><h3>Markdown</h3><p>Viết Markdown, xem trước trực tiếp, xuất tệp.</p></a>
+    <a class="appcard" href="/htmledit.html"><span class="badge live">Hoạt động</span><div class="ic">🌐</div><h3>HTML</h3><p>Soạn HTML, xem trước trực tiếp trong trình duyệt.</p></a>
+    <a class="appcard soon" href="/bangtinh.html"><span class="badge soon">Sắp ra mắt</span><div class="ic">📊</div><h3>Bảng tính + Hỏi Excel</h3><p>Bảng tính, công thức, hỏi bằng tiếng Việt → tính tự động.</p></a>
+    <a class="appcard soon" href="#"><span class="badge soon">Sắp ra mắt</span><div class="ic">📽️</div><h3>Trình chiếu</h3><p>Soạn slide, tạo slide bằng AI theo chủ đề.</p></a>
+    <a class="appcard soon" href="#"><span class="badge soon">Sắp ra mắt</span><div class="ic">📄</div><h3>PDF</h3><p>Xem và ghi chú tài liệu PDF.</p></a>
   </div>
-  <div class="ribbon">
-    <div class="rb-pane" data-pane="draw">
-      <button data-tool="pen" class="tool active" title="Bút">✒️ Bút</button>
-      <button data-tool="eraser" class="tool" title="Tẩy">🧽 Tẩy</button>
-      <button id="undo" class="tool" title="Hoàn tác">↶</button>
-      <button id="clear" class="tool" title="Xóa trang">🗑️</button>
-      <span class="sep"></span>
-      <span class="colors">
-        <button data-color="#7a1020" class="sw sel"></button>
-        <button data-color="#111111" class="sw"></button>
-        <button data-color="#1F6FEB" class="sw"></button>
-        <button data-color="#1A7F37" class="sw"></button>
-        <button data-color="#E3A008" class="sw"></button>
-      </span>
-      <label class="lbl">Cỡ</label><input id="size" type="range" min="1" max="12" value="3" />
-      <span class="sep"></span>
-      <button id="beautify" class="tool on">✨ Làm đẹp nét: BẬT</button>
-    </div>
-    <div class="rb-pane hidden" data-pane="geo">
-      <button data-geo="point" class="tool geo-tool">• Điểm</button>
-      <button data-geo="segment" class="tool geo-tool">╱ Đoạn</button>
-      <button data-geo="line" class="tool geo-tool">— Thẳng</button>
-      <button data-geo="circle" class="tool geo-tool">◯ Tròn</button>
-      <button data-geo="move" class="tool geo-tool">✋ Kéo điểm</button>
-      <span class="sep"></span>
-      <button id="btn-shapes" class="tool">△ Mẫu hình</button>
-      <button id="btn-solid" class="tool">🧊 Hình không gian</button>
-    </div>
-    <div class="rb-pane hidden" data-pane="math">
-      <button id="btn-math" class="tool">∑ Công thức</button>
-      <button id="btn-plot" class="tool">📈 Đồ thị</button>
-      <button id="btn-var" class="tool">📋 Bảng biến thiên</button>
-      <button id="btn-calc" class="tool">🧮 Máy tính</button>
-      <span class="sep"></span>
-      <button id="btn-quiz" class="tool">❓ Câu hỏi</button>
-      <button id="btn-note" class="tool">🗒️ Giấy note</button>
-    </div>
-    <div class="rb-pane hidden" data-pane="ai">
-      <select id="ai-engine" title="Công cụ nhận dạng">
-        <option value="tesseract">AI Tesseract (miễn phí)</option>
-        <option value="server">Máy chủ (Ollama/Claude)</option>
-      </select>
-      <select id="ai-mode" title="Kiểu nhận dạng">
-        <option value="auto">Tự động</option>
-        <option value="text">Chữ tiếng Việt</option>
-        <option value="math">Công thức</option>
-      </select>
-      <button id="btn-ai" class="tool primary">🤖 Nhận dạng</button>
-      <span class="sep"></span>
-      <label class="lbl">Phông</label>
-      <select id="text-font" title="Phông chữ kết quả">
-        <option value="">Mặc định</option>
-        <option value="'Times New Roman', serif">Times New Roman</option>
-        <option value="Arial, sans-serif">Arial</option>
-        <option value="'Comic Sans MS','Segoe Script',cursive">Chữ viết tay</option>
-      </select>
-      <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
-      <span id="ai-status" class="ai-status"></span>
-    </div>
-    <div class="rb-pane hidden" data-pane="page">
-      <button id="page-prev" class="tool" title="Trang trước">◀</button>
-      <span id="page-label" class="lbl">Trang 1/1</span>
-      <button id="page-next" class="tool" title="Trang sau">▶</button>
-      <button id="page-add" class="tool" title="Thêm trang">＋ Trang</button>
-      <button id="page-del" class="tool" title="Xóa trang">🗑 Xóa trang</button>
-      <span class="sep"></span>
-      <button id="book-save" class="tool">💾 Lưu sổ</button>
-      <button id="book-open" class="tool">📂 Mở sổ</button>
-      <span class="sep"></span>
-      <button id="btn-png" class="tool">🖼️ Xuất ảnh</button>
-      <button id="btn-pdf" class="tool">📄 Xuất PDF</button>
-    </div>
-  </div>
-
-  <main id="board" class="board">
-    <canvas id="paper"></canvas>
-    <div id="overlay" class="overlay"></div>
-  </main>
-
-  <!-- Hộp thoại công thức -->
-  <div id="dlg-math" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Chèn công thức (LaTeX) <button data-close="dlg-math" class="x">✕</button></div>
-      <input id="math-input" class="in" placeholder="Ví dụ: x^2 - 3x = 0  hoặc  \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}" />
-      <div class="hint">Gõ theo cú pháp LaTeX/KaTeX. Xem trước:</div>
-      <div id="math-preview" class="preview"></div>
-      <div class="dlg-foot"><button data-close="dlg-math" class="btn ghost">Hủy</button><button id="math-ok" class="btn">Chèn</button></div>
-    </div>
-  </div>
-
-  <!-- Hộp thoại đồ thị -->
-  <div id="dlg-plot" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Vẽ đồ thị từ phương trình <button data-close="dlg-plot" class="x">✕</button></div>
-      <input id="plot-input" class="in" placeholder="Ví dụ: y = x^2 - 2x - 3   hoặc   sin(x)" />
-      <div class="hint">Nhập hàm theo x. Hỗ trợ + - * / ^, sin, cos, tan, sqrt, log…</div>
-      <div class="dlg-foot"><button data-close="dlg-plot" class="btn ghost">Hủy</button><button id="plot-ok" class="btn">Vẽ</button></div>
-    </div>
-  </div>
-
-  <!-- Mẫu hình học -->
-  <div id="dlg-shapes" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Chèn mẫu hình học <button data-close="dlg-shapes" class="x">✕</button></div>
-      <div class="shape-grid">
-        <button data-shape="triangle" class="shape">△<br>Tam giác</button>
-        <button data-shape="rect" class="shape">▭<br>Chữ nhật</button>
-        <button data-shape="circle" class="shape">◯<br>Đường tròn</button>
-        <button data-shape="axes" class="shape">✚<br>Hệ trục Oxy</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="dlg-quiz" class="dlg">
-    <div class="dlg-card wide">
-      <div class="dlg-head">Chèn câu hỏi <button data-close="dlg-quiz" class="x">✕</button></div>
-      <div class="qtabs"><button class="qtab active" data-qtab="mcq">Trắc nghiệm A/B/C/D</button><button class="qtab" data-qtab="tf">Đúng / Sai</button></div>
-      <input id="q-text" class="in" placeholder="Nội dung câu hỏi (dùng $...$ cho công thức, vd: $f(x)=x^2$)" />
-      <div id="q-mcq" class="qpane"><div class="qrow"><b>A</b><input id="q-a" class="in"/><label><input type="radio" name="q-correct" value="0" checked/> đáp án đúng</label></div><div class="qrow"><b>B</b><input id="q-b" class="in"/><label><input type="radio" name="q-correct" value="1"/> đáp án đúng</label></div><div class="qrow"><b>C</b><input id="q-c" class="in"/><label><input type="radio" name="q-correct" value="2"/> đáp án đúng</label></div><div class="qrow"><b>D</b><input id="q-d" class="in"/><label><input type="radio" name="q-correct" value="3"/> đáp án đúng</label></div><input id="q-sol" class="in" placeholder="Lời giải (tùy chọn)"/></div>
-      <div id="q-tf" class="qpane" style="display:none"><div class="qrow"><b>a</b><input id="tf-a" class="in" placeholder="Mệnh đề a"/><label><input type="radio" name="tf0" value="true"/> Đúng</label><label><input type="radio" name="tf0" value="false" checked/> Sai</label></div><div class="qrow"><b>b</b><input id="tf-b" class="in" placeholder="Mệnh đề b"/><label><input type="radio" name="tf1" value="true"/> Đúng</label><label><input type="radio" name="tf1" value="false" checked/> Sai</label></div><div class="qrow"><b>c</b><input id="tf-c" class="in" placeholder="Mệnh đề c"/><label><input type="radio" name="tf2" value="true"/> Đúng</label><label><input type="radio" name="tf2" value="false" checked/> Sai</label></div><div class="qrow"><b>d</b><input id="tf-d" class="in" placeholder="Mệnh đề d"/><label><input type="radio" name="tf3" value="true"/> Đúng</label><label><input type="radio" name="tf3" value="false" checked/> Sai</label></div></div>
-      <div class="dlg-foot"><button data-close="dlg-quiz" class="btn ghost">Hủy</button><button id="quiz-ok" class="btn">Chèn</button></div>
-    </div>
-  </div>
-
-  <div id="dlg-solid" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Chèn hình không gian <button data-close="dlg-solid" class="x">✕</button></div>
-      <div class="shape-grid solid-grid"><button data-solid="chop4" class="shape">Chóp tứ giác</button><button data-solid="chop3" class="shape">Chóp tam giác</button><button data-solid="hop" class="shape">Hình hộp</button><button data-solid="langtru" class="shape">Lăng trụ</button><button data-solid="tru" class="shape">Hình trụ</button><button data-solid="non" class="shape">Hình nón</button><button data-solid="cau" class="shape">Hình cầu</button></div>
-      <div class="hint">Nét khuất được vẽ bằng nét đứt (kiểu hình chiếu trong sách).</div>
-    </div>
-  </div>
-
-  <div id="dlg-var" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Bảng biến thiên / xét dấu <button data-close="dlg-var" class="x">✕</button></div>
-      <input id="var-input" class="in" placeholder="Nhập hàm số theo x, vd: x^3 - 3x   hoặc   x^2 - 4" />
-      <div class="qrow" style="margin-top:8px">
-        <select id="var-mode"><option value="bbt">Bảng biến thiên</option><option value="xetdau">Bảng xét dấu</option></select>
-        <label class="lbl">x từ</label><input id="var-min" class="in" style="width:70px" value="-10"/>
-        <label class="lbl">đến</label><input id="var-max" class="in" style="width:70px" value="10"/>
-      </div>
-      <div class="hint">Tự tính đạo hàm, tìm nghiệm, xét dấu và dựng bảng. Khoảng x để tìm nghiệm bằng số.</div>
-      <div class="dlg-foot"><button data-close="dlg-var" class="btn ghost">Hủy</button><button id="var-ok" class="btn">Tạo bảng</button></div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script src="/vendor/katex/katex.min.js"></script>
-  <script src="/vendor/function-plot.js"></script>
-  <script src="/js/beautify.js"></script>
-  <script src="/js/mathplot.js"></script>
-  <script src="/vendor/math.min.js"></script>
-  <script src="/vendor/jspdf.umd.min.js"></script>
-  <script src="/vendor/html2canvas.min.js"></script>
-  <script src="/js/recognize.js"></script>
-  <script src="/js/tools-calc.js"></script>
-  <script src="/js/tools-sci.js"></script>
-  <script src="/js/tools-geo.js"></script>
-  <script src="/js/tools-quiz.js"></script>
-  <script src="/js/tools-solid.js"></script>
-  <script src="/js/tools-var.js"></script>
-  <script src="/js/tools-export.js"></script>
-  <script src="/js/app.js"></script>
-</body>
-</html>
+</div>
+</body></html>

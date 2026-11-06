@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from ..version import __version__, APP_NAME
 from ..ai import recognize as ai_recognize, available as ai_available
 from ..ai.recognize import provider_info
+from ..ai import assist as ai_assist
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "web")
 
@@ -40,6 +41,21 @@ def recognize(body: RecognizeIn):
         return {"ok": True, **result}
     except Exception as e:  # noqa: BLE001
         return JSONResponse(status_code=500, content={"ok": False, "error": f"Lỗi nhận dạng: {e}"})
+
+
+class AssistIn(BaseModel):
+    text: str
+    task: str = "rewrite"
+
+
+@app.post("/api/assist")
+def assist(body: AssistIn):
+    if not ai_available():
+        return JSONResponse(status_code=503, content={"ok": False, "error": "Chưa bật AI. Dùng Ollama (miễn phí) hoặc đặt ANTHROPIC_API_KEY."})
+    try:
+        return {"ok": True, "text": ai_assist.assist(body.text, body.task)}
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse(status_code=500, content={"ok": False, "error": f"Lỗi AI: {e}"})
 
 
 @app.get("/")
