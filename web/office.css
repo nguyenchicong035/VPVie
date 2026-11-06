@@ -111,3 +111,12 @@ input.cell.sel{outline:2px solid var(--teal);background:#F2FAFB}
 .btn{background:var(--teal);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-weight:700;cursor:pointer}
 .btn:hover{background:var(--teal-d)}
 .btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+
+/* Word: tìm/thay, công thức, trích dẫn */
+.find-bar{position:fixed;top:92px;right:20px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:8px;display:none;gap:6px;align-items:center;z-index:60}
+.find-bar.show{display:flex}
+.find-bar input{border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:13px}
+.mathchip{display:inline-block;vertical-align:middle;margin:0 2px;padding:0 1px;user-select:none}
+.sheet blockquote{border-left:3px solid var(--teal);margin:10px 0;padding:6px 16px;color:var(--muted);background:#f6f9fa}
+.sheet table{border-collapse:collapse}
+.sheet img{max-width:100%}

@@ -30,6 +30,34 @@
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html], { type: "text/html" })); a.download = "vanban.html"; a.click();
   };
   $("export-pdf").onclick = function () { window.print(); };
+  $("font").onchange = function () { if (this.value) exec("fontName", this.value); };
+  $("quote").onclick = function () { exec("formatBlock", "blockquote"); };
+  $("math").onclick = function () {
+    var tex = prompt("Nhập công thức LaTeX:", "\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}");
+    if (!tex) return;
+    var span = document.createElement("span"); span.className = "mathchip"; span.contentEditable = "false"; span.setAttribute("data-latex", tex);
+    try { window.katex.render(tex, span, { throwOnError: false }); } catch (e) { span.textContent = tex; }
+    doc.focus();
+    var sel = window.getSelection();
+    if (sel.rangeCount) { var r = sel.getRangeAt(0); r.deleteContents(); r.insertNode(span); r.setStartAfter(span); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); }
+    else doc.appendChild(span);
+    scheduleSave(); updateWC();
+  };
+  // Tìm & thay thế
+  $("find").onclick = function () { var fb = $("find-bar"); fb.classList.toggle("show"); if (fb.classList.contains("show")) $("find-q").focus(); };
+  $("find-close").onclick = function () { $("find-bar").classList.remove("show"); };
+  $("find-all").onclick = function () {
+    var q = $("find-q").value, rep = $("find-r").value; if (!q) return;
+    var walker = document.createTreeWalker(doc, NodeFilter.SHOW_TEXT, null), nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    var ql = q.toLowerCase(), count = 0;
+    nodes.forEach(function (n) {
+      var t = n.nodeValue, lower = t.toLowerCase(); if (lower.indexOf(ql) < 0) return;
+      var out = "", i = 0; while (true) { var idx = lower.indexOf(ql, i); if (idx < 0) { out += t.slice(i); break; } out += t.slice(i, idx) + rep; count++; i = idx + q.length; }
+      n.nodeValue = out;
+    });
+    $("find-note").textContent = "Đã thay " + count + " chỗ"; scheduleSave(); updateWC();
+  };
 
   // Đếm từ + tự lưu
   function updateWC() { var t = doc.innerText.trim(); $("wc").textContent = (t ? t.split(/\s+/).length : 0) + " từ"; }

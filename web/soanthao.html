@@ -1,11 +1,12 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>VPVie – Soạn thảo</title><link rel="stylesheet" href="/office.css"/></head>
+<title>VPVie – Soạn thảo</title><link rel="stylesheet" href="/vendor/katex/katex.min.css"/><link rel="stylesheet" href="/office.css"/></head>
 <body class="app">
 <div class="appbar"><span class="logo">VP</span><a class="home" href="/">← Trang chủ</a><span class="title">Soạn thảo văn bản</span><span class="spacer"></span><span id="save-note" style="font-size:12px;opacity:.85"></span></div>
 <div class="obar">
   <select id="block" title="Kiểu đoạn"><option value="P">Thường</option><option value="H1">Tiêu đề 1</option><option value="H2">Tiêu đề 2</option><option value="H3">Tiêu đề 3</option></select>
   <select id="fsize" title="Cỡ chữ"><option value="3">Cỡ vừa</option><option value="2">Nhỏ</option><option value="4">Lớn</option><option value="5">Rất lớn</option><option value="6">Khổng lồ</option></select>
+  <select id="font" title="Phông chữ"><option value="">Phông mặc định</option><option value="'Times New Roman',serif">Times New Roman</option><option value="Arial,sans-serif">Arial</option><option value="Tahoma">Tahoma</option><option value="Georgia,serif">Georgia</option><option value="'Courier New',monospace">Courier New</option></select>
   <button class="obtn" data-cmd="bold" title="Đậm"><b>B</b></button>
   <button class="obtn" data-cmd="italic" title="Nghiêng"><i>I</i></button>
   <button class="obtn" data-cmd="underline" title="Gạch chân"><u>U</u></button>
@@ -24,6 +25,10 @@
   <button class="obtn" id="link">🔗</button>
   <button class="obtn" id="table">▦ Bảng</button>
   <button class="obtn" id="image">🖼 Ảnh</button>
+  <button class="obtn" id="math">∑ Công thức</button>
+  <button class="obtn" data-cmd="insertHorizontalRule" title="Kẻ ngang">— HR</button>
+  <button class="obtn" id="quote" title="Trích dẫn">❝ Trích</button>
+  <button class="obtn" id="find">🔍 Tìm/Thay</button>
   <button class="obtn" data-cmd="removeFormat" title="Xóa định dạng">✖</button>
   <span class="sep"></span>
   <button class="obtn primary" id="ai-btn">🤖 AI hỗ trợ</button>
@@ -41,5 +46,11 @@
   <button data-task="expand">➕ Mở rộng ý</button>
   <button data-task="translate_en">🌐 Dịch sang tiếng Anh</button>
 </div>
+<div id="find-bar" class="find-bar">
+  <input id="find-q" placeholder="Tìm…"/><input id="find-r" placeholder="Thay bằng…"/>
+  <button class="obtn" id="find-all">Thay tất cả</button><button class="obtn" id="find-close">✕</button>
+  <span id="find-note" style="font-size:12px;color:var(--muted)"></span>
+</div>
+<script src="/vendor/katex/katex.min.js"></script>
 <script src="/js/office-doc.js"></script>
 </body></html>
