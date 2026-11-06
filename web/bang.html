@@ -249,6 +249,14 @@
           </div>
           <div class="set-sub">Khổ giấy</div>
           <select id="set-size" class="in"><option value="a4">A4 (210 × 297 mm)</option><option value="a5">A5 (148 × 210 mm)</option><option value="letter">Letter (216 × 279 mm)</option><option value="screen">Vừa màn hình</option></select>
+          <div class="set-sub">Giấy mẫu của bạn (viết đè lên đề)</div>
+          <div class="import-row">
+            <button id="set-img" class="btn ghost small">＋ Thêm từ ảnh…</button>
+            <button id="set-pdf" class="btn ghost small">＋ Thêm từ PDF…</button>
+            <button id="set-nobg" class="btn ghost small">Bỏ nền</button>
+          </div>
+          <input id="imp-img" type="file" accept="image/*" hidden/>
+          <input id="imp-pdf" type="file" accept="application/pdf" hidden/>
           <div class="set-sub">Màu giấy</div>
           <div class="swatch-row" data-swatch="bg">
             <button data-c="#FFFFFF" class="cs" style="background:#FFFFFF"></button>
@@ -361,6 +369,7 @@
 
   <div id="toast" class="toast"></div>
 
+  <script src="/vendor/pdfjs/pdf.min.js"></script>
   <script src="/vendor/katex/katex.min.js"></script>
   <script src="/vendor/function-plot.js"></script>
   <script src="/js/beautify.js"></script>

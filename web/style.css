@@ -279,3 +279,7 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .math-pal{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;max-height:120px;overflow:auto}
 .math-pal button{min-width:34px;height:32px;border:1px solid var(--nrline);background:#fff;border-radius:7px;font-size:15px;cursor:pointer;padding:0 6px;color:var(--ink)}
 .math-pal button:hover{background:#F0F2F4;border-color:var(--maroon)}
+
+/* Nhập ảnh/PDF làm nền */
+.import-row{display:flex;flex-wrap:wrap;gap:6px}
+.btn.small{padding:6px 10px;font-size:12px;font-weight:600}
