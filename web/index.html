@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VPVie – Bảng dạy học</title>
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="appbar">
+    <div class="brand"><span class="logo">VP</span> VPVie <small>· Bảng dạy học</small></div>
+    <div class="appbar-right">
+      <span id="ai-note" class="ai-note">⚠ Chưa bật AI (đặt ANTHROPIC_API_KEY)</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="group">
+      <button data-tool="pen" class="tool active" title="Bút">✒️ Bút</button>
+      <button data-tool="eraser" class="tool" title="Tẩy">🧽 Tẩy</button>
+      <button id="undo" class="tool" title="Hoàn tác">↶</button>
+      <button id="clear" class="tool" title="Xóa bảng">🗑️</button>
+    </div>
+    <div class="group colors">
+      <button data-color="#7a1020" class="sw sel"></button>
+      <button data-color="#111111" class="sw"></button>
+      <button data-color="#1F6FEB" class="sw"></button>
+      <button data-color="#1A7F37" class="sw"></button>
+      <button data-color="#E3A008" class="sw"></button>
+    </div>
+    <div class="group">
+      <label class="lbl">Cỡ</label>
+      <input id="size" type="range" min="1" max="12" value="3" />
+    </div>
+    <div class="group">
+      <button id="beautify" class="tool on">✨ Làm đẹp nét: BẬT</button>
+      <button id="btn-shapes" class="tool">△ Mẫu hình</button>
+      <button id="btn-math" class="tool">∑ Công thức</button>
+      <button id="btn-plot" class="tool">📈 Đồ thị</button>
+    </div>
+    <div class="group ai">
+      <select id="ai-mode" title="Kiểu nhận dạng">
+        <option value="auto">Tự động</option>
+        <option value="text">Chữ tiếng Việt</option>
+        <option value="math">Công thức</option>
+      </select>
+      <button id="btn-ai" class="tool primary">🤖 Nhận dạng AI</button>
+    </div>
+  </div>
+
+  <main id="board" class="board">
+    <canvas id="paper"></canvas>
+    <div id="overlay" class="overlay"></div>
+  </main>
+
+  <!-- Hộp thoại công thức -->
+  <div id="dlg-math" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">Chèn công thức (LaTeX) <button data-close="dlg-math" class="x">✕</button></div>
+      <input id="math-input" class="in" placeholder="Ví dụ: x^2 - 3x = 0  hoặc  \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}" />
+      <div class="hint">Gõ theo cú pháp LaTeX/KaTeX. Xem trước:</div>
+      <div id="math-preview" class="preview"></div>
+      <div class="dlg-foot"><button data-close="dlg-math" class="btn ghost">Hủy</button><button id="math-ok" class="btn">Chèn</button></div>
+    </div>
+  </div>
+
+  <!-- Hộp thoại đồ thị -->
+  <div id="dlg-plot" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">Vẽ đồ thị từ phương trình <button data-close="dlg-plot" class="x">✕</button></div>
+      <input id="plot-input" class="in" placeholder="Ví dụ: y = x^2 - 2x - 3   hoặc   sin(x)" />
+      <div class="hint">Nhập hàm theo x. Hỗ trợ + - * / ^, sin, cos, tan, sqrt, log…</div>
+      <div class="dlg-foot"><button data-close="dlg-plot" class="btn ghost">Hủy</button><button id="plot-ok" class="btn">Vẽ</button></div>
+    </div>
+  </div>
+
+  <!-- Mẫu hình học -->
+  <div id="dlg-shapes" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">Chèn mẫu hình học <button data-close="dlg-shapes" class="x">✕</button></div>
+      <div class="shape-grid">
+        <button data-shape="triangle" class="shape">△<br>Tam giác</button>
+        <button data-shape="rect" class="shape">▭<br>Chữ nhật</button>
+        <button data-shape="circle" class="shape">◯<br>Đường tròn</button>
+        <button data-shape="axes" class="shape">✚<br>Hệ trục Oxy</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/vendor/katex/katex.min.js"></script>
+  <script src="/vendor/function-plot.js"></script>
+  <script src="/js/beautify.js"></script>
+  <script src="/js/mathplot.js"></script>
+  <script src="/js/recognize.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
