@@ -47,3 +47,27 @@ iframe.preview{border:none;border-left:1px solid var(--line)}
 
 @media print{ .appbar,.obar,.statusbar,.ai-menu{display:none!important} body.app{height:auto;overflow:visible} .sheet-wrap{overflow:visible;padding:0;background:#fff} .sheet{box-shadow:none;margin:0;max-width:none;min-height:auto;padding:0} }
 @media print{ .editor-split textarea{display:none!important} .preview{border:none!important} }
+
+/* Bảng tính */
+.sheet-area{flex:1;overflow:hidden;display:flex}
+.grid-wrap{flex:1;overflow:auto;background:#fff}
+table.xl{border-collapse:collapse;font-size:13px}
+table.xl th{background:#F3F6F7;border:1px solid var(--line);color:var(--navy);font-weight:700;padding:3px 7px;position:sticky;top:0;z-index:1;text-align:center}
+table.xl th.rownum{left:0;z-index:0;min-width:34px}
+table.xl th.corner{left:0;top:0;z-index:2}
+table.xl td{border:1px solid #e6ebee;padding:0}
+input.cell{width:88px;border:none;outline:none;padding:4px 6px;font-size:13px;background:transparent}
+input.cell.sel{outline:2px solid var(--teal);background:#F2FAFB}
+.fxbar{flex:1;max-width:460px;border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-family:Consolas,monospace;font-size:13px}
+.ask-panel{position:fixed;right:0;top:0;bottom:0;width:330px;background:#fff;border-left:1px solid var(--line);box-shadow:-6px 0 20px rgba(0,0,0,.08);padding:18px;overflow:auto;transform:translateX(100%);transition:.2s;z-index:30}
+.ask-panel.show{transform:translateX(0)}
+.ask-panel h4{margin:0 0 10px;color:var(--navy)}
+.ask-panel label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
+.ask-panel input,.ask-panel textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:8px;font-size:13px;font-family:inherit}
+.ask-panel textarea{min-height:70px;resize:vertical}
+.ask-panel .primary{width:100%;margin-top:12px}
+.ask-result{margin-top:16px;font-size:13px}
+.ar-title{font-weight:700;color:var(--navy)}
+.ar-fx{font-family:Consolas,monospace;background:#F3F6F7;border-radius:6px;padding:7px 9px;margin:7px 0;color:var(--teal);word-break:break-all}
+.ar-tbl{border-collapse:collapse;width:100%;margin-top:6px}
+.ar-tbl th,.ar-tbl td{border:1px solid var(--line);padding:4px 8px;text-align:left}
