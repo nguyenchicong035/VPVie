@@ -65,34 +65,43 @@
     const size = Math.max(bb.w, bb.h);
     if (size < 16) return null;
     const endGap = dist(pts[0], pts[pts.length - 1]);
-    const straightness = dist(pts[0], pts[pts.length - 1]) / L;
-    const closed = endGap < size * 0.32;
+    const straightness = endGap / L;
+    const closed = endGap < size * 0.4;
 
-    // Đường thẳng
+    // Đường thẳng (nét mở, gần như thẳng)
     if (!closed && straightness > 0.9) {
       const [x1, y1, x2, y2] = snapAngle(pts[0].x, pts[0].y, pts[pts.length - 1].x, pts[pts.length - 1].y);
       return { type: "line", x1, y1, x2, y2 };
     }
 
+    // Tâm & bán kính theo hộp bao; độ lệch so với elip (0 = tròn/elip hoàn hảo)
+    const cx = (bb.minx + bb.maxx) / 2, cy = (bb.miny + bb.maxy) / 2;
+    const rx = bb.w / 2, ry = bb.h / 2;
+    let dev = 0;
+    for (const p of pts) {
+      const nx = (p.x - cx) / (rx || 1), ny = (p.y - cy) / (ry || 1);
+      dev += Math.abs(Math.hypot(nx, ny) - 1);
+    }
+    dev /= pts.length;
+
+    function roundShape() {
+      if (Math.abs(rx - ry) / Math.max(rx, ry) < 0.18) return { type: "circle", cx, cy, r: (rx + ry) / 2 };
+      return { type: "ellipse", cx, cy, rx, ry };
+    }
+
+    // 1) Nét cong & bán kính đều -> ĐƯỜNG TRÒN/ELIP MƯỢT (kể cả khi khép hở một chút)
+    if (straightness < 0.45 && dev < 0.15) return roundShape();
+
     if (closed) {
-      const eps = size * 0.08;
-      let corners = rdp(pts, eps);
-      // bỏ đỉnh trùng điểm đầu/cuối
+      // 2) Đa giác: xét số đỉnh góc
+      const epsP = size * 0.09;
+      let corners = rdp(pts, epsP);
       if (corners.length > 1 && dist(corners[0], corners[corners.length - 1]) < size * 0.18) corners = corners.slice(0, -1);
       const n = corners.length;
-
-      // Độ "tròn": độ lệch bán kính so với tâm bbox
-      const cx = (bb.minx + bb.maxx) / 2, cy = (bb.miny + bb.maxy) / 2;
-      let rs = pts.map(p => Math.hypot(p.x - cx, p.y - cy));
-      const rmean = rs.reduce((a, b) => a + b, 0) / rs.length;
-      const rdev = Math.sqrt(rs.reduce((a, b) => a + (b - rmean) * (b - rmean), 0) / rs.length) / rmean;
-
-      if (n >= 3 && n <= 3) return { type: "triangle", pts: corners.map(p => ({ x: p.x, y: p.y })) };
-      if (n === 4 && rdev > 0.18) return { type: "rect", x: bb.minx, y: bb.miny, w: bb.w, h: bb.h };
-      // Tròn hoặc elip
-      const rx = bb.w / 2, ry = bb.h / 2;
-      if (Math.abs(rx - ry) / Math.max(rx, ry) < 0.2) return { type: "circle", cx, cy, r: (rx + ry) / 2 };
-      return { type: "ellipse", cx, cy, rx, ry };
+      if (n === 3) return { type: "triangle", pts: corners.map(p => ({ x: p.x, y: p.y })) };
+      if (n === 4) return { type: "rect", x: bb.minx, y: bb.miny, w: bb.w, h: bb.h };
+      // 3) Mặc định vẫn là đường tròn/elip
+      return roundShape();
     }
     return null;
   }

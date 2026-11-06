@@ -171,7 +171,7 @@
     addOverlay("plot", x, y, function (body) { window.VPCalc.buildGraph(body, expr); });
   }
   function insertCalc(x, y) {
-    addOverlay("calc", x, y, function (body) { window.VPCalc.buildSciCalc(body); });
+    addOverlay("calc", x, y, function (body) { window.VPSci.build(body); });
   }
 
   // ----- Thanh công cụ

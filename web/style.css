@@ -74,3 +74,22 @@ select{border:1px solid var(--line);border-radius:8px;padding:6px;font-size:13px
 .slider b{color:var(--teal);min-width:34px;display:inline-block}
 .ai-status{font-size:11px;color:var(--muted);min-width:80px}
 .ov-calc .ov-body,.ov-plot .ov-body{min-width:250px}
+
+/* Máy tính khoa học hiển thị tự nhiên (kiểu fx) */
+.fx{width:300px;background:#2a2f36;border-radius:12px;padding:10px;box-shadow:inset 0 0 0 2px #3a4049}
+.fx-screen{background:#d7e6c8;border-radius:6px;padding:8px 10px;min-height:74px;margin-bottom:8px;border:2px solid #9fb08c;font-family:"Cambria Math",Consolas,serif}
+.fx-status{display:flex;justify-content:flex-start;height:14px}
+.fx-badge{font-size:10px;font-weight:700;color:#3a5a2a;letter-spacing:.5px}
+.fx-expr{min-height:26px;font-size:18px;color:#1c2a16;text-align:right;overflow-x:auto}
+.fx-res{min-height:22px;font-size:20px;font-weight:700;color:#14341f;text-align:right}
+.fx-pad{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.fx-key{border:none;border-radius:7px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;background:#4a515a;color:#fff;box-shadow:0 2px 0 #20242a}
+.fx-key:hover{filter:brightness(1.12)}
+.fx-key:active{transform:translateY(1px);box-shadow:0 1px 0 #20242a}
+.fx-key.k-num{background:#eef2f5;color:#1d2a33;box-shadow:0 2px 0 #c3ccd3}
+.fx-key.k-op{background:#2f6f7e;box-shadow:0 2px 0 #1d4b56}
+.fx-key.k-eq{background:#13697A;box-shadow:0 2px 0 #0b434e}
+.fx-key.k-ac{background:#c0392b;box-shadow:0 2px 0 #7f271d}
+.fx-key.k-del{background:#b4873a;box-shadow:0 2px 0 #7a5a24}
+.fx-key.k-shift{background:#d6a52e;color:#2a2f36;box-shadow:0 2px 0 #9a7820}
+.fx-key.k-mode{background:#596270;box-shadow:0 2px 0 #353b45;font-size:11px}
