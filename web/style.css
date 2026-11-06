@@ -120,3 +120,5 @@ table.tf td{border:1px solid var(--line);padding:7px 10px}
 .tf-cell{text-align:center;width:52px;cursor:default}
 .tf-cell .dot{display:inline-block;width:16px;height:16px;border:2px solid #b7c2ca;border-radius:50%}
 .tf-cell.correct .dot{background:var(--ok,#2E9E5B);border-color:var(--ok,#2E9E5B)}
+.solid-grid{grid-template-columns:repeat(4,1fr)}
+.solid-grid .shape{font-size:13px;padding:12px 4px}

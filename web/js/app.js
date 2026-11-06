@@ -55,6 +55,14 @@
       ctx.arc(it.cx, it.cy, it.r, 0, Math.PI * 2); ctx.stroke();
     } else if (it.type === "ellipse") {
       ctx.ellipse(it.cx, it.cy, it.rx, it.ry, 0, 0, Math.PI * 2); ctx.stroke();
+    } else if (it.type === "solid") {
+      var sc = it.color || state.color, lw = it.size || 2;
+      ctx.strokeStyle = sc; ctx.lineWidth = lw;
+      (it.segs || []).forEach(function (s) { ctx.setLineDash(s.dashed ? [6, 5] : []); ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); });
+      (it.ellipses || []).forEach(function (e) { ctx.setLineDash(e.dashed ? [6, 5] : []); ctx.beginPath(); ctx.ellipse(e.cx, e.cy, e.rx, e.ry, 0, e.a0 || 0, (e.a1 != null ? e.a1 : Math.PI * 2)); ctx.stroke(); });
+      ctx.setLineDash([]);
+      ctx.fillStyle = sc; ctx.font = "13px 'Segoe UI'";
+      (it.labels || []).forEach(function (l) { ctx.fillText(l.t, l.x, l.y); });
     }
   }
 
@@ -232,6 +240,13 @@
 
   // Mẫu hình học
   $("btn-shapes").onclick = function () { showDialog("dlg-shapes"); };
+  $("btn-solid").onclick = function () { showDialog("dlg-solid"); };
+  document.querySelectorAll("[data-solid]").forEach(function (b) {
+    b.onclick = function () {
+      state.items.push(window.VPSolid.make(b.dataset.solid, canvas.clientWidth / 2, canvas.clientHeight / 2, 100, state.color, state.size || 2));
+      redraw(); hideDialog("dlg-solid");
+    };
+  });
   document.querySelectorAll("[data-shape]").forEach(function (b) {
     b.onclick = function () { addShapeTemplate(b.dataset.shape); hideDialog("dlg-shapes"); };
   });

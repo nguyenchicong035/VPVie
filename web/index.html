@@ -36,6 +36,7 @@
     <div class="group">
       <button id="beautify" class="tool on">✨ Làm đẹp nét: BẬT</button>
       <button id="btn-shapes" class="tool">△ Mẫu hình</button>
+      <button id="btn-solid" class="tool">🧊 Hình KG</button>
       <button id="btn-math" class="tool">∑ Công thức</button>
       <button id="btn-plot" class="tool">📈 Đồ thị</button>
       <button id="btn-calc" class="tool">🧮 Máy tính</button>
@@ -115,6 +116,14 @@
     </div>
   </div>
 
+  <div id="dlg-solid" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">Chèn hình không gian <button data-close="dlg-solid" class="x">✕</button></div>
+      <div class="shape-grid solid-grid"><button data-solid="chop4" class="shape">Chóp tứ giác</button><button data-solid="chop3" class="shape">Chóp tam giác</button><button data-solid="hop" class="shape">Hình hộp</button><button data-solid="langtru" class="shape">Lăng trụ</button><button data-solid="tru" class="shape">Hình trụ</button><button data-solid="non" class="shape">Hình nón</button><button data-solid="cau" class="shape">Hình cầu</button></div>
+      <div class="hint">Nét khuất được vẽ bằng nét đứt (kiểu hình chiếu trong sách).</div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/vendor/katex/katex.min.js"></script>
@@ -129,6 +138,7 @@
   <script src="/js/tools-sci.js"></script>
   <script src="/js/tools-geo.js"></script>
   <script src="/js/tools-quiz.js"></script>
+  <script src="/js/tools-solid.js"></script>
   <script src="/js/tools-export.js"></script>
   <script src="/js/app.js"></script>
 </body>
