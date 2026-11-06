@@ -62,6 +62,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (var i = 0; i < state.items.length; i++) drawItem(state.items[i]);
     if (state.cur) drawItem(state.cur);
+    if (window.VPGeo) window.VPGeo.render(ctx, canvas.clientWidth, canvas.clientHeight);
   }
 
   // ----- Tẩy: xóa item gần con trỏ
@@ -91,13 +92,18 @@
 
   // ----- Sự kiện vẽ
   canvas.addEventListener("pointerdown", function (e) {
-    canvas.setPointerCapture(e.pointerId);
     var pt = pos(e);
+    if (state.tool === "geo") {
+      if (window.VPGeo.tool === "move") canvas.setPointerCapture(e.pointerId);
+      window.VPGeo.onDown(pt); state.geoDown = true; redraw(); return;
+    }
+    canvas.setPointerCapture(e.pointerId);
     if (state.tool === "eraser") { state.drawing = true; eraseAt(pt); return; }
     state.drawing = true;
     state.cur = { type: "stroke", points: [pt], color: state.color, size: state.size };
   });
   canvas.addEventListener("pointermove", function (e) {
+    if (state.tool === "geo") { if (state.geoDown && window.VPGeo.onMove(pos(e))) redraw(); return; }
     if (!state.drawing) return;
     var pt = pos(e);
     if (state.tool === "eraser") { eraseAt(pt); return; }
@@ -105,6 +111,7 @@
     redraw();
   });
   function endStroke() {
+    if (state.tool === "geo") { if (window.VPGeo) window.VPGeo.onUp(); state.geoDown = false; return; }
     if (!state.drawing) return;
     state.drawing = false;
     if (state.tool === "eraser") return;
@@ -177,11 +184,20 @@
   // ----- Thanh công cụ
   function $(id) { return document.getElementById(id); }
   var tools = document.querySelectorAll("[data-tool]");
+  var geoBtns = document.querySelectorAll("[data-geo]");
+  function clearActive() { tools.forEach(function (x) { x.classList.remove("active"); }); geoBtns.forEach(function (x) { x.classList.remove("active"); }); }
   tools.forEach(function (b) {
     b.onclick = function () {
       state.tool = b.dataset.tool;
-      tools.forEach(function (x) { x.classList.remove("active"); });
-      b.classList.add("active");
+      if (window.VPGeo) window.VPGeo.setTool(null);
+      clearActive(); b.classList.add("active");
+    };
+  });
+  geoBtns.forEach(function (b) {
+    b.onclick = function () {
+      state.tool = "geo";
+      window.VPGeo.setTool(b.dataset.geo);
+      clearActive(); b.classList.add("active");
     };
   });
   document.querySelectorAll("[data-color]").forEach(function (b) {
@@ -196,7 +212,7 @@
   var bt = $("beautify");
   bt.onclick = function () { state.beautify = !state.beautify; bt.classList.toggle("on", state.beautify); bt.textContent = state.beautify ? "✨ Làm đẹp nét: BẬT" : "✨ Làm đẹp nét: TẮT"; };
   $("undo").onclick = function () { state.items.pop(); redraw(); };
-  $("clear").onclick = function () { if (confirm("Xóa toàn bộ bảng?")) { state.items = []; overlay.innerHTML = ""; redraw(); } };
+  $("clear").onclick = function () { if (confirm("Xóa toàn bộ bảng?")) { state.items = []; overlay.innerHTML = ""; if (window.VPGeo) window.VPGeo.clear(); redraw(); } };
   $("btn-calc").onclick = function () { insertCalc(100, 90); };
   $("btn-png").onclick = async function () { try { toast("Đang tạo ảnh…"); await window.VPExport.png(board); } catch (e) { toast("Lỗi xuất ảnh."); } };
   $("btn-pdf").onclick = async function () { try { toast("Đang tạo PDF…"); await window.VPExport.pdf(board); } catch (e) { toast("Lỗi xuất PDF."); } };
