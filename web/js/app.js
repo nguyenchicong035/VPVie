@@ -104,6 +104,10 @@
       ctx.arc(it.cx, it.cy, it.r, 0, Math.PI * 2); ctx.stroke();
     } else if (it.type === "ellipse") {
       ctx.ellipse(it.cx, it.cy, it.rx, it.ry, 0, 0, Math.PI * 2); ctx.stroke();
+    } else if (it.type === "poly") {
+      var pp = it.pts; ctx.moveTo(pp[0].x, pp[0].y); for (var k = 1; k < pp.length; k++) ctx.lineTo(pp[k].x, pp[k].y); ctx.closePath(); ctx.stroke();
+    } else if (it.type === "path") {
+      var pa = it.pts; ctx.moveTo(pa[0].x, pa[0].y); for (var k2 = 1; k2 < pa.length; k2++) ctx.lineTo(pa[k2].x, pa[k2].y); ctx.stroke();
     } else if (it.type === "solid") {
       var sc = it.color || state.color, lw = it.size || 2;
       ctx.strokeStyle = sc; ctx.lineWidth = lw;
@@ -145,7 +149,7 @@
     if (it.type === "rect") return { minx: it.x, maxx: it.x + it.w, miny: it.y, maxy: it.y + it.h };
     if (it.type === "circle") return { minx: it.cx - it.r, maxx: it.cx + it.r, miny: it.cy - it.r, maxy: it.cy + it.r };
     if (it.type === "ellipse") return { minx: it.cx - it.rx, maxx: it.cx + it.rx, miny: it.cy - it.ry, maxy: it.cy + it.ry };
-    if (it.type === "triangle") { var xs = it.pts.map(function (p) { return p.x; }), ys = it.pts.map(function (p) { return p.y; }); return { minx: Math.min.apply(0, xs), maxx: Math.max.apply(0, xs), miny: Math.min.apply(0, ys), maxy: Math.max.apply(0, ys) }; }
+    if (it.type === "triangle" || it.type === "poly" || it.type === "path") { var xs = it.pts.map(function (p) { return p.x; }), ys = it.pts.map(function (p) { return p.y; }); return { minx: Math.min.apply(0, xs), maxx: Math.max.apply(0, xs), miny: Math.min.apply(0, ys), maxy: Math.max.apply(0, ys) }; }
     return { minx: 0, maxx: 0, miny: 0, maxy: 0 };
   }
 
@@ -413,12 +417,24 @@
   document.querySelectorAll("[data-shape]").forEach(function (b) {
     b.onclick = function () { addShapeTemplate(b.dataset.shape); hideDialog("dlg-shapes"); };
   });
+  function regPoly(cx, cy, r, n, rot) { var a = []; for (var i = 0; i < n; i++) { var t = rot + i * 2 * Math.PI / n; a.push({ x: cx + r * Math.cos(t), y: cy + r * Math.sin(t) }); } return a; }
   function addShapeTemplate(kind) {
     var cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, s = 90, c = state.color, w = state.size;
-    if (kind === "triangle") state.items.push({ type: "triangle", pts: [{ x: cx, y: cy - s }, { x: cx - s, y: cy + s }, { x: cx + s, y: cy + s }], color: c, size: w });
-    else if (kind === "rect") state.items.push({ type: "rect", x: cx - s, y: cy - s * 0.7, w: 2 * s, h: 1.4 * s, color: c, size: w });
-    else if (kind === "circle") state.items.push({ type: "circle", cx: cx, cy: cy, r: s, color: c, size: w });
-    else if (kind === "axes") { state.items.push({ type: "line", x1: cx - 180, y1: cy, x2: cx + 180, y2: cy, color: c, size: w }); state.items.push({ type: "line", x1: cx, y1: cy - 140, x2: cx, y2: cy + 140, color: c, size: w }); }
+    function push(o) { o.color = c; o.size = w; state.items.push(o); }
+    if (kind === "triangle") push({ type: "triangle", pts: [{ x: cx, y: cy - s }, { x: cx - s, y: cy + s }, { x: cx + s, y: cy + s }] });
+    else if (kind === "triangle-eq") { var h = s * Math.sqrt(3); push({ type: "triangle", pts: [{ x: cx, y: cy - h / 2 }, { x: cx - s, y: cy + h / 2 }, { x: cx + s, y: cy + h / 2 }] }); }
+    else if (kind === "right-tri") push({ type: "triangle", pts: [{ x: cx - s, y: cy - s }, { x: cx - s, y: cy + s }, { x: cx + s, y: cy + s }] });
+    else if (kind === "square") push({ type: "rect", x: cx - s, y: cy - s, w: 2 * s, h: 2 * s });
+    else if (kind === "rect") push({ type: "rect", x: cx - s, y: cy - s * 0.7, w: 2 * s, h: 1.4 * s });
+    else if (kind === "para") push({ type: "poly", pts: [{ x: cx - s + 30, y: cy - s * 0.6 }, { x: cx + s + 30, y: cy - s * 0.6 }, { x: cx + s - 30, y: cy + s * 0.6 }, { x: cx - s - 30, y: cy + s * 0.6 }] });
+    else if (kind === "rhombus") push({ type: "poly", pts: [{ x: cx, y: cy - s }, { x: cx + s * 0.7, y: cy }, { x: cx, y: cy + s }, { x: cx - s * 0.7, y: cy }] });
+    else if (kind === "trapezoid") push({ type: "poly", pts: [{ x: cx - s * 0.55, y: cy - s * 0.6 }, { x: cx + s * 0.55, y: cy - s * 0.6 }, { x: cx + s, y: cy + s * 0.6 }, { x: cx - s, y: cy + s * 0.6 }] });
+    else if (kind === "pentagon") push({ type: "poly", pts: regPoly(cx, cy, s, 5, -Math.PI / 2) });
+    else if (kind === "hexagon") push({ type: "poly", pts: regPoly(cx, cy, s, 6, -Math.PI / 2) });
+    else if (kind === "circle") push({ type: "circle", cx: cx, cy: cy, r: s });
+    else if (kind === "ellipse") push({ type: "ellipse", cx: cx, cy: cy, rx: s * 1.3, ry: s * 0.75 });
+    else if (kind === "parabola") { var pts = []; for (var x = -s * 1.4; x <= s * 1.4; x += 6) pts.push({ x: cx + x, y: cy + s - (x * x) / (s * 1.0) }); push({ type: "path", pts: pts }); }
+    else if (kind === "axes") { push({ type: "line", x1: cx - 180, y1: cy, x2: cx + 180, y2: cy }); push({ type: "line", x1: cx, y1: cy - 140, x2: cx, y2: cy + 140 }); }
     redraw();
   }
 
