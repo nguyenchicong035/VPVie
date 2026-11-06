@@ -32,7 +32,7 @@
 
   function pos(e) {
     var r = canvas.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    return { x: e.clientX - r.left, y: e.clientY - r.top, pr: (e.pressure && e.pressure > 0) ? e.pressure : 0.5 };
   }
 
   // ----- Vẽ
@@ -42,9 +42,14 @@
     ctx.lineWidth = it.size || state.size;
     ctx.beginPath();
     if (it.type === "stroke") {
-      var p = it.points;
-      if (p.length) { ctx.moveTo(p[0].x, p[0].y); for (var i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y); }
-      ctx.stroke();
+      var p = it.points, base = it.size || state.size;
+      if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0].x, p[0].y, base / 2, 0, 6.2832); ctx.fillStyle = it.color; ctx.fill(); return; }
+      for (var i = 1; i < p.length; i++) {                // nét theo lực nhấn của bút (stylus)
+        var pr = p[i].pr != null ? p[i].pr : 0.5;
+        ctx.beginPath(); ctx.lineWidth = base * (0.55 + pr * 0.9);
+        ctx.moveTo(p[i - 1].x, p[i - 1].y); ctx.lineTo(p[i].x, p[i].y); ctx.stroke();
+      }
+      return;
     } else if (it.type === "line") {
       ctx.moveTo(it.x1, it.y1); ctx.lineTo(it.x2, it.y2); ctx.stroke();
     } else if (it.type === "rect") {
@@ -100,6 +105,9 @@
 
   // ----- Sự kiện vẽ
   canvas.addEventListener("pointerdown", function (e) {
+    // Chống chạm nhầm lòng bàn tay: khi đang dùng bút thì bỏ qua ngón tay (touch)
+    if (e.pointerType === "touch" && (state.penDown || (Date.now() - (state.lastPen || 0) < 700))) return;
+    if (e.pointerType === "pen") { state.penDown = true; state.lastPen = Date.now(); }
     var pt = pos(e);
     if (state.tool === "geo") {
       if (window.VPGeo.tool === "move") canvas.setPointerCapture(e.pointerId);
@@ -131,8 +139,8 @@
     }
     state.items.push(s); redraw();
   }
-  canvas.addEventListener("pointerup", endStroke);
-  canvas.addEventListener("pointercancel", endStroke);
+  canvas.addEventListener("pointerup", function (e) { if (e.pointerType === "pen") { state.penDown = false; state.lastPen = Date.now(); } endStroke(); });
+  canvas.addEventListener("pointercancel", function (e) { if (e.pointerType === "pen") { state.penDown = false; state.lastPen = Date.now(); } endStroke(); });
   canvas.addEventListener("pointerleave", function (e) { if (state.drawing && state.tool !== "eraser") endStroke(); });
 
   // ----- Lớp phủ: công thức & đồ thị (DOM, kéo được)
@@ -176,9 +184,33 @@
       body.dataset.latex = latex;
     });
   }
-  function insertText(text, x, y) {
+  function insertText(text, x, y, opts) {
     if (!text) return;
-    addOverlay("text", x, y, function (body) { body.textContent = text; });
+    opts = opts || {};
+    addOverlay("text", x, y, function (body) {
+      body.textContent = text;
+      if (opts.font) body.style.fontFamily = opts.font;
+      if (opts.size) body.style.fontSize = opts.size + "px";
+    });
+  }
+  function inkBBox() {
+    var minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity, found = false;
+    state.items.forEach(function (it) {
+      if (it.type === "stroke") it.points.forEach(function (p) { found = true; if (p.x < minx) minx = p.x; if (p.y < miny) miny = p.y; if (p.x > maxx) maxx = p.x; if (p.y > maxy) maxy = p.y; });
+    });
+    return found ? { x: minx, y: miny, w: maxx - minx, h: maxy - miny } : null;
+  }
+  function clearStrokes() { state.items = state.items.filter(function (it) { return it.type !== "stroke"; }); }
+  // Cắt đúng vùng có nét viết tay (phóng to) để nhận dạng chính xác hơn
+  function cropForOCR() {
+    var bb = inkBBox();
+    if (!bb || bb.w < 6 || bb.h < 6) return canvas;
+    var dpr = window.devicePixelRatio || 1, pad = 18, scale = 2;
+    var x = Math.max(0, bb.x - pad), y = Math.max(0, bb.y - pad), w = bb.w + 2 * pad, h = bb.h + 2 * pad;
+    var oc = document.createElement("canvas"); oc.width = Math.round(w * scale); oc.height = Math.round(h * scale);
+    var o = oc.getContext("2d"); o.fillStyle = "#fff"; o.fillRect(0, 0, oc.width, oc.height);
+    o.drawImage(canvas, x * dpr, y * dpr, w * dpr, h * dpr, 0, 0, oc.width, oc.height);
+    return oc;
   }
   function insertPlot(expr, x, y) {
     if (!expr) return;
@@ -264,22 +296,28 @@
     var btn = this; var old = btn.textContent; var statusEl = $("ai-status");
     btn.disabled = true; btn.textContent = "Đang nhận dạng…";
     try {
-      var engine = $("ai-engine").value, data;
+      var engine = $("ai-engine").value, data, src = cropForOCR();
       if (engine === "tesseract") {
         statusEl.textContent = "Đang tải mô hình…";
-        data = await window.VPRecognize.recognizeTesseract(canvas, function (st) { statusEl.textContent = st; });
+        data = await window.VPRecognize.recognizeTesseract(src, function (st) { statusEl.textContent = st; });
       } else {
-        data = await window.VPRecognize.recognizeServer(canvas.toDataURL("image/png"), $("ai-mode").value);
+        data = await window.VPRecognize.recognizeServer(src.toDataURL("image/png"), $("ai-mode").value);
       }
       statusEl.textContent = "";
+      var bb = inkBBox();
       if ((data.kind === "math" || data.kind === "mixed") && data.latex) {
         $("math-input").value = data.latex;
         window.VPMathPlot.renderMath($("math-preview"), data.latex, true);
         showDialog("dlg-math");             // mở ra để sửa LaTeX rồi chèn
       }
-      if (data.text) insertText(data.text, 100, 100);
+      if (data.text) {
+        var fs = bb ? Math.min(Math.max(Math.round(bb.h), 18), 46) : 22;
+        insertText(data.text, bb ? bb.x : 100, bb ? bb.y : 100, { font: $("text-font").value, size: fs });
+      }
+      // Thay nét viết tay bằng chữ (nếu bật) – đổi chữ tay thành phông chữ tại chỗ
+      if ($("ai-replace").checked && bb && (data.text || data.latex)) { clearStrokes(); redraw(); }
       if (!data.latex && !data.text) toast("Không nhận ra nội dung. Hãy viết rõ hơn.");
-      else toast("Đã nhận dạng xong.");
+      else toast("Đã chuyển chữ viết tay thành chữ đánh máy.");
     } catch (e) {
       statusEl.textContent = "";
       toast(e.message || "Lỗi nhận dạng.");
