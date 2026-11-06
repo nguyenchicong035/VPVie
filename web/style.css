@@ -133,3 +133,26 @@ table.tf td{border:1px solid var(--line);padding:7px 10px}
 .note-colors{display:flex;gap:5px;padding:4px 10px 8px}
 .note-dot{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
 .note-dot:hover{transform:scale(1.15)}
+
+/* Bảng biến thiên / xét dấu */
+.var-deriv{font-size:13px;color:var(--navy);margin:4px 0 8px}
+.vartbl{border-collapse:collapse;font-size:15px;min-width:300px}
+.vartbl th{background:#F3F6F7;color:var(--navy);padding:6px 12px;border:1px solid var(--line);font-weight:700;text-align:left}
+.vartbl td{border:1px solid var(--line);padding:6px 14px;text-align:center;min-width:42px}
+.vartbl td.pt{font-weight:600;color:var(--text)}
+.vartbl td.zero{color:var(--muted)}
+.vartbl td.sign{font-weight:700;font-size:17px}
+.vartbl td.arrow{font-size:20px;color:var(--teal)}
+.vartbl td.ext{font-weight:700}
+.vartbl .ext-k{font-size:11px;color:var(--accent);font-weight:700}
+
+/* Thanh công cụ dạng ribbon chia nhóm */
+.ribbon-tabs{display:flex;gap:3px;background:var(--navy);padding:5px 10px 0;flex:0 0 auto}
+.rb-tab{background:transparent;border:none;color:#cfe0ec;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;border-radius:9px 9px 0 0}
+.rb-tab:hover{background:rgba(255,255,255,.1);color:#fff}
+.rb-tab.active{background:var(--card);color:var(--navy)}
+.ribbon{background:var(--card);border-bottom:1px solid var(--line);padding:8px 12px;flex:0 0 auto}
+.rb-pane{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rb-pane.hidden{display:none}
+.sep{width:1px;height:26px;background:var(--line);margin:0 3px;display:inline-block}
+.colors{display:inline-flex;gap:5px;align-items:center}

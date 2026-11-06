@@ -152,6 +152,7 @@
     else if (kind === "plot") window.VPCalc.buildGraph(body, data.expr);
     else if (kind === "calc") window.VPSci.build(body);
     else if (kind === "quiz") data.sub === "tf" ? window.VPQuiz.buildTF(body, data) : window.VPQuiz.buildMCQ(body, data);
+    else if (kind === "var") window.VPVar.build(body, data);
     else if (kind === "note") {
       var host = body.closest(".ov"); host.classList.add("ov-note");
       function applyColor(c) { data.color = c; host.style.background = c; }
@@ -226,6 +227,7 @@
   function insertPlot(expr, x, y) { if (expr) addOverlayData("plot", { expr: expr }, x, y); }
   function insertCalc(x, y) { addOverlayData("calc", {}, x, y); }
   function insertNote(x, y) { addOverlayData("note", { text: "", color: "#FFF1A6" }, x, y); }
+  function insertVar(data, x, y) { addOverlayData("var", data, x, y); }
   var quizNo = 0;
   function insertQuiz(data, kind, x, y) {
     quizNo += 1; data.no = quizNo; data.sub = kind;
@@ -259,6 +261,14 @@
       b.classList.add("sel");
     };
   });
+  // Ribbon: chuyển nhóm công cụ theo thẻ
+  document.querySelectorAll(".rb-tab").forEach(function (t) {
+    t.onclick = function () {
+      document.querySelectorAll(".rb-tab").forEach(function (x) { x.classList.remove("active"); });
+      t.classList.add("active");
+      document.querySelectorAll(".rb-pane").forEach(function (pn) { pn.classList.toggle("hidden", pn.dataset.pane !== t.dataset.rb); });
+    };
+  });
   $("size").oninput = function () { state.size = parseInt(this.value, 10); };
   var bt = $("beautify");
   bt.onclick = function () { state.beautify = !state.beautify; bt.classList.toggle("on", state.beautify); bt.textContent = state.beautify ? "✨ Làm đẹp nét: BẬT" : "✨ Làm đẹp nét: TẮT"; };
@@ -266,6 +276,12 @@
   $("clear").onclick = function () { if (confirm("Xóa toàn bộ trang?")) { state.items = []; state.overlays = []; overlay.innerHTML = ""; if (window.VPGeo) window.VPGeo.clear(); redraw(); scheduleSave(); } };
   $("btn-calc").onclick = function () { insertCalc(100, 90); };
   $("btn-note").onclick = function () { insertNote(130, 100); };
+  $("btn-var").onclick = function () { showDialog("dlg-var"); $("var-input").focus(); };
+  $("var-ok").onclick = function () {
+    var expr = $("var-input").value.trim(); if (!expr) return;
+    insertVar({ expr: expr, mode: $("var-mode").value, xmin: parseFloat($("var-min").value) || -10, xmax: parseFloat($("var-max").value) || 10 }, 90, 90);
+    hideDialog("dlg-var");
+  };
   $("btn-png").onclick = async function () { try { toast("Đang tạo ảnh…"); await window.VPExport.png(board); } catch (e) { toast("Lỗi xuất ảnh."); } };
   $("btn-pdf").onclick = async function () { try { toast("Đang tạo PDF…"); await window.VPExport.pdf(board); } catch (e) { toast("Lỗi xuất PDF."); } };
 

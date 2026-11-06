@@ -15,44 +15,51 @@
     </div>
   </header>
 
-  <div class="toolbar">
-    <div class="group">
+  <div class="ribbon-tabs">
+    <button class="rb-tab active" data-rb="draw">✏️ Vẽ</button>
+    <button class="rb-tab" data-rb="geo">📐 Hình học</button>
+    <button class="rb-tab" data-rb="math">∑ Toán học</button>
+    <button class="rb-tab" data-rb="ai">🤖 AI nhận dạng</button>
+    <button class="rb-tab" data-rb="page">📄 Trang &amp; Xuất</button>
+  </div>
+  <div class="ribbon">
+    <div class="rb-pane" data-pane="draw">
       <button data-tool="pen" class="tool active" title="Bút">✒️ Bút</button>
       <button data-tool="eraser" class="tool" title="Tẩy">🧽 Tẩy</button>
       <button id="undo" class="tool" title="Hoàn tác">↶</button>
-      <button id="clear" class="tool" title="Xóa bảng">🗑️</button>
-    </div>
-    <div class="group colors">
-      <button data-color="#7a1020" class="sw sel"></button>
-      <button data-color="#111111" class="sw"></button>
-      <button data-color="#1F6FEB" class="sw"></button>
-      <button data-color="#1A7F37" class="sw"></button>
-      <button data-color="#E3A008" class="sw"></button>
-    </div>
-    <div class="group">
-      <label class="lbl">Cỡ</label>
-      <input id="size" type="range" min="1" max="12" value="3" />
-    </div>
-    <div class="group">
+      <button id="clear" class="tool" title="Xóa trang">🗑️</button>
+      <span class="sep"></span>
+      <span class="colors">
+        <button data-color="#7a1020" class="sw sel"></button>
+        <button data-color="#111111" class="sw"></button>
+        <button data-color="#1F6FEB" class="sw"></button>
+        <button data-color="#1A7F37" class="sw"></button>
+        <button data-color="#E3A008" class="sw"></button>
+      </span>
+      <label class="lbl">Cỡ</label><input id="size" type="range" min="1" max="12" value="3" />
+      <span class="sep"></span>
       <button id="beautify" class="tool on">✨ Làm đẹp nét: BẬT</button>
-      <button id="btn-shapes" class="tool">△ Mẫu hình</button>
-      <button id="btn-solid" class="tool">🧊 Hình KG</button>
-      <button id="btn-math" class="tool">∑ Công thức</button>
-      <button id="btn-plot" class="tool">📈 Đồ thị</button>
-      <button id="btn-calc" class="tool">🧮 Máy tính</button>
-      <button id="btn-png" class="tool">🖼️ Ảnh</button>
-      <button id="btn-pdf" class="tool">📄 PDF</button>
-      <button id="btn-quiz" class="tool">❓ Câu hỏi</button>
-      <button id="btn-note" class="tool">🗒️ Giấy note</button>
     </div>
-    <div class="group geo">
+    <div class="rb-pane hidden" data-pane="geo">
       <button data-geo="point" class="tool geo-tool">• Điểm</button>
       <button data-geo="segment" class="tool geo-tool">╱ Đoạn</button>
       <button data-geo="line" class="tool geo-tool">— Thẳng</button>
       <button data-geo="circle" class="tool geo-tool">◯ Tròn</button>
-      <button data-geo="move" class="tool geo-tool">✋ Kéo</button>
+      <button data-geo="move" class="tool geo-tool">✋ Kéo điểm</button>
+      <span class="sep"></span>
+      <button id="btn-shapes" class="tool">△ Mẫu hình</button>
+      <button id="btn-solid" class="tool">🧊 Hình không gian</button>
     </div>
-    <div class="group ai">
+    <div class="rb-pane hidden" data-pane="math">
+      <button id="btn-math" class="tool">∑ Công thức</button>
+      <button id="btn-plot" class="tool">📈 Đồ thị</button>
+      <button id="btn-var" class="tool">📋 Bảng biến thiên</button>
+      <button id="btn-calc" class="tool">🧮 Máy tính</button>
+      <span class="sep"></span>
+      <button id="btn-quiz" class="tool">❓ Câu hỏi</button>
+      <button id="btn-note" class="tool">🗒️ Giấy note</button>
+    </div>
+    <div class="rb-pane hidden" data-pane="ai">
       <select id="ai-engine" title="Công cụ nhận dạng">
         <option value="tesseract">AI Tesseract (miễn phí)</option>
         <option value="server">Máy chủ (Ollama/Claude)</option>
@@ -63,23 +70,29 @@
         <option value="math">Công thức</option>
       </select>
       <button id="btn-ai" class="tool primary">🤖 Nhận dạng</button>
+      <span class="sep"></span>
+      <label class="lbl">Phông</label>
       <select id="text-font" title="Phông chữ kết quả">
-        <option value="">Phông mặc định</option>
+        <option value="">Mặc định</option>
         <option value="'Times New Roman', serif">Times New Roman</option>
         <option value="Arial, sans-serif">Arial</option>
         <option value="'Comic Sans MS','Segoe Script',cursive">Chữ viết tay</option>
       </select>
-      <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét</label>
+      <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
       <span id="ai-status" class="ai-status"></span>
     </div>
-    <div class="group pages">
+    <div class="rb-pane hidden" data-pane="page">
       <button id="page-prev" class="tool" title="Trang trước">◀</button>
       <span id="page-label" class="lbl">Trang 1/1</span>
       <button id="page-next" class="tool" title="Trang sau">▶</button>
-      <button id="page-add" class="tool" title="Thêm trang">＋</button>
-      <button id="page-del" class="tool" title="Xóa trang">🗑</button>
+      <button id="page-add" class="tool" title="Thêm trang">＋ Trang</button>
+      <button id="page-del" class="tool" title="Xóa trang">🗑 Xóa trang</button>
+      <span class="sep"></span>
       <button id="book-save" class="tool">💾 Lưu sổ</button>
       <button id="book-open" class="tool">📂 Mở sổ</button>
+      <span class="sep"></span>
+      <button id="btn-png" class="tool">🖼️ Xuất ảnh</button>
+      <button id="btn-pdf" class="tool">📄 Xuất PDF</button>
     </div>
   </div>
 
@@ -141,6 +154,20 @@
     </div>
   </div>
 
+  <div id="dlg-var" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">Bảng biến thiên / xét dấu <button data-close="dlg-var" class="x">✕</button></div>
+      <input id="var-input" class="in" placeholder="Nhập hàm số theo x, vd: x^3 - 3x   hoặc   x^2 - 4" />
+      <div class="qrow" style="margin-top:8px">
+        <select id="var-mode"><option value="bbt">Bảng biến thiên</option><option value="xetdau">Bảng xét dấu</option></select>
+        <label class="lbl">x từ</label><input id="var-min" class="in" style="width:70px" value="-10"/>
+        <label class="lbl">đến</label><input id="var-max" class="in" style="width:70px" value="10"/>
+      </div>
+      <div class="hint">Tự tính đạo hàm, tìm nghiệm, xét dấu và dựng bảng. Khoảng x để tìm nghiệm bằng số.</div>
+      <div class="dlg-foot"><button data-close="dlg-var" class="btn ghost">Hủy</button><button id="var-ok" class="btn">Tạo bảng</button></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/vendor/katex/katex.min.js"></script>
@@ -156,6 +183,7 @@
   <script src="/js/tools-geo.js"></script>
   <script src="/js/tools-quiz.js"></script>
   <script src="/js/tools-solid.js"></script>
+  <script src="/js/tools-var.js"></script>
   <script src="/js/tools-export.js"></script>
   <script src="/js/app.js"></script>
 </body>
