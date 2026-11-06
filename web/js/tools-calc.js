@@ -39,7 +39,7 @@
   function detectParams(expr) {
     var toks = (expr.match(/[a-zA-Z]+/g) || []);
     var ps = [];
-    toks.forEach(function (t) { if (FUNCS.indexOf(t) < 0 && t.length === 1 && t !== "x" && ps.indexOf(t) < 0) ps.push(t); });
+    toks.forEach(function (t) { if (FUNCS.indexOf(t) < 0 && t.length === 1 && t !== "x" && t !== "y" && t !== "e" && ps.indexOf(t) < 0) ps.push(t); });
     return ps;
   }
 
@@ -75,7 +75,8 @@
     }
     function render() {
       try {
-        global.functionPlot({ target: graph, width: 360, height: 240, grid: true, data: [{ fn: substituted(), color: "#1F6FEB" }] });
+        if (global.VPGrapher) global.VPGrapher.draw(graph, substituted(), { w: 380, h: 300 });
+        else global.functionPlot({ target: graph, width: 360, height: 240, grid: true, data: [{ fn: substituted(), color: "#1F6FEB" }] });
       } catch (e) { graph.textContent = "Không vẽ được."; }
     }
     inp.oninput = function () { buildSliders(); render(); };
