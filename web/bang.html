@@ -8,68 +8,83 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header class="appbar">
-    <div class="brand"><a href="/" style="color:#fff;text-decoration:none;opacity:.9;margin-right:10px">←</a><span class="logo">VP</span> VPVie <small>· Bảng dạy học</small></div>
-    <div class="appbar-right">
-      <span id="ai-note" class="ai-note">⚠ Chưa bật AI (đặt ANTHROPIC_API_KEY)</span>
-    </div>
+  <!-- Thanh tiêu đề kiểu NoteRenderer -->
+  <header class="nr-title">
+    <div class="nr-title-left"><a href="/" class="nr-home" title="Về trang chủ">△</a><span id="doc-title">Sổ bài giảng – VPVie</span></div>
+    <div class="nr-title-right"><span id="ai-note" class="ai-note">⚠ Chưa bật AI</span></div>
   </header>
 
-  <div class="ribbon-tabs">
-    <button class="rb-tab active" data-rb="draw">✏️ Vẽ</button>
-    <button class="rb-tab" data-rb="geo">📐 Hình học</button>
-    <button class="rb-tab" data-rb="math">∑ Toán học</button>
-    <button class="rb-tab" data-rb="ai">🤖 AI nhận dạng</button>
-    <button class="rb-tab" data-rb="util">🧰 Tiện ích</button>
-    <button class="rb-tab" data-rb="page">📄 Trang &amp; Xuất</button>
+  <!-- Hàng 1: tệp & điều hướng -->
+  <div class="nr-row nr-row-top">
+    <button id="btn-menu" class="nr-ic" title="Danh mục">☰</button>
+    <button id="btn-library" class="nr-ic" title="Thư viện sổ">📚</button>
+    <button id="book-save" class="nr-ic" title="Lưu sổ">🖫</button>
+    <button id="undo" class="nr-ic" title="Hoàn tác">↶</button>
+    <button id="redo" class="nr-ic" title="Làm lại">↷</button>
+    <span class="nr-sep"></span>
+    <button id="book-open" class="nr-ic" title="Mở sổ">🗁</button>
+    <button id="btn-sidebar" class="nr-ic active" title="Hiện/ẩn danh sách trang">▧</button>
+    <button id="page-add" class="nr-ic" title="Thêm trang">🗋</button>
+    <button id="btn-settings" class="nr-ic" title="Cài đặt">🎚</button>
+    <button id="btn-record" class="nr-ic" title="Quay màn hình">⏺</button>
+    <span class="nr-page-ind"><button id="page-prev" class="nr-mini">◀</button><span id="page-label">1 / 1</span><button id="page-next" class="nr-mini">▶</button><span class="nr-zoom">· 100%</span></span>
   </div>
-  <div class="ribbon">
-    <div class="rb-pane" data-pane="draw">
-      <button data-tool="pen" class="tool active" title="Bút">✒️ Bút</button>
-      <button data-tool="eraser" class="tool" title="Tẩy">🧽 Tẩy</button>
-      <button id="undo" class="tool" title="Hoàn tác">↶</button>
-      <button id="clear" class="tool" title="Xóa trang">🗑️</button>
-      <span class="sep"></span>
-      <span class="colors">
-        <button data-color="#7a1020" class="sw sel"></button>
-        <button data-color="#111111" class="sw"></button>
-        <button data-color="#1F6FEB" class="sw"></button>
-        <button data-color="#1A7F37" class="sw"></button>
-        <button data-color="#E3A008" class="sw"></button>
-      </span>
-      <label class="lbl">Cỡ</label><input id="size" type="range" min="1" max="12" value="3" />
-      <span class="sep"></span>
-      <button id="beautify" class="tool on">✨ Làm đẹp nét: BẬT</button>
-    </div>
-    <div class="rb-pane hidden" data-pane="geo">
-      <button data-geo="point" class="tool geo-tool">• Điểm</button>
-      <button data-geo="segment" class="tool geo-tool">╱ Đoạn</button>
-      <button data-geo="line" class="tool geo-tool">— Thẳng</button>
-      <button data-geo="circle" class="tool geo-tool">◯ Tròn</button>
-      <button data-geo="move" class="tool geo-tool">✋ Kéo điểm</button>
-      <span class="sep"></span>
-      <button data-geo="mid" class="tool geo-tool" title="Trung điểm 2 điểm">Trung điểm</button>
-      <button data-geo="perpbis" class="tool geo-tool" title="Trung trực đoạn thẳng">Trung trực</button>
-      <button data-geo="bisector" class="tool geo-tool" title="Phân giác góc (chọn A, B, C)">Phân giác</button>
-      <span class="sep"></span>
-      <button data-geo="centroid" class="tool geo-tool" title="Trọng tâm tam giác">Trọng tâm</button>
-      <button data-geo="ortho" class="tool geo-tool" title="Trực tâm tam giác">Trực tâm</button>
-      <button data-geo="circum" class="tool geo-tool" title="Tâm đường tròn ngoại tiếp">Tâm ngoại</button>
-      <button data-geo="incenter" class="tool geo-tool" title="Tâm đường tròn nội tiếp">Tâm nội</button>
-      <span class="sep"></span>
-      <button id="btn-shapes" class="tool">△ Mẫu hình</button>
-      <button id="btn-solid" class="tool">🧊 Hình không gian</button>
-    </div>
-    <div class="rb-pane hidden" data-pane="math">
-      <button id="btn-math" class="tool">∑ Công thức</button>
-      <button id="btn-plot" class="tool">📈 Đồ thị</button>
-      <button id="btn-var" class="tool">📋 Bảng biến thiên</button>
-      <button id="btn-calc" class="tool">🧮 Máy tính</button>
-      <span class="sep"></span>
-      <button id="btn-quiz" class="tool">❓ Câu hỏi</button>
-      <button id="btn-note" class="tool">🗒️ Giấy note</button>
-    </div>
-    <div class="rb-pane hidden" data-pane="ai">
+
+  <!-- Hàng 2: công cụ vẽ -->
+  <div class="nr-row nr-row-tools">
+    <button id="btn-shapes-fav" class="nr-ic" title="Mẫu hình yêu thích">★</button>
+    <span class="nr-sep"></span>
+    <button data-tool="pen" data-pen="ball" class="nr-ic tool active" title="Bút bi">🖊</button>
+    <button data-tool="eraser" class="nr-ic tool" title="Tẩy">⌫</button>
+    <button data-tool="pen" data-pen="brush" class="nr-ic tool" title="Bút dạ (nét theo lực)">〰</button>
+    <button data-tool="pen" data-pen="pencil" class="nr-ic tool" title="Bút chì">✎</button>
+    <button id="beautify" class="nr-ic on" title="Làm đẹp nét (giữ tay thành hình/đường thẳng)">✨</button>
+    <!-- Màu bút -->
+    <span class="nr-pill">
+      <button data-color="#111111" class="sw sel"></button>
+      <button data-color="#C21807" class="sw"></button>
+      <button data-color="#1F6FEB" class="sw"></button>
+      <button data-color="#1A7F37" class="sw"></button>
+      <button data-color="#7A3FB3" class="sw"></button>
+    </span>
+    <!-- Cỡ nét -->
+    <span class="nr-pill nr-sizes">
+      <button data-sizedot="2" class="szdot" title="Nét mảnh"><i style="width:6px;height:6px"></i></button>
+      <button data-sizedot="4" class="szdot sel" title="Nét vừa"><i style="width:10px;height:10px"></i></button>
+      <button data-sizedot="8" class="szdot" title="Nét đậm"><i style="width:15px;height:15px"></i></button>
+    </span>
+    <!-- Bút dạ quang (highlighter) -->
+    <span class="nr-pill">
+      <button data-hl="#FFE86B" class="sw hl" style="background:#FFE86B"></button>
+      <button data-hl="#9BE89B" class="sw hl" style="background:#9BE89B"></button>
+      <button data-hl="#7FD8F2" class="sw hl" style="background:#7FD8F2"></button>
+    </span>
+    <span class="nr-sep"></span>
+    <button data-geo="line" class="nr-ic tool geo-tool" title="Đường thẳng">╱</button>
+    <button id="btn-ruler" class="nr-ic" title="Thước kẻ / đo góc">📐</button>
+    <button id="btn-shapes" class="nr-ic" title="Hình học 2D (hơn 30 mẫu)">△</button>
+    <button id="btn-solid" class="nr-ic" title="Hình không gian 3D">⬡</button>
+    <button id="btn-plot" class="nr-ic" title="Đồ thị hàm số">📈</button>
+    <button id="btn-table" class="nr-ic" title="Chèn bảng">▦</button>
+    <button id="btn-var" class="nr-ic" title="Bảng biến thiên / xét dấu">⋔</button>
+    <button id="btn-math" class="nr-ic" title="Công thức Toán (LaTeX)">Σ</button>
+    <button id="btn-textbox" class="nr-ic" title="Khung văn bản">▤</button>
+    <button id="btn-note" class="nr-ic" title="Giấy note">🗈</button>
+    <button id="btn-timer" class="nr-ic" title="Đồng hồ đếm ngược">⏱</button>
+    <button id="btn-picker" class="nr-ic" title="Gọi tên ngẫu nhiên">⚅</button>
+    <button id="btn-web" class="nr-ic" title="Trình duyệt web">◍</button>
+  </div>
+
+  <!-- Hàng 3: văn bản, tô, chọn, di chuyển + nhận dạng AI -->
+  <div class="nr-row nr-row-tools2">
+    <button id="btn-text" class="nr-ic" title="Chữ">T</button>
+    <button id="btn-fill" class="nr-ic" title="Tô màu miền">◆</button>
+    <button data-tool="eraser" class="nr-ic tool" title="Tẩy vùng">▨</button>
+    <button id="btn-select" class="nr-ic" title="Chọn vùng">⬚</button>
+    <button data-tool="pan" class="nr-ic tool" title="Di chuyển trang">✋</button>
+    <button id="clear" class="nr-ic" title="Xóa trang">🗑</button>
+    <span class="nr-sep"></span>
+    <span class="nr-aigrp">
       <select id="ai-engine" title="Công cụ nhận dạng">
         <option value="tesseract">AI Tesseract (miễn phí)</option>
         <option value="server">Máy chủ (Ollama/Claude)</option>
@@ -79,41 +94,40 @@
         <option value="text">Chữ tiếng Việt</option>
         <option value="math">Công thức</option>
       </select>
-      <button id="btn-ai" class="tool primary">🤖 Nhận dạng</button>
-      <span class="sep"></span>
-      <label class="lbl">Phông</label>
       <select id="text-font" title="Phông chữ kết quả">
-        <option value="">Mặc định</option>
+        <option value="">Phông mặc định</option>
         <option value="'Times New Roman', serif">Times New Roman</option>
         <option value="Arial, sans-serif">Arial</option>
         <option value="'Comic Sans MS','Segoe Script',cursive">Chữ viết tay</option>
       </select>
       <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
+      <button id="btn-ai" class="nr-ic primary" title="Nhận dạng chữ viết tay">🤖 Nhận dạng</button>
       <span id="ai-status" class="ai-status"></span>
-    </div>
-    <div class="rb-pane hidden" data-pane="util">
-      <button id="btn-timer" class="tool">⏱ Đồng hồ đếm ngược</button>
-      <button id="btn-picker" class="tool">🎲 Gọi tên ngẫu nhiên</button>
-    </div>
-    <div class="rb-pane hidden" data-pane="page">
-      <button id="page-prev" class="tool" title="Trang trước">◀</button>
-      <span id="page-label" class="lbl">Trang 1/1</span>
-      <button id="page-next" class="tool" title="Trang sau">▶</button>
-      <button id="page-add" class="tool" title="Thêm trang">＋ Trang</button>
-      <button id="page-del" class="tool" title="Xóa trang">🗑 Xóa trang</button>
-      <span class="sep"></span>
-      <button id="book-save" class="tool">💾 Lưu sổ</button>
-      <button id="book-open" class="tool">📂 Mở sổ</button>
-      <span class="sep"></span>
-      <button id="btn-png" class="tool">🖼️ Xuất ảnh</button>
-      <button id="btn-pdf" class="tool">📄 Xuất PDF</button>
-    </div>
+    </span>
+    <span class="nr-sep"></span>
+    <button id="btn-png" class="nr-ic" title="Xuất ảnh PNG">🖼</button>
+    <button id="btn-pdf" class="nr-ic" title="Xuất PDF">📄</button>
   </div>
 
-  <main id="board" class="board">
-    <canvas id="paper"></canvas>
-    <div id="overlay" class="overlay"></div>
-  </main>
+  <div class="nr-main">
+    <aside id="nr-side" class="nr-side">
+      <div id="thumbs" class="thumbs"></div>
+      <div class="thumb-ctrl">
+        <button id="th-up" class="nr-mini" title="Lên">▲</button>
+        <button id="th-down" class="nr-mini" title="Xuống">▼</button>
+        <button id="page-del" class="nr-mini" title="Xóa trang">🗑</button>
+      </div>
+    </aside>
+    <main id="board" class="board">
+      <canvas id="paper"></canvas>
+      <div id="overlay" class="overlay"></div>
+    </main>
+  </div>
+
+  <div class="nr-sheets">
+    <span class="sheet-tab active">Sheet 1</span>
+    <button id="sheet-add" class="nr-mini" title="Thêm sheet">＋</button>
+  </div>
 
   <!-- Hộp thoại công thức -->
   <div id="dlg-math" class="dlg">
@@ -138,12 +152,22 @@
 
   <!-- Mẫu hình học -->
   <div id="dlg-shapes" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Chèn mẫu hình học <button data-close="dlg-shapes" class="x">✕</button></div>
+    <div class="dlg-card wide">
+      <div class="dlg-head">Chèn mẫu hình học 2D <button data-close="dlg-shapes" class="x">✕</button></div>
       <div class="shape-grid">
         <button data-shape="triangle" class="shape">△<br>Tam giác</button>
+        <button data-shape="triangle-eq" class="shape">△<br>Tam giác đều</button>
+        <button data-shape="right-tri" class="shape">◣<br>Tam giác vuông</button>
+        <button data-shape="square" class="shape">◻<br>Hình vuông</button>
         <button data-shape="rect" class="shape">▭<br>Chữ nhật</button>
+        <button data-shape="para" class="shape">▰<br>Bình hành</button>
+        <button data-shape="rhombus" class="shape">◇<br>Hình thoi</button>
+        <button data-shape="trapezoid" class="shape">⏢<br>Hình thang</button>
+        <button data-shape="pentagon" class="shape">⬠<br>Ngũ giác</button>
+        <button data-shape="hexagon" class="shape">⬡<br>Lục giác</button>
         <button data-shape="circle" class="shape">◯<br>Đường tròn</button>
+        <button data-shape="ellipse" class="shape">⬭<br>Elip</button>
+        <button data-shape="parabola" class="shape">⌣<br>Parabol</button>
         <button data-shape="axes" class="shape">✚<br>Hệ trục Oxy</button>
       </div>
     </div>
@@ -162,7 +186,7 @@
 
   <div id="dlg-solid" class="dlg">
     <div class="dlg-card">
-      <div class="dlg-head">Chèn hình không gian <button data-close="dlg-solid" class="x">✕</button></div>
+      <div class="dlg-head">Chèn hình không gian 3D <button data-close="dlg-solid" class="x">✕</button></div>
       <div class="shape-grid solid-grid"><button data-solid="chop4" class="shape">Chóp tứ giác</button><button data-solid="chop3" class="shape">Chóp tam giác</button><button data-solid="hop" class="shape">Hình hộp</button><button data-solid="langtru" class="shape">Lăng trụ</button><button data-solid="tru" class="shape">Hình trụ</button><button data-solid="non" class="shape">Hình nón</button><button data-solid="cau" class="shape">Hình cầu</button></div>
       <div class="hint">Nét khuất được vẽ bằng nét đứt (kiểu hình chiếu trong sách).</div>
     </div>
@@ -177,8 +201,124 @@
         <label class="lbl">x từ</label><input id="var-min" class="in" style="width:70px" value="-10"/>
         <label class="lbl">đến</label><input id="var-max" class="in" style="width:70px" value="10"/>
       </div>
-      <div class="hint">Tự tính đạo hàm, tìm nghiệm, xét dấu và dựng bảng. Khoảng x để tìm nghiệm bằng số.</div>
+      <div class="hint">Tự tính đạo hàm, tìm nghiệm, xét dấu và dựng bảng.</div>
       <div class="dlg-foot"><button data-close="dlg-var" class="btn ghost">Hủy</button><button id="var-ok" class="btn">Tạo bảng</button></div>
+    </div>
+  </div>
+
+  <!-- Hộp thoại Cài đặt (3 cột, giống NoteRenderer) -->
+  <div id="dlg-settings" class="dlg">
+    <div class="dlg-card set-card">
+      <div class="dlg-head">Cài đặt <button data-close="dlg-settings" class="x">✕</button></div>
+      <div class="set-cols">
+        <!-- Cột 1: GIẤY -->
+        <div class="set-col">
+          <div class="set-group">GIẤY</div>
+          <div class="set-sub">Kiểu giấy</div>
+          <div class="paper-grid">
+            <button data-paper="lined" class="paper-opt"><span class="pv pv-lined"></span>Kẻ dòng</button>
+            <button data-paper="grid" class="paper-opt"><span class="pv pv-grid"></span>Ô vuông</button>
+            <button data-paper="dot" class="paper-opt"><span class="pv pv-dot"></span>Chấm</button>
+            <button data-paper="plain" class="paper-opt"><span class="pv pv-plain"></span>Trơn</button>
+          </div>
+          <div class="set-sub">Hướng trang</div>
+          <div class="orient-grid">
+            <button data-orient="portrait" class="paper-opt"><span class="pv pv-port"></span>Dọc</button>
+            <button data-orient="landscape" class="paper-opt"><span class="pv pv-land"></span>Ngang</button>
+          </div>
+          <div class="set-sub">Khổ giấy</div>
+          <select id="set-size" class="in"><option value="a4">A4 (210 × 297 mm)</option><option value="a5">A5 (148 × 210 mm)</option><option value="letter">Letter (216 × 279 mm)</option><option value="screen">Vừa màn hình</option></select>
+          <div class="set-sub">Màu giấy</div>
+          <div class="swatch-row" data-swatch="bg">
+            <button data-c="#FFFFFF" class="cs" style="background:#FFFFFF"></button>
+            <button data-c="#FBF3E0" class="cs" style="background:#FBF3E0"></button>
+            <button data-c="#FFF7C2" class="cs" style="background:#FFF7C2"></button>
+            <button data-c="#E7F6E3" class="cs" style="background:#E7F6E3"></button>
+            <button data-c="#E6F0FB" class="cs" style="background:#E6F0FB"></button>
+            <button data-c="#FBE6EE" class="cs" style="background:#FBE6EE"></button>
+            <button data-c="#1C3A2A" class="cs" style="background:#1C3A2A"></button>
+            <input type="color" id="set-bg" class="cwheel" value="#FFFFFF"/>
+          </div>
+          <div class="set-sub">Màu dòng kẻ / ô / chấm</div>
+          <div class="swatch-row" data-swatch="line">
+            <button data-c="#9CC2F0" class="cs" style="background:#9CC2F0"></button>
+            <button data-c="#B9C6D4" class="cs" style="background:#B9C6D4"></button>
+            <button data-c="#F2A6C0" class="cs" style="background:#F2A6C0"></button>
+            <button data-c="#A8D7A0" class="cs" style="background:#A8D7A0"></button>
+            <button data-c="#F2C879" class="cs" style="background:#F2C879"></button>
+            <button data-c="#C79BE0" class="cs" style="background:#C79BE0"></button>
+            <button data-c="#6B6B6B" class="cs" style="background:#6B6B6B"></button>
+            <input type="color" id="set-line" class="cwheel" value="#9CC2F0"/>
+          </div>
+          <div class="set-sub">Độ đậm dòng kẻ</div>
+          <input type="range" id="set-thick" min="1" max="4" value="1" class="set-slider"/>
+          <div class="set-sub">Khoảng cách dòng: <span id="set-space-val">34</span></div>
+          <input type="range" id="set-space" min="16" max="80" value="34" class="set-slider"/>
+          <label class="setchk"><input type="checkbox" id="set-titlebox" checked/> Ô tiêu đề ở trang đầu</label>
+          <label class="setchk"><input type="checkbox" id="set-margin" checked/> Đường lề dọc</label>
+          <label class="setchk"><input type="checkbox" id="set-infinite"/> Trang vô cực</label>
+          <label class="setchk"><input type="checkbox" id="set-pagebreak" checked/> Hiện đường ngắt trang và số trang</label>
+        </div>
+        <!-- Cột 2: HÌNH VẼ -->
+        <div class="set-col">
+          <div class="set-group">HÌNH VẼ</div>
+          <label class="setchk"><input type="checkbox" id="set-autolabel"/> Hiện tên tự động của hình (A, B, C…) trong sổ này</label>
+          <label class="setchk"><input type="checkbox" id="set-snap"/> Bắt điểm, bắt cạnh khi kẻ đường thẳng</label>
+          <label class="setchk"><input type="checkbox" id="set-showdots" checked/> Hiện chấm tròn ở các điểm của hình</label>
+          <div class="set-sub">Cỡ chữ tên điểm: <span id="set-lblsize-val">16</span></div>
+          <input type="range" id="set-lblsize" min="10" max="30" value="16" class="set-slider"/>
+          <div class="set-sub">Màu tên điểm</div>
+          <div class="swatch-row" data-swatch="lblcolor">
+            <button data-c="#111111" class="cs" style="background:#111111"></button>
+            <button data-c="#C21807" class="cs" style="background:#C21807"></button>
+            <button data-c="#1F6FEB" class="cs" style="background:#1F6FEB"></button>
+            <button data-c="#1A7F37" class="cs" style="background:#1A7F37"></button>
+            <button data-c="#7A3FB3" class="cs" style="background:#7A3FB3"></button>
+            <button data-c="#E08A1E" class="cs" style="background:#E08A1E"></button>
+          </div>
+          <div class="set-sub">Cỡ chấm tròn ở điểm: <span id="set-dotsize-val">4</span></div>
+          <input type="range" id="set-dotsize" min="2" max="9" value="4" class="set-slider"/>
+          <div class="set-group" style="margin-top:14px">CHÈN KHOẢNG TRỐNG</div>
+          <label class="setradio"><input type="radio" name="set-insert" value="exact" checked/> Trang chèn cao đúng đoạn kéo</label>
+          <label class="setradio"><input type="radio" name="set-insert" value="push"/> Đẩy nội dung xuống trang sau</label>
+          <label class="setradio"><input type="radio" name="set-insert" value="overflow"/> Chèn đúng đoạn kéo, nội dung bị đẩy xuống</label>
+        </div>
+        <!-- Cột 3: MÔN DẠY -->
+        <div class="set-col">
+          <div class="set-group">MÔN DẠY</div>
+          <div class="subj-grid">
+            <button data-subj="toan" class="seg sel">Toán</button>
+            <button data-subj="ly" class="seg">Vật lí</button>
+            <button data-subj="hoa" class="seg">Hóa học</button>
+            <button data-subj="sinh" class="seg">Sinh học</button>
+          </div>
+          <div class="set-group" style="margin-top:14px">CON TRỎ CHUỘT</div>
+          <div class="seg-grid">
+            <button data-cursor="pen" class="seg sel">✎ Bút viết</button>
+            <button data-cursor="hand" class="seg">✋ Bàn tay</button>
+            <button data-cursor="default" class="seg">⇖ Mặc định</button>
+            <button data-cursor="dot" class="seg">• Chấm nhỏ</button>
+          </div>
+          <div class="set-group" style="margin-top:14px">CỠ CON TRỎ</div>
+          <div class="seg-grid">
+            <button data-cursize="s" class="seg sel">Nhỏ</button>
+            <button data-cursize="m" class="seg">Vừa</button>
+            <button data-cursize="l" class="seg">To</button>
+            <button data-cursize="xl" class="seg">Rất to</button>
+          </div>
+          <div class="set-group" style="margin-top:14px">VẼ BẢNG (MÀN HÌNH CẢM ỨNG)</div>
+          <div class="seg-grid">
+            <button data-touch="auto" class="seg sel">Tự động</button>
+            <button data-touch="both" class="seg">Bút và ngón tay</button>
+            <button data-touch="pen" class="seg">Chỉ bút</button>
+            <button data-touch="finger" class="seg">Chỉ ngón tay</button>
+          </div>
+          <label class="setchk" style="margin-top:12px"><input type="checkbox" id="set-autosave" checked/> Tự động lưu</label>
+          <label class="setchk"><input type="checkbox" id="set-penlead" checked/> Nét bám đầu bút</label>
+          <label class="setchk"><input type="checkbox" id="set-scratchrase"/> Viết nguệch ngoạc để xoá</label>
+        </div>
+      </div>
+      <div class="dlg-foot"><button data-close="dlg-settings" class="btn ghost">Hủy</button><button id="set-apply" class="btn" data-close="dlg-settings">Áp dụng</button></div>
     </div>
   </div>
 
@@ -199,6 +339,7 @@
   <script src="/js/tools-class.js"></script>
   <script src="/js/tools-solid.js"></script>
   <script src="/js/tools-var.js"></script>
+  <script src="/js/tools-ruler.js"></script>
   <script src="/js/tools-export.js"></script>
   <script src="/js/app.js"></script>
 </body>
