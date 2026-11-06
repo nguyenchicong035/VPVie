@@ -93,3 +93,30 @@ select{border:1px solid var(--line);border-radius:8px;padding:6px;font-size:13px
 .fx-key.k-del{background:#b4873a;box-shadow:0 2px 0 #7a5a24}
 .fx-key.k-shift{background:#d6a52e;color:#2a2f36;box-shadow:0 2px 0 #9a7820}
 .fx-key.k-mode{background:#596270;box-shadow:0 2px 0 #353b45;font-size:11px}
+
+/* Khối câu hỏi */
+.dlg-card.wide{width:min(620px,94vw)}
+.qtabs{display:flex;gap:8px;margin-bottom:10px}
+.qtab{border:1px solid var(--line);background:#fff;border-radius:8px 8px 0 0;padding:8px 14px;cursor:pointer;font-weight:600}
+.qtab.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.qpane .qrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.qpane .qrow b{width:18px;color:var(--navy)}
+.qpane .qrow .in{flex:1}
+.qpane .qrow label{font-size:13px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:3px}
+.quiz{min-width:300px;max-width:440px}
+.quiz-head{margin-bottom:6px}
+.quiz-badge{background:var(--accent);color:#fff;font-weight:700;padding:3px 12px;border-radius:5px;font-size:14px}
+.quiz-q{font-size:15px;margin:8px 0;color:var(--text)}
+.quiz-opt{padding:5px 8px;border-radius:7px;margin:3px 0;font-size:14px}
+.quiz-opt.correct{background:#E3F4EA;outline:1.5px solid var(--ok,#2E9E5B)}
+.quiz-sol{margin-top:8px;padding:8px;background:#F3F6F7;border-radius:7px;font-size:14px}
+.quiz-toggle{margin-top:10px;border:1px solid var(--teal);background:#fff;color:var(--teal);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600}
+.quiz-toggle:hover{background:#EAF4F4}
+table.tf{border-collapse:collapse;width:100%;font-size:14px}
+table.tf th{background:var(--accent);color:#fff;padding:6px 10px;font-weight:700}
+table.tf th:first-child{text-align:left;border-radius:6px 0 0 0}
+table.tf th:last-child{border-radius:0 6px 0 0}
+table.tf td{border:1px solid var(--line);padding:7px 10px}
+.tf-cell{text-align:center;width:52px;cursor:default}
+.tf-cell .dot{display:inline-block;width:16px;height:16px;border:2px solid #b7c2ca;border-radius:50%}
+.tf-cell.correct .dot{background:var(--ok,#2E9E5B);border-color:var(--ok,#2E9E5B)}

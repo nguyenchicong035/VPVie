@@ -148,8 +148,7 @@
   function makeDraggable(el) {
     var sx, sy, ox, oy, moving = false;
     el.addEventListener("pointerdown", function (e) {
-      if (e.target.classList.contains("ov-del")) return;
-      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.target.closest("button, input, textarea, select, label, .tf-cell")) return;
       moving = true; sx = e.clientX; sy = e.clientY;
       ox = parseFloat(el.style.left); oy = parseFloat(el.style.top);
       el.setPointerCapture(e.pointerId); el.classList.add("dragging");
@@ -179,6 +178,11 @@
   }
   function insertCalc(x, y) {
     addOverlay("calc", x, y, function (body) { window.VPSci.build(body); });
+  }
+  var quizNo = 0;
+  function insertQuiz(data, kind, x, y) {
+    quizNo += 1; data.no = quizNo;
+    addOverlay("quiz", x, y, function (body) { kind === "tf" ? window.VPQuiz.buildTF(body, data) : window.VPQuiz.buildMCQ(body, data); });
   }
 
   // ----- Thanh công cụ
@@ -265,6 +269,34 @@
       statusEl.textContent = "";
       toast(e.message || "Lỗi nhận dạng.");
     } finally { btn.disabled = false; btn.textContent = old; }
+  };
+
+  // Câu hỏi
+  var qTab = "mcq";
+  $("btn-quiz").onclick = function () { showDialog("dlg-quiz"); };
+  document.querySelectorAll("[data-qtab]").forEach(function (b) {
+    b.onclick = function () {
+      qTab = b.dataset.qtab;
+      document.querySelectorAll("[data-qtab]").forEach(function (x) { x.classList.remove("active"); });
+      b.classList.add("active");
+      $("q-mcq").style.display = qTab === "mcq" ? "block" : "none";
+      $("q-tf").style.display = qTab === "tf" ? "block" : "none";
+    };
+  });
+  $("quiz-ok").onclick = function () {
+    var q = $("q-text").value.trim();
+    if (qTab === "mcq") {
+      var correct = parseInt((document.querySelector('input[name="q-correct"]:checked') || {}).value || "0", 10);
+      insertQuiz({ q: q, opts: [$("q-a").value, $("q-b").value, $("q-c").value, $("q-d").value], correct: correct, sol: $("q-sol").value.trim() }, "mcq", 90, 90);
+    } else {
+      var rows = [0, 1, 2, 3].map(function (i) {
+        var t = $("tf-" + "abcd"[i]).value;
+        var sel = document.querySelector('input[name="tf' + i + '"]:checked');
+        return { t: t, ans: sel && sel.value === "true" };
+      });
+      insertQuiz({ q: q, rows: rows }, "tf", 90, 90);
+    }
+    hideDialog("dlg-quiz");
   };
 
   // ----- Hộp thoại & toast

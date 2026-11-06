@@ -41,6 +41,7 @@
       <button id="btn-calc" class="tool">🧮 Máy tính</button>
       <button id="btn-png" class="tool">🖼️ Ảnh</button>
       <button id="btn-pdf" class="tool">📄 PDF</button>
+      <button id="btn-quiz" class="tool">❓ Câu hỏi</button>
     </div>
     <div class="group geo">
       <button data-geo="point" class="tool geo-tool">• Điểm</button>
@@ -103,6 +104,17 @@
     </div>
   </div>
 
+  <div id="dlg-quiz" class="dlg">
+    <div class="dlg-card wide">
+      <div class="dlg-head">Chèn câu hỏi <button data-close="dlg-quiz" class="x">✕</button></div>
+      <div class="qtabs"><button class="qtab active" data-qtab="mcq">Trắc nghiệm A/B/C/D</button><button class="qtab" data-qtab="tf">Đúng / Sai</button></div>
+      <input id="q-text" class="in" placeholder="Nội dung câu hỏi (dùng $...$ cho công thức, vd: $f(x)=x^2$)" />
+      <div id="q-mcq" class="qpane"><div class="qrow"><b>A</b><input id="q-a" class="in"/><label><input type="radio" name="q-correct" value="0" checked/> đáp án đúng</label></div><div class="qrow"><b>B</b><input id="q-b" class="in"/><label><input type="radio" name="q-correct" value="1"/> đáp án đúng</label></div><div class="qrow"><b>C</b><input id="q-c" class="in"/><label><input type="radio" name="q-correct" value="2"/> đáp án đúng</label></div><div class="qrow"><b>D</b><input id="q-d" class="in"/><label><input type="radio" name="q-correct" value="3"/> đáp án đúng</label></div><input id="q-sol" class="in" placeholder="Lời giải (tùy chọn)"/></div>
+      <div id="q-tf" class="qpane" style="display:none"><div class="qrow"><b>a</b><input id="tf-a" class="in" placeholder="Mệnh đề a"/><label><input type="radio" name="tf0" value="true"/> Đúng</label><label><input type="radio" name="tf0" value="false" checked/> Sai</label></div><div class="qrow"><b>b</b><input id="tf-b" class="in" placeholder="Mệnh đề b"/><label><input type="radio" name="tf1" value="true"/> Đúng</label><label><input type="radio" name="tf1" value="false" checked/> Sai</label></div><div class="qrow"><b>c</b><input id="tf-c" class="in" placeholder="Mệnh đề c"/><label><input type="radio" name="tf2" value="true"/> Đúng</label><label><input type="radio" name="tf2" value="false" checked/> Sai</label></div><div class="qrow"><b>d</b><input id="tf-d" class="in" placeholder="Mệnh đề d"/><label><input type="radio" name="tf3" value="true"/> Đúng</label><label><input type="radio" name="tf3" value="false" checked/> Sai</label></div></div>
+      <div class="dlg-foot"><button data-close="dlg-quiz" class="btn ghost">Hủy</button><button id="quiz-ok" class="btn">Chèn</button></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/vendor/katex/katex.min.js"></script>
@@ -116,6 +128,7 @@
   <script src="/js/tools-calc.js"></script>
   <script src="/js/tools-sci.js"></script>
   <script src="/js/tools-geo.js"></script>
+  <script src="/js/tools-quiz.js"></script>
   <script src="/js/tools-export.js"></script>
   <script src="/js/app.js"></script>
 </body>
