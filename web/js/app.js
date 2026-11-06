@@ -443,10 +443,10 @@
     var btn = this; var old = btn.textContent; var statusEl = $("ai-status");
     btn.disabled = true; btn.textContent = "Đang nhận dạng…";
     try {
-      var engine = $("ai-engine").value, data, src = cropForOCR();
+      var engine = $("ai-engine").value, mode = $("ai-mode").value, data, src = cropForOCR();
       if (engine === "tesseract") {
         statusEl.textContent = "Đang tải mô hình…";
-        data = await window.VPRecognize.recognizeTesseract(src, function (st) { statusEl.textContent = st; });
+        data = await window.VPRecognize.recognizeTesseract(src, function (st) { statusEl.textContent = st; }, { math: mode === "math", psm: mode === "text" ? "6" : "6" });
       } else {
         data = await window.VPRecognize.recognizeServer(src.toDataURL("image/png"), $("ai-mode").value);
       }
@@ -464,7 +464,8 @@
       // Thay nét viết tay bằng chữ (nếu bật) – đổi chữ tay thành phông chữ tại chỗ
       if ($("ai-replace").checked && bb && (data.text || data.latex)) { clearStrokes(); redraw(); }
       if (!data.latex && !data.text) toast("Không nhận ra nội dung. Hãy viết rõ hơn.");
-      else toast("Đã chuyển chữ viết tay thành chữ đánh máy.");
+      else if (data.confidence != null && data.confidence < 55) toast("Đã nhận dạng (độ tin cậy " + data.confidence + "%). Viết to & rõ hơn để chính xác hơn.");
+      else toast("Đã chuyển chữ viết tay thành chữ đánh máy." + (data.confidence != null ? " (tin cậy " + data.confidence + "%)" : ""));
     } catch (e) {
       statusEl.textContent = "";
       toast(e.message || "Lỗi nhận dạng.");
