@@ -133,8 +133,29 @@
   <div id="dlg-math" class="dlg">
     <div class="dlg-card">
       <div class="dlg-head">Chèn công thức (LaTeX) <button data-close="dlg-math" class="x">✕</button></div>
+      <div id="math-palette" class="math-pal">
+        <button data-ltx="\frac{}{}" title="Phân số">½</button>
+        <button data-ltx="\sqrt{}" title="Căn bậc hai">√</button>
+        <button data-ltx="\sqrt[]{}" title="Căn bậc n">ⁿ√</button>
+        <button data-ltx="^{}" title="Lũy thừa">xⁿ</button>
+        <button data-ltx="_{}" title="Chỉ số dưới">xᵢ</button>
+        <button data-ltx="\int_{}^{} {} \,dx" title="Tích phân">∫</button>
+        <button data-ltx="\sum_{}^{} {}" title="Tổng">∑</button>
+        <button data-ltx="\prod_{}^{} {}" title="Tích">∏</button>
+        <button data-ltx="\lim_{ \to } {}" title="Giới hạn">lim</button>
+        <button data-ltx="\begin{cases} {} \\ {} \end{cases}" title="Hệ phương trình">⎰</button>
+        <button data-ltx="\begin{pmatrix} {} & {} \\ {} & {} \end{pmatrix}" title="Ma trận">[▦]</button>
+        <button data-ltx="\vec{}" title="Vectơ">v⃗</button>
+        <button data-ltx="\overline{}" title="Gạch trên">x̄</button>
+        <button data-ltx="\alpha">α</button><button data-ltx="\beta">β</button><button data-ltx="\gamma">γ</button>
+        <button data-ltx="\theta">θ</button><button data-ltx="\pi">π</button><button data-ltx="\Delta">Δ</button>
+        <button data-ltx="\pm">±</button><button data-ltx="\times">×</button><button data-ltx="\div">÷</button>
+        <button data-ltx="\leq">≤</button><button data-ltx="\geq">≥</button><button data-ltx="\neq">≠</button>
+        <button data-ltx="\infty">∞</button><button data-ltx="\in">∈</button><button data-ltx="\subset">⊂</button>
+        <button data-ltx="\cup">∪</button><button data-ltx="\cap">∩</button><button data-ltx="\rightarrow">→</button>
+      </div>
       <input id="math-input" class="in" placeholder="Ví dụ: x^2 - 3x = 0  hoặc  \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}" />
-      <div class="hint">Gõ theo cú pháp LaTeX/KaTeX. Xem trước:</div>
+      <div class="hint">Gõ hoặc bấm ký hiệu ở trên. Dán được cả đề LaTeX. Xem trước:</div>
       <div id="math-preview" class="preview"></div>
       <div class="dlg-foot"><button data-close="dlg-math" class="btn ghost">Hủy</button><button id="math-ok" class="btn">Chèn</button></div>
     </div>

@@ -274,3 +274,8 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .pt-sym{font-size:13px;font-weight:700;color:#1a2630}
 .pt-info{margin-top:8px;font-size:13px;color:var(--text);min-height:20px;border-top:1px solid var(--nrline);padding-top:6px}
 .chem-out{margin-top:8px;font-size:17px;font-weight:600;color:var(--teal);min-height:24px}
+
+/* Bảng ký hiệu công thức */
+.math-pal{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;max-height:120px;overflow:auto}
+.math-pal button{min-width:34px;height:32px;border:1px solid var(--nrline);background:#fff;border-radius:7px;font-size:15px;cursor:pointer;padding:0 6px;color:var(--ink)}
+.math-pal button:hover{background:#F0F2F4;border-color:var(--maroon)}

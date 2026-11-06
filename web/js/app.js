@@ -413,6 +413,17 @@
   $("btn-math").onclick = function () { showDialog("dlg-math"); $("math-input").focus(); };
   $("math-ok").onclick = function () { insertMath($("math-input").value, 80, 80); $("math-input").value = ""; hideDialog("dlg-math"); };
   $("math-input").oninput = function () { window.VPMathPlot.renderMath($("math-preview"), this.value, true); };
+  // Bảng ký hiệu công thức: chèn tại con trỏ, đặt con trỏ vào {} đầu tiên
+  document.querySelectorAll("#math-palette button").forEach(function (b) {
+    b.onmousedown = function (e) { e.preventDefault(); };
+    b.onclick = function () {
+      var inp = $("math-input"), snip = b.dataset.ltx, s = inp.selectionStart || 0, e = inp.selectionEnd || 0, v = inp.value;
+      inp.value = v.slice(0, s) + snip + v.slice(e);
+      var rel = snip.indexOf("{}"); var caret = rel >= 0 ? s + rel + 1 : s + snip.length;
+      inp.focus(); inp.setSelectionRange(caret, caret);
+      window.VPMathPlot.renderMath($("math-preview"), inp.value, true);
+    };
+  });
 
   // Hộp thoại đồ thị
   $("btn-plot").onclick = function () { showDialog("dlg-plot"); $("plot-input").focus(); };
