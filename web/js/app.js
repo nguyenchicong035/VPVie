@@ -13,6 +13,7 @@
     size: 3,
     beautify: true,
     items: [],        // nét & hình trên canvas
+    overlays: [],     // lớp phủ (công thức, đồ thị, máy tính, câu hỏi, chữ) – dạng dữ liệu
     drawing: false,
     cur: null,
   };
@@ -76,6 +77,7 @@
     for (var i = 0; i < state.items.length; i++) drawItem(state.items[i]);
     if (state.cur) drawItem(state.cur);
     if (window.VPGeo) window.VPGeo.render(ctx, canvas.clientWidth, canvas.clientHeight);
+    if (typeof scheduleSave === "function") scheduleSave();
   }
 
   // ----- Tẩy: xóa item gần con trỏ
@@ -143,55 +145,64 @@
   canvas.addEventListener("pointercancel", function (e) { if (e.pointerType === "pen") { state.penDown = false; state.lastPen = Date.now(); } endStroke(); });
   canvas.addEventListener("pointerleave", function (e) { if (state.drawing && state.tool !== "eraser") endStroke(); });
 
-  // ----- Lớp phủ: công thức & đồ thị (DOM, kéo được)
-  function addOverlay(kind, x, y, build) {
+  // ----- Lớp phủ dạng DỮ LIỆU (lưu/mở theo trang được)
+  function overlayBody(kind, body, data) {
+    if (kind === "math") window.VPMathPlot.renderMath(body, data.latex, true);
+    else if (kind === "text") { body.textContent = data.text; if (data.font) body.style.fontFamily = data.font; if (data.size) body.style.fontSize = data.size + "px"; }
+    else if (kind === "plot") window.VPCalc.buildGraph(body, data.expr);
+    else if (kind === "calc") window.VPSci.build(body);
+    else if (kind === "quiz") data.sub === "tf" ? window.VPQuiz.buildTF(body, data) : window.VPQuiz.buildMCQ(body, data);
+    else if (kind === "note") {
+      var host = body.closest(".ov"); host.classList.add("ov-note");
+      function applyColor(c) { data.color = c; host.style.background = c; }
+      applyColor(data.color || "#FFF1A6");
+      var grip = document.createElement("div"); grip.className = "note-grip"; grip.title = "Kéo để di chuyển";
+      var ed = document.createElement("div"); ed.className = "note-edit"; ed.contentEditable = "true"; ed.spellcheck = false;
+      ed.setAttribute("data-ph", "Ghi chú…"); ed.textContent = data.text || "";
+      ed.addEventListener("input", function () { data.text = ed.textContent; scheduleSave(); });
+      var bar = document.createElement("div"); bar.className = "note-colors";
+      ["#FFF1A6", "#FFD2E0", "#CDEFC6", "#CFE3FF"].forEach(function (c) { var d = document.createElement("button"); d.className = "note-dot"; d.style.background = c; d.onclick = function () { applyColor(c); scheduleSave(); }; bar.appendChild(d); });
+      body.appendChild(grip); body.appendChild(ed); body.appendChild(bar);
+    }
+  }
+  function makeOverlayEl(ov) {
     var el = document.createElement("div");
-    el.className = "ov ov-" + kind;
-    el.style.left = (x || 60) + "px";
-    el.style.top = (y || 60) + "px";
-    var body = document.createElement("div");
-    body.className = "ov-body";
-    el.appendChild(body);
-    var del = document.createElement("button");
-    del.className = "ov-del"; del.textContent = "✕"; del.title = "Xóa";
-    del.onclick = function () { overlay.removeChild(el); };
+    el.className = "ov ov-" + ov.kind; el.style.left = ov.x + "px"; el.style.top = ov.y + "px"; el.dataset.id = ov.id;
+    var body = document.createElement("div"); body.className = "ov-body"; el.appendChild(body);
+    var del = document.createElement("button"); del.className = "ov-del"; del.textContent = "✕"; del.title = "Xóa";
+    del.onclick = function () { removeOverlay(ov.id); };
     el.appendChild(del);
-    build(body);
-    makeDraggable(el);
-    overlay.appendChild(el);
+    overlayBody(ov.kind, body, ov.data);
+    makeDraggable(el, ov);
     return el;
   }
-  function makeDraggable(el) {
+  function renderOverlays() { overlay.innerHTML = ""; state.overlays.forEach(function (ov) { overlay.appendChild(makeOverlayEl(ov)); }); }
+  function addOverlayData(kind, data, x, y) {
+    var n = state.overlays.length;
+    var ov = { id: "o" + Date.now() + Math.floor(Math.random() * 1000), kind: kind, x: x != null ? x : 80 + (n * 12) % 240, y: y != null ? y : 80 + (n * 12) % 180, data: data || {} };
+    state.overlays.push(ov); overlay.appendChild(makeOverlayEl(ov)); scheduleSave(); return ov;
+  }
+  function removeOverlay(id) { state.overlays = state.overlays.filter(function (o) { return o.id !== id; }); renderOverlays(); scheduleSave(); }
+  function makeDraggable(el, ov) {
     var sx, sy, ox, oy, moving = false;
     el.addEventListener("pointerdown", function (e) {
-      if (e.target.closest("button, input, textarea, select, label, .tf-cell")) return;
+      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors")) return;
       moving = true; sx = e.clientX; sy = e.clientY;
       ox = parseFloat(el.style.left); oy = parseFloat(el.style.top);
       el.setPointerCapture(e.pointerId); el.classList.add("dragging");
     });
     el.addEventListener("pointermove", function (e) {
       if (!moving) return;
-      el.style.left = (ox + e.clientX - sx) + "px";
-      el.style.top = (oy + e.clientY - sy) + "px";
+      var nx = ox + e.clientX - sx, ny = oy + e.clientY - sy;
+      el.style.left = nx + "px"; el.style.top = ny + "px"; if (ov) { ov.x = nx; ov.y = ny; }
     });
-    el.addEventListener("pointerup", function () { moving = false; el.classList.remove("dragging"); });
+    el.addEventListener("pointerup", function () { moving = false; el.classList.remove("dragging"); scheduleSave(); });
   }
 
-  function insertMath(latex, x, y) {
-    if (!latex) return;
-    addOverlay("math", x, y, function (body) {
-      window.VPMathPlot.renderMath(body, latex, true);
-      body.dataset.latex = latex;
-    });
-  }
+  function insertMath(latex, x, y) { if (latex) addOverlayData("math", { latex: latex }, x, y); }
   function insertText(text, x, y, opts) {
-    if (!text) return;
-    opts = opts || {};
-    addOverlay("text", x, y, function (body) {
-      body.textContent = text;
-      if (opts.font) body.style.fontFamily = opts.font;
-      if (opts.size) body.style.fontSize = opts.size + "px";
-    });
+    if (!text) return; opts = opts || {};
+    addOverlayData("text", { text: text, font: opts.font, size: opts.size }, x, y);
   }
   function inkBBox() {
     var minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity, found = false;
@@ -212,17 +223,13 @@
     o.drawImage(canvas, x * dpr, y * dpr, w * dpr, h * dpr, 0, 0, oc.width, oc.height);
     return oc;
   }
-  function insertPlot(expr, x, y) {
-    if (!expr) return;
-    addOverlay("plot", x, y, function (body) { window.VPCalc.buildGraph(body, expr); });
-  }
-  function insertCalc(x, y) {
-    addOverlay("calc", x, y, function (body) { window.VPSci.build(body); });
-  }
+  function insertPlot(expr, x, y) { if (expr) addOverlayData("plot", { expr: expr }, x, y); }
+  function insertCalc(x, y) { addOverlayData("calc", {}, x, y); }
+  function insertNote(x, y) { addOverlayData("note", { text: "", color: "#FFF1A6" }, x, y); }
   var quizNo = 0;
   function insertQuiz(data, kind, x, y) {
-    quizNo += 1; data.no = quizNo;
-    addOverlay("quiz", x, y, function (body) { kind === "tf" ? window.VPQuiz.buildTF(body, data) : window.VPQuiz.buildMCQ(body, data); });
+    quizNo += 1; data.no = quizNo; data.sub = kind;
+    addOverlayData("quiz", data, x, y);
   }
 
   // ----- Thanh công cụ
@@ -256,8 +263,9 @@
   var bt = $("beautify");
   bt.onclick = function () { state.beautify = !state.beautify; bt.classList.toggle("on", state.beautify); bt.textContent = state.beautify ? "✨ Làm đẹp nét: BẬT" : "✨ Làm đẹp nét: TẮT"; };
   $("undo").onclick = function () { state.items.pop(); redraw(); };
-  $("clear").onclick = function () { if (confirm("Xóa toàn bộ bảng?")) { state.items = []; overlay.innerHTML = ""; if (window.VPGeo) window.VPGeo.clear(); redraw(); } };
+  $("clear").onclick = function () { if (confirm("Xóa toàn bộ trang?")) { state.items = []; state.overlays = []; overlay.innerHTML = ""; if (window.VPGeo) window.VPGeo.clear(); redraw(); scheduleSave(); } };
   $("btn-calc").onclick = function () { insertCalc(100, 90); };
+  $("btn-note").onclick = function () { insertNote(130, 100); };
   $("btn-png").onclick = async function () { try { toast("Đang tạo ảnh…"); await window.VPExport.png(board); } catch (e) { toast("Lỗi xuất ảnh."); } };
   $("btn-pdf").onclick = async function () { try { toast("Đang tạo PDF…"); await window.VPExport.pdf(board); } catch (e) { toast("Lỗi xuất PDF."); } };
 
@@ -364,7 +372,45 @@
     if (!d.ai) { $("ai-note").style.display = "inline"; }
   }).catch(function () {});
 
+  // ----- Trang & sổ bài giảng (lưu/mở)
+  var pages = [blankPage()], cur = 0, saveTimer = null;
+  function blankPage() { return { items: [], geo: { points: [], shapes: [] }, overlays: [] }; }
+  function capture() { pages[cur] = { items: state.items, geo: { points: window.VPGeo.points, shapes: window.VPGeo.shapes }, overlays: state.overlays }; }
+  function restore() {
+    var pg = pages[cur] || blankPage();
+    state.items = pg.items; state.overlays = pg.overlays;
+    window.VPGeo.points = pg.geo.points; window.VPGeo.shapes = pg.geo.shapes; window.VPGeo.sel = [];
+    renderOverlays(); redraw(); updatePageLabel();
+  }
+  function updatePageLabel() { var el = $("page-label"); if (el) el.textContent = "Trang " + (cur + 1) + "/" + pages.length; }
+  function gotoPage(i) { capture(); cur = Math.max(0, Math.min(pages.length - 1, i)); restore(); scheduleSave(); }
+  function addPage() { capture(); pages.splice(cur + 1, 0, blankPage()); cur++; restore(); scheduleSave(); }
+  function delPage() { if (!confirm("Xóa trang hiện tại?")) return; if (pages.length <= 1) pages[0] = blankPage(); else { pages.splice(cur, 1); if (cur >= pages.length) cur = pages.length - 1; } restore(); scheduleSave(); }
+  function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 400); }
+  function serialize() { capture(); return JSON.stringify({ v: 1, cur: cur, pages: pages }); }
+  function saveLocal() { try { localStorage.setItem("vpvie.book", serialize()); } catch (e) {} }
+  function loadBook(obj) {
+    if (!obj || !obj.pages || !obj.pages.length) return;
+    pages = obj.pages.map(function (pg) { return { items: pg.items || [], geo: { points: (pg.geo && pg.geo.points) || [], shapes: (pg.geo && pg.geo.shapes) || [] }, overlays: pg.overlays || [] }; });
+    cur = Math.min(obj.cur || 0, pages.length - 1); restore();
+  }
+  function loadLocal() { try { var s = localStorage.getItem("vpvie.book"); if (s) loadBook(JSON.parse(s)); } catch (e) {} }
+  function downloadBook() { var b = new Blob([serialize()], { type: "application/json" }); var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "so-bai-giang.vpvie.json"; a.click(); }
+  function openBookFile() {
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+    inp.onchange = function () { var f = inp.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { try { loadBook(JSON.parse(rd.result)); scheduleSave(); toast("Đã mở sổ bài giảng."); } catch (e) { toast("Tệp không hợp lệ."); } }; rd.readAsText(f); };
+    inp.click();
+  }
+  $("page-prev").onclick = function () { gotoPage(cur - 1); };
+  $("page-next").onclick = function () { gotoPage(cur + 1); };
+  $("page-add").onclick = addPage;
+  $("page-del").onclick = delPage;
+  $("book-save").onclick = downloadBook;
+  $("book-open").onclick = openBookFile;
+
   resize();
+  loadLocal();
+  updatePageLabel();
   // expose cho kiểm thử
-  window.__vp = { state: state, insertMath: insertMath, insertPlot: insertPlot, redraw: redraw, resize: resize };
+  window.__vp = { state: state, insertMath: insertMath, insertPlot: insertPlot, redraw: redraw, resize: resize, gotoPage: gotoPage, addPage: addPage, pages: function () { return pages; }, cur: function () { return cur; } };
 })();
