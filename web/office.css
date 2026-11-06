@@ -120,3 +120,11 @@ input.cell.sel{outline:2px solid var(--teal);background:#F2FAFB}
 .sheet blockquote{border-left:3px solid var(--teal);margin:10px 0;padding:6px 16px;color:var(--muted);background:#f6f9fa}
 .sheet table{border-collapse:collapse}
 .sheet img{max-width:100%}
+
+/* Xem PDF */
+.pdf-viewer{flex:1;overflow:auto;background:#e9eef0;padding:20px;text-align:center}
+.pdf-empty{color:var(--muted);margin-top:70px;font-size:15px}
+.pdf-page{position:relative;display:inline-block;margin:0 auto 18px;box-shadow:0 2px 14px rgba(0,0,0,.16);background:#fff}
+.pdf-page canvas{display:block}
+.pdf-page canvas.annot{position:absolute;inset:0}
+@media print{ .appbar,.obar{display:none!important} .pdf-viewer{overflow:visible;background:#fff;padding:0} .pdf-page{box-shadow:none;page-break-after:always;margin:0} }
