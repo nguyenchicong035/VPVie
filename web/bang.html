@@ -129,34 +129,38 @@
     <button id="sheet-add" class="nr-mini" title="Thêm sheet">＋</button>
   </div>
 
-  <!-- Hộp thoại công thức -->
+  <!-- Hộp thoại công thức đầy đủ -->
   <div id="dlg-math" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Chèn công thức (LaTeX) <button data-close="dlg-math" class="x">✕</button></div>
-      <div id="math-palette" class="math-pal">
-        <button data-ltx="\frac{}{}" title="Phân số">½</button>
-        <button data-ltx="\sqrt{}" title="Căn bậc hai">√</button>
-        <button data-ltx="\sqrt[]{}" title="Căn bậc n">ⁿ√</button>
-        <button data-ltx="^{}" title="Lũy thừa">xⁿ</button>
-        <button data-ltx="_{}" title="Chỉ số dưới">xᵢ</button>
-        <button data-ltx="\int_{}^{} {} \,dx" title="Tích phân">∫</button>
-        <button data-ltx="\sum_{}^{} {}" title="Tổng">∑</button>
-        <button data-ltx="\prod_{}^{} {}" title="Tích">∏</button>
-        <button data-ltx="\lim_{ \to } {}" title="Giới hạn">lim</button>
-        <button data-ltx="\begin{cases} {} \\ {} \end{cases}" title="Hệ phương trình">⎰</button>
-        <button data-ltx="\begin{pmatrix} {} & {} \\ {} & {} \end{pmatrix}" title="Ma trận">[▦]</button>
-        <button data-ltx="\vec{}" title="Vectơ">v⃗</button>
-        <button data-ltx="\overline{}" title="Gạch trên">x̄</button>
-        <button data-ltx="\alpha">α</button><button data-ltx="\beta">β</button><button data-ltx="\gamma">γ</button>
-        <button data-ltx="\theta">θ</button><button data-ltx="\pi">π</button><button data-ltx="\Delta">Δ</button>
-        <button data-ltx="\pm">±</button><button data-ltx="\times">×</button><button data-ltx="\div">÷</button>
-        <button data-ltx="\leq">≤</button><button data-ltx="\geq">≥</button><button data-ltx="\neq">≠</button>
-        <button data-ltx="\infty">∞</button><button data-ltx="\in">∈</button><button data-ltx="\subset">⊂</button>
-        <button data-ltx="\cup">∪</button><button data-ltx="\cap">∩</button><button data-ltx="\rightarrow">→</button>
+    <div class="dlg-card formula-card">
+      <div class="dlg-head">Chèn công thức <button data-close="dlg-math" class="x">✕</button></div>
+      <div class="formula-top">
+        <div class="formula-left">
+          <input id="f-search" class="in" placeholder="Tìm ký hiệu…" />
+          <div id="f-cats" class="f-cats"></div>
+        </div>
+        <div id="f-grid" class="f-grid"></div>
       </div>
-      <input id="math-input" class="in" placeholder="Ví dụ: x^2 - 3x = 0  hoặc  \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}" />
-      <div class="hint">Gõ hoặc bấm ký hiệu ở trên. Dán được cả đề LaTeX. Xem trước:</div>
-      <div id="math-preview" class="preview"></div>
+      <div id="f-quick" class="f-quick"></div>
+      <div id="math-preview" class="f-preview"></div>
+      <div class="f-lxlabel">LaTeX</div>
+      <textarea id="math-input" class="in f-latex" rows="2" placeholder="Gõ hoặc bấm ký hiệu; dán được cả đề LaTeX, vd: \frac{-b\pm\sqrt{b^2-4ac}}{2a}"></textarea>
+      <div class="f-controls">
+        <span class="lbl">Màu</span>
+        <span id="f-colors" class="f-colors">
+          <button data-fc="#111111" class="fcs sel" style="background:#111111"></button>
+          <button data-fc="#FFFFFF" class="fcs" style="background:#FFFFFF"></button>
+          <button data-fc="#C21807" class="fcs" style="background:#C21807"></button>
+          <button data-fc="#E3A008" class="fcs" style="background:#E3A008"></button>
+          <button data-fc="#1F6FEB" class="fcs" style="background:#1F6FEB"></button>
+          <button data-fc="#1A7F37" class="fcs" style="background:#1A7F37"></button>
+          <button data-fc="#7A3FB3" class="fcs" style="background:#7A3FB3"></button>
+          <button data-fc="#7a1020" class="fcs" style="background:#7a1020"></button>
+          <input type="color" id="f-color-wheel" class="cwheel" value="#111111"/>
+        </span>
+        <span class="lbl">Cỡ</span><input id="f-size" type="range" min="16" max="80" value="46"/><b id="f-size-val">46</b>
+        <label class="chk"><input type="checkbox" id="f-display" checked/> Kiểu hiển thị lớn (display)</label>
+        <span class="f-mode"><button id="f-math" class="sel">Toán</button><button id="f-text">Văn bản</button></span>
+      </div>
       <div class="dlg-foot"><button data-close="dlg-math" class="btn ghost">Hủy</button><button id="math-ok" class="btn">Chèn</button></div>
     </div>
   </div>
@@ -385,6 +389,7 @@
   <script src="/js/tools-quiz.js"></script>
   <script src="/js/tools-class.js"></script>
   <script src="/js/tools-science.js"></script>
+  <script src="/js/tools-formula.js"></script>
   <script src="/js/tools-solid.js"></script>
   <script src="/js/tools-var.js"></script>
   <script src="/js/tools-ruler.js"></script>

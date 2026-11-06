@@ -207,7 +207,12 @@
 
   // ----- Lớp phủ dạng DỮ LIỆU (lưu/mở theo trang được)
   function overlayBody(kind, body, data) {
-    if (kind === "math") window.VPMathPlot.renderMath(body, data.latex, true);
+    if (kind === "math") {
+      if (data.mode === "text") body.textContent = data.latex || "";
+      else window.VPMathPlot.renderMath(body, data.latex, data.display !== false);
+      if (data.color) body.style.color = data.color;
+      if (data.size) body.style.fontSize = data.size + "px";
+    }
     else if (kind === "text") { body.textContent = data.text; if (data.font) body.style.fontFamily = data.font; if (data.size) body.style.fontSize = data.size + "px"; }
     else if (kind === "plot") window.VPCalc.buildGraph(body, data.expr);
     else if (kind === "calc") window.VPSci.build(body);
@@ -285,7 +290,7 @@
     el.addEventListener("pointerup", function () { moving = false; el.classList.remove("dragging"); scheduleSave(); });
   }
 
-  function insertMath(latex, x, y) { if (latex) addOverlayData("math", { latex: latex }, x, y); }
+  function insertMath(latex, x, y, opts) { if (latex) addOverlayData("math", Object.assign({ latex: latex }, opts || {}), x, y); }
   function insertText(text, x, y, opts) {
     if (!text) return; opts = opts || {};
     addOverlayData("text", { text: text, font: opts.font, size: opts.size }, x, y);
@@ -418,21 +423,30 @@
   $("btn-png").onclick = async function () { try { toast("Đang tạo ảnh…"); await window.VPExport.png(board); } catch (e) { toast("Lỗi xuất ảnh."); } };
   $("btn-pdf").onclick = async function () { try { toast("Đang tạo PDF…"); await window.VPExport.pdf(board); } catch (e) { toast("Lỗi xuất PDF."); } };
 
-  // Hộp thoại công thức
-  $("btn-math").onclick = function () { showDialog("dlg-math"); $("math-input").focus(); };
-  $("math-ok").onclick = function () { insertMath($("math-input").value, 80, 80); $("math-input").value = ""; hideDialog("dlg-math"); };
-  $("math-input").oninput = function () { window.VPMathPlot.renderMath($("math-preview"), this.value, true); };
-  // Bảng ký hiệu công thức: chèn tại con trỏ, đặt con trỏ vào {} đầu tiên
-  document.querySelectorAll("#math-palette button").forEach(function (b) {
-    b.onmousedown = function (e) { e.preventDefault(); };
-    b.onclick = function () {
-      var inp = $("math-input"), snip = b.dataset.ltx, s = inp.selectionStart || 0, e = inp.selectionEnd || 0, v = inp.value;
-      inp.value = v.slice(0, s) + snip + v.slice(e);
-      var rel = snip.indexOf("{}"); var caret = rel >= 0 ? s + rel + 1 : s + snip.length;
-      inp.focus(); inp.setSelectionRange(caret, caret);
-      window.VPMathPlot.renderMath($("math-preview"), inp.value, true);
-    };
-  });
+  // Hộp thoại công thức đầy đủ (VPFormula)
+  var formulaBuilt = false;
+  function buildFormulaUI() {
+    if (formulaBuilt) return; formulaBuilt = true;
+    window.VPFormula.build({ cats: $("f-cats"), grid: $("f-grid"), quick: $("f-quick"), search: $("f-search"), input: $("math-input"), preview: $("math-preview") });
+    // Màu
+    document.querySelectorAll("#f-colors .fcs").forEach(function (b) {
+      b.onclick = function () { window.VPFormula.setColor(b.dataset.fc); if ($("f-color-wheel")) $("f-color-wheel").value = b.dataset.fc; document.querySelectorAll("#f-colors .fcs").forEach(function (x) { x.classList.remove("sel"); }); b.classList.add("sel"); window.VPFormula.render($("math-preview"), $("math-input").value); };
+    });
+    if ($("f-color-wheel")) $("f-color-wheel").oninput = function () { window.VPFormula.setColor(this.value); document.querySelectorAll("#f-colors .fcs").forEach(function (x) { x.classList.remove("sel"); }); window.VPFormula.render($("math-preview"), $("math-input").value); };
+    // Cỡ
+    $("f-size").oninput = function () { window.VPFormula.setSize(parseInt(this.value, 10)); $("f-size-val").textContent = this.value; };
+    // Display
+    $("f-display").onchange = function () { window.VPFormula.setDisplay(this.checked); window.VPFormula.render($("math-preview"), $("math-input").value); };
+    // Toán / Văn bản
+    $("f-math").onclick = function () { window.VPFormula.setMode("math"); this.classList.add("sel"); $("f-text").classList.remove("sel"); window.VPFormula.render($("math-preview"), $("math-input").value); };
+    $("f-text").onclick = function () { window.VPFormula.setMode("text"); this.classList.add("sel"); $("f-math").classList.remove("sel"); window.VPFormula.render($("math-preview"), $("math-input").value); };
+  }
+  $("btn-math").onclick = function () { showDialog("dlg-math"); buildFormulaUI(); $("math-input").focus(); };
+  $("math-ok").onclick = function () {
+    var st = window.VPFormula.state;
+    insertMath($("math-input").value, 90, 90, { color: st.color, size: st.size, display: st.display, mode: st.mode });
+    $("math-input").value = ""; window.VPFormula.render($("math-preview"), ""); hideDialog("dlg-math");
+  };
 
   // Hộp thoại đồ thị
   $("btn-plot").onclick = function () { showDialog("dlg-plot"); $("plot-input").focus(); };
