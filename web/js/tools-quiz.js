@@ -44,6 +44,18 @@
     return qs;
   }
 
+  var THEMES = ["candy", "rainbow", "ocean", "space", "jungle"];
+  function applyTheme(body, data) {
+    var host = body.closest(".ov"); if (!host) return;
+    THEMES.forEach(function (t) { host.classList.remove("qz-th-" + t); });
+    data.theme = data.theme || "candy"; host.classList.add("qz-th-" + data.theme);
+  }
+  function themeBtn(body, data) {
+    var b = el("button", "qz-theme-btn"); b.textContent = "🎨"; b.title = "Đổi nền";
+    b.onclick = function () { var i = THEMES.indexOf(data.theme || "candy"); data.theme = THEMES[(i + 1) % THEMES.length]; applyTheme(body, data); };
+    return b;
+  }
+
   // ---- Trình chơi câu đố ----
   function buildPlayer(body, data) {
     body.innerHTML = "";
@@ -53,7 +65,8 @@
     var head = el("div", "qz-head");
     var title = el("div", "qz-title"); title.textContent = data.title || "Câu đố";
     var prog = el("div", "qz-prog");
-    head.appendChild(title); head.appendChild(prog);
+    head.appendChild(title); head.appendChild(prog); head.appendChild(themeBtn(body, data));
+    applyTheme(body, data);
     var tbar = el("div", "qz-timer"); var tfill = el("div", "qz-timer-fill"); tbar.appendChild(tfill);
     var qtext = el("div", "qz-q");
     var opts = el("div", "qz-opts");
@@ -112,8 +125,10 @@
   function buildCrossword(body, data) {
     body.innerHTML = "";
     var qs = data.questions || parse(data.raw || "");
-    var head = el("div", "qz-title"); head.textContent = data.title || "Ô chữ bí mật";
-    body.appendChild(head);
+    var head = el("div", "qz-head");
+    var ht = el("div", "qz-title"); ht.textContent = data.title || "Ô chữ bí mật";
+    head.appendChild(ht); head.appendChild(themeBtn(body, data));
+    body.appendChild(head); applyTheme(body, data);
     var wrap = el("div", "cw-wrap"); body.appendChild(wrap);
     var secret = el("div", "cw-secret"); secret.textContent = ""; body.appendChild(secret);
     var rows = qs.map(function (q) { var ans = (q.opts[q.correct] || "").toUpperCase().replace(/\s/g, ""); return { clue: q.q, ans: ans, key: Math.min(q.key || 0, Math.max(0, ans.length - 1)), done: false }; }).filter(function (r) { return r.ans; });

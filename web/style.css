@@ -816,3 +816,28 @@ body.theme-dark .qz-opt{background:#23262e;border-color:#353a45;color:#e6e8ee}
 body.theme-dark .qz-opt .qz-let{background:#2f343f;color:#cdd2db}
 body.theme-dark .cw-clue{background:#23262e;color:#e6e8ee}
 body.theme-dark .cw-cell{background:#23262e;border-color:#3a404c;color:#e6e8ee}
+
+/* ===== Nền game bắt mắt cho câu đố / ô chữ ===== */
+.ov-quizgame .ov-body,.ov-crossword .ov-body{border-radius:16px;padding:14px 15px 16px;transition:background .35s;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)}
+.qz-theme-btn{border:none;background:rgba(255,255,255,.75);border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:15px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.qz-theme-btn:hover{background:#fff}
+/* Chủ đề Kẹo ngọt */
+.qz-th-candy .ov-body{background-image:radial-gradient(rgba(255,255,255,.5) 2px,transparent 3px),linear-gradient(135deg,#ffd9ec,#dcebff 55%,#d7fbe8);background-size:26px 26px,100% 100%}
+/* Cầu vồng */
+.qz-th-rainbow .ov-body{background-image:radial-gradient(rgba(255,255,255,.45) 2px,transparent 3px),linear-gradient(120deg,#ffe0e0,#fff4d6 25%,#e3ffd6 50%,#d6f0ff 75%,#f0d6ff)}
+.qz-th-rainbow .ov-body{background-size:26px 26px,100% 100%}
+/* Đại dương */
+.qz-th-ocean .ov-body{background-image:radial-gradient(circle at 20% 30%,rgba(255,255,255,.4) 0 7px,transparent 8px),radial-gradient(circle at 70% 60%,rgba(255,255,255,.3) 0 10px,transparent 11px),linear-gradient(160deg,#9fe3ff,#4fb8e6 70%,#2f8fc9);background-size:120px 120px,160px 160px,100% 100%}
+.qz-th-ocean .qz-q,.qz-th-ocean .qz-title,.qz-th-ocean .cw-secret{color:#083b55}
+/* Vũ trụ (nền tối, chữ sáng) */
+.qz-th-space .ov-body{background-image:radial-gradient(#fff 1px,transparent 2px),radial-gradient(rgba(255,255,255,.6) 1px,transparent 2px),linear-gradient(160deg,#2a1a5e,#140a2e 60%,#0a1a3a);background-size:38px 38px,61px 61px,100% 100%;background-position:0 0,19px 25px,0 0}
+.qz-th-space .qz-q,.qz-th-space .qz-title{color:#fff}
+.qz-th-space .qz-prog{background:rgba(255,255,255,.2);color:#fff}
+.qz-th-space .cw-secret{color:#ffd98a}
+.qz-th-space .cw-clue{background:rgba(255,255,255,.14);color:#eef}
+/* Rừng xanh */
+.qz-th-jungle .ov-body{background-image:radial-gradient(circle at 15% 20%,rgba(255,255,255,.3) 0 6px,transparent 7px),linear-gradient(150deg,#c8f0b0,#8fd97f 60%,#5bbe6a);background-size:90px 90px,100% 100%}
+.qz-th-jungle .qz-q,.qz-th-jungle .qz-title,.qz-th-jungle .cw-secret{color:#17421f}
+/* Khung câu hỏi nổi trên nền */
+.qz-th-candy .qz-q,.qz-th-rainbow .qz-q,.qz-th-jungle .qz-q,.qz-th-ocean .qz-q{background:rgba(255,255,255,.55);border-radius:10px;padding:8px 11px}
+.qz-th-space .qz-q{background:rgba(255,255,255,.1);border-radius:10px;padding:8px 11px}
