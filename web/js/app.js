@@ -18,7 +18,7 @@
     cur: null,
     pen: "ball",      // ball | brush | pencil | hl (dạ quang)
     tidyInk: true,    // tự nắn mượt nét chữ viết tay sau khi viết
-    tidyStrength: 2,  // 1 nhẹ · 2 vừa · 3 mạnh · 4 rất mượt
+    tidyStrength: 4,  // 1 nhẹ · 2 vừa · 3 mạnh · 4 rất mượt (mặc định)
     // Cài đặt trang giấy + hình vẽ (toàn cục, không theo trang)
     paper: { style: "lined", bg: "#FFFFFF", lineColor: "#9CC2F0", spacing: 34, thickness: 1, orient: "portrait", titlebox: true, margin: true, pagebreak: true },
     opt: { showdots: true, autolabel: false, snap: false, lblsize: 16, lblcolor: "#111111", dotsize: 4, subject: "toan", cursor: "pen", cursize: "s", touch: "auto", autosave: true, penlead: true, scratchrase: false },
@@ -709,8 +709,8 @@
         state.size = parseInt(b.dataset.pz, 10);
         document.querySelectorAll("[data-sizedot]").forEach(function (x) { x.classList.toggle("sel", parseInt(x.dataset.sizedot, 10) === state.size); });
       } else if (b.dataset.pb != null) { $("beautify").click(); }
-      else if (b.dataset.pt != null) { state.tidyInk = !state.tidyInk; toast(state.tidyInk ? "Tự nắn mượt nét chữ: BẬT" : "Tự nắn mượt nét chữ: TẮT"); }
-      else if (b.dataset.tidy != null) { state.tidyInk = true; state.tidyStrength = parseInt(b.dataset.tidy, 10); toast("Nắn nét mức " + b.dataset.tidy + " (" + b.textContent.trim().replace(/^\d+ · /, "") + ")"); }
+      else if (b.dataset.pt != null) { state.tidyInk = !state.tidyInk; saveSettings(); toast(state.tidyInk ? "Tự nắn mượt nét chữ: BẬT" : "Tự nắn mượt nét chữ: TẮT"); }
+      else if (b.dataset.tidy != null) { state.tidyInk = true; state.tidyStrength = parseInt(b.dataset.tidy, 10); saveSettings(); toast("Nắn nét mức " + b.dataset.tidy + " (" + b.textContent.trim().replace(/^\d+ · /, "") + ")"); }
       else if (b.dataset.tidyAll != null) { tidyWholePage(); }
       syncMenuChecks();
     };
@@ -1087,10 +1087,10 @@
 
   // ----- Cài đặt – lưu riêng, áp dụng toàn cục
   function loadSettings() {
-    try { var s = JSON.parse(localStorage.getItem("vpvie.settings") || "null"); if (s) { if (s.paper) state.paper = Object.assign(state.paper, s.paper); if (s.opt) state.opt = Object.assign(state.opt, s.opt); } } catch (e) {}
+    try { var s = JSON.parse(localStorage.getItem("vpvie.settings") || "null"); if (s) { if (s.paper) state.paper = Object.assign(state.paper, s.paper); if (s.opt) state.opt = Object.assign(state.opt, s.opt); if (typeof s.tidyInk === "boolean") state.tidyInk = s.tidyInk; if (s.tidyStrength) state.tidyStrength = s.tidyStrength; } } catch (e) {}
     applyCursor();
   }
-  function saveSettings() { try { localStorage.setItem("vpvie.settings", JSON.stringify({ paper: state.paper, opt: state.opt })); } catch (e) {} }
+  function saveSettings() { try { localStorage.setItem("vpvie.settings", JSON.stringify({ paper: state.paper, opt: state.opt, tidyInk: state.tidyInk, tidyStrength: state.tidyStrength })); } catch (e) {} }
   function applyCursor() {
     var c = state.opt.cursor, m = { pen: "crosshair", hand: "grab", "default": "default", dot: "crosshair" };
     canvas.style.cursor = m[c] || "crosshair";
