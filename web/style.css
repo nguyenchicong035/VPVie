@@ -698,3 +698,23 @@ body.theme-dark .lic-badge{background:#1f3326;color:#8fe0a8;border-color:#2f5a3d
 .cl-score .cl-plus{background:#e7f6ec;border-color:#bfe6cb;color:#1a7f37}
 body.theme-dark .cl-group,body.theme-dark .cl-attend-row,body.theme-dark .cl-score-row,body.theme-dark .cl-row input{background:#23262e;border-color:#353a45}
 body.theme-dark .cl-attend-row.absent{background:#3a2428}
+
+/* ===== Nhãn dán & con dấu ===== */
+.sticker-menu{max-width:300px}
+.stk-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin:4px 0 8px}
+.stk-grid.stk-praise,.stk-grid.stk-stamps{grid-template-columns:repeat(2,1fr)}
+.stk-grid .stk{border:1px solid transparent;background:transparent;border-radius:8px;cursor:pointer;padding:5px 2px;font-size:19px;line-height:1}
+.stk-grid.stk-praise .stk,.stk-grid.stk-stamps .stk{font-size:13px;font-weight:600;border:1px solid var(--line);color:#7a1020}
+.stk-grid.stk-stamps .stk{color:#c21807;border-style:dashed}
+.stk-grid .stk:hover{background:#f3e9ec;border-color:#e3c9d0}
+.stk-more{display:block;width:100%;text-align:left;border:none;background:transparent;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13.5px;color:#2b3340}
+.stk-more:hover{background:#f4f5f8}
+/* vật thể nhãn dán trên trang */
+.ov-sticker .ov-body{background:transparent}
+.stk-item{user-select:none;white-space:nowrap}
+.stk-item.stk-emoji{font-size:48px;line-height:1}
+.stk-item.stk-praise{font-size:26px;font-weight:800;color:#c21807;font-family:'Patrick Hand',cursive;text-shadow:0 1px 0 rgba(0,0,0,.08)}
+.stk-item.stk-stamp{font-size:20px;font-weight:800;color:#c21807;border:2.5px solid #c21807;border-radius:8px;padding:4px 12px;transform:rotate(-8deg);letter-spacing:.5px;opacity:.9;text-transform:uppercase}
+body.theme-dark .stk-grid.stk-praise .stk,body.theme-dark .stk-grid.stk-stamps .stk{border-color:#3a404c;color:#f0c7cf}
+body.theme-dark .stk-more{color:#e6e8ee}
+body.theme-dark .stk-more:hover{background:#30343d}

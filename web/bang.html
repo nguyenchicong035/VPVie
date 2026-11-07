@@ -45,7 +45,7 @@
 
   <!-- Hàng 2: công cụ vẽ -->
   <div class="nr-row nr-row-tools">
-    <button id="btn-shapes-fav" class="nr-ic" title="Mẫu hình yêu thích">★</button>
+    <button id="btn-shapes-fav" class="nr-ic" title="Nhãn dán & con dấu">★</button>
     <span class="nr-sep"></span>
     <button data-tool="pen" data-pen="ball" class="nr-ic tool active" title="Bút bi">🖊</button><button id="btn-pen-dd" class="nr-dd" title="Tuỳ chọn bút">▾</button>
     <button data-tool="eraser" data-erase="stroke" class="nr-ic tool" title="Tẩy">⌫</button><button id="btn-eraser-dd" class="nr-dd" title="Tuỳ chọn tẩy">▾</button>
@@ -581,6 +581,16 @@
   </div>
   <div id="shapes-menu" class="nr-menu shapes-menu"></div>
   <div id="geo-menu" class="nr-menu shapes-menu"></div>
+  <div id="sticker-menu" class="nr-menu sticker-menu">
+    <div class="nr-menu-h">Nhãn dán khen thưởng</div>
+    <div class="stk-grid" id="stk-emoji"></div>
+    <div class="nr-menu-h">Lời khen</div>
+    <div class="stk-grid stk-praise" id="stk-praise"></div>
+    <div class="nr-menu-h">Con dấu</div>
+    <div class="stk-grid stk-stamps" id="stk-stamps"></div>
+    <hr/>
+    <button id="stk-sci" class="stk-more">🔬 Công cụ môn Tự nhiên…</button>
+  </div>
   <div id="class-menu" class="nr-menu">
     <div class="nr-menu-h">Công cụ lớp học</div>
     <button data-class="picker">🎲 Gọi tên ngẫu nhiên</button>

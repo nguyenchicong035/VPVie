@@ -543,6 +543,11 @@
     else if (kind === "var") window.VPVar.build(body, data);
     else if (kind === "timer") window.VPClass.buildTimer(body, data);
     else if (kind === "picker") window.VPClass.buildPicker(body, data);
+    else if (kind === "sticker") {
+      var host = body.closest(".ov"); host.classList.add("ov-stk-" + (data.skind || "emoji"));
+      var sp = document.createElement("div"); sp.className = "stk-item stk-" + (data.skind || "emoji"); sp.textContent = data.text;
+      body.appendChild(sp);
+    }
     else if (kind === "wheel") window.VPClass.buildWheel(body, data);
     else if (kind === "groups") window.VPClass.buildGroups(body, data);
     else if (kind === "attend") window.VPClass.buildAttend(body, data);
@@ -952,7 +957,30 @@
   if ($("btn-calc")) $("btn-calc").onclick = function () { insertCalc(100, 90); };
   $("btn-note").onclick = function () { insertNote(130, 100); };
   // Công cụ môn học (Lý/Hoá/Sinh) qua nút ★
-  if ($("btn-shapes-fav")) $("btn-shapes-fav").onclick = function () { showDialog("dlg-sci"); };
+  // Nhãn dán & con dấu (nút ★) — gộp cả lối vào Công cụ môn Tự nhiên
+  var STK_EMOJI = ["⭐", "🌟", "👍", "👏", "😊", "🎉", "❤️", "✅", "💯", "🏆", "🔥", "🌸", "🦋", "🍎", "✏️", "😍"];
+  var STK_PRAISE = ["Giỏi!", "Đúng rồi!", "Tốt lắm!", "Xuất sắc!", "Cố lên!", "10 điểm", "Tiến bộ!", "Tuyệt vời!"];
+  var STK_STAMPS = ["Đã chấm", "Đã xem", "Cần cố gắng", "Nộp bài", "✔ Đạt", "Hoàn thành"];
+  function buildStickerMenu() {
+    if (buildStickerMenu.done) return; buildStickerMenu.done = true;
+    function fill(id, arr, kind) {
+      var c = $(id); if (!c) return;
+      arr.forEach(function (t) {
+        var b = document.createElement("button"); b.className = "stk"; b.textContent = t;
+        b.onclick = function () { $("sticker-menu").classList.remove("show"); insertSticker(t, kind); };
+        c.appendChild(b);
+      });
+    }
+    fill("stk-emoji", STK_EMOJI, "emoji");
+    fill("stk-praise", STK_PRAISE, "praise");
+    fill("stk-stamps", STK_STAMPS, "stamp");
+    if ($("stk-sci")) $("stk-sci").onclick = function () { $("sticker-menu").classList.remove("show"); showDialog("dlg-sci"); };
+  }
+  function insertSticker(text, kind) {
+    var cx = Math.max(40, canvas.clientWidth / 2 - 40), cy = Math.max(40, canvas.clientHeight / 2 - 40);
+    addOverlayData("sticker", { text: text, skind: kind }, cx, cy);
+  }
+  if ($("btn-shapes-fav")) $("btn-shapes-fav").onclick = function (e) { buildStickerMenu(); var r = this.getBoundingClientRect(); showMenuAt($("sticker-menu"), r.left, r.bottom + 4); e.stopPropagation(); };
   document.querySelectorAll("[data-sci]").forEach(function (b) {
     b.onclick = function () {
       var k = b.dataset.sci;
