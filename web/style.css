@@ -311,3 +311,8 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .f-mode{display:inline-flex;border:1px solid var(--nrline);border-radius:8px;overflow:hidden}
 .f-mode button{border:none;background:#fff;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text)}
 .f-mode button.sel{background:var(--maroon);color:#fff}
+
+/* Sơ đồ Lý/Sinh */
+.dg-sel{margin-bottom:6px;font-size:12px}
+.dg-svg svg{display:block;border-radius:6px}
+.ov-circuit .ov-body,.ov-force .ov-body,.ov-pedigree .ov-body,.ov-dna .ov-body{padding:4px}

@@ -222,6 +222,7 @@
     else if (kind === "picker") window.VPClass.buildPicker(body, data);
     else if (kind === "ptable") window.VPScience.buildPTable(body);
     else if (kind === "chem") window.VPScience.buildChem(body);
+    else if (kind === "circuit" || kind === "force" || kind === "pedigree" || kind === "dna") { data._save = scheduleSave; window.VPDiagram.build(body, kind, data); }
     else if (kind === "table") {
       var tb = document.createElement("table"); tb.className = "ov-table";
       data.cells = data.cells || [];
@@ -386,6 +387,10 @@
       var k = b.dataset.sci;
       if (k === "ptable") addOverlayData("ptable", {}, 70, 90);
       else if (k === "chem") addOverlayData("chem", {}, 120, 110);
+      else if (k === "circuit") addOverlayData("circuit", {}, 120, 110);
+      else if (k === "force") addOverlayData("force", {}, 140, 110);
+      else if (k === "pedigree") addOverlayData("pedigree", {}, 140, 110);
+      else if (k === "dna") addOverlayData("dna", {}, 160, 110);
       else toast("Công cụ này đang được phát triển.");
       hideDialog("dlg-sci");
     };
