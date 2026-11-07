@@ -582,6 +582,8 @@
     else if (kind === "groups") window.VPClass.buildGroups(body, data);
     else if (kind === "attend") window.VPClass.buildAttend(body, data);
     else if (kind === "score") window.VPClass.buildScore(body, data);
+    else if (kind === "quizgame") window.VPQuiz2.buildPlayer(body, data);
+    else if (kind === "crossword") window.VPQuiz2.buildCrossword(body, data);
     else if (kind === "ptable") window.VPScience.buildPTable(body);
     else if (kind === "chem") window.VPScience.buildChem(body);
     else if (kind === "circuit" || kind === "force" || kind === "pedigree" || kind === "dna") { data._save = scheduleSave; window.VPDiagram.build(body, kind, data); }
@@ -1335,6 +1337,61 @@
   document.querySelectorAll("#class-menu [data-class]").forEach(function (b) {
     b.onclick = function () { $("class-menu").classList.remove("show"); var fn = classIns[b.dataset.class]; if (fn) fn(160, 100); };
   });
+  // ----- Trò chơi câu đố -----
+  function insertQuizGame(x, y) {
+    var nm = window.VPQuiz2.current(); if (!nm) { toast("Chưa có bộ câu đố. Hãy Soạn câu đố."); openQuizEditor(); return; }
+    addOverlayData("quizgame", { title: nm, raw: window.VPQuiz2.getRaw(nm) }, x || 120, y || 90);
+  }
+  function insertCrossword(x, y) {
+    var nm = window.VPQuiz2.current(); if (!nm) { toast("Chưa có bộ câu đố. Hãy Soạn câu đố."); openQuizEditor(); return; }
+    addOverlayData("crossword", { title: nm, raw: window.VPQuiz2.getRaw(nm) }, x || 120, y || 90);
+  }
+  function refreshQuizPick() {
+    var sel = $("qze-pick"); if (!sel) return; sel.innerHTML = "";
+    var ns = window.VPQuiz2.names();
+    if (!ns.length) { var o = document.createElement("option"); o.textContent = "(chưa có bộ nào)"; o.value = ""; sel.appendChild(o); }
+    ns.forEach(function (nm) { var o = document.createElement("option"); o.value = nm; o.textContent = nm; if (nm === window.VPQuiz2.current()) o.selected = true; sel.appendChild(o); });
+  }
+  function loadQuizIntoEditor(nm) { $("qze-name").value = nm || ""; $("qze-raw").value = nm ? window.VPQuiz2.getRaw(nm) : ""; }
+  function openQuizEditor() { refreshQuizPick(); loadQuizIntoEditor(window.VPQuiz2.current()); showDialog("dlg-quized"); }
+  document.querySelectorAll("#class-menu [data-quiz]").forEach(function (b) {
+    b.onclick = function () {
+      $("class-menu").classList.remove("show");
+      if (b.dataset.quiz === "play") insertQuizGame();
+      else if (b.dataset.quiz === "cross") insertCrossword();
+      else openQuizEditor();
+    };
+  });
+  if ($("qze-pick")) $("qze-pick").onchange = function () { if (this.value) { window.VPQuiz2.select(this.value); loadQuizIntoEditor(this.value); } };
+  if ($("qze-save")) $("qze-save").onclick = function () {
+    var nm = $("qze-name").value.trim(); if (!nm) { toast("Hãy nhập tên bộ câu đố."); return; }
+    var oldSel = $("qze-pick").value;
+    if (oldSel && oldSel !== nm && window.VPQuiz2.names().indexOf(oldSel) >= 0) window.VPQuiz2.renameQuiz(oldSel, nm);
+    window.VPQuiz2.setQuiz(nm, $("qze-raw").value); refreshQuizPick();
+    var n = window.VPQuiz2.parse($("qze-raw").value).length; toast("Đã lưu bộ “" + nm + "” (" + n + " câu).");
+  };
+  if ($("qze-play")) $("qze-play").onclick = function () {
+    var nm = $("qze-name").value.trim() || "Câu đố";
+    window.VPQuiz2.setQuiz(nm, $("qze-raw").value); refreshQuizPick(); hideDialog("dlg-quized");
+    addOverlayData("quizgame", { title: nm, raw: $("qze-raw").value }, 120, 90);
+  };
+  if ($("qze-del")) $("qze-del").onclick = function () {
+    var nm = $("qze-pick").value; if (!nm) return;
+    if (!confirm("Xóa bộ câu đố “" + nm + "”?")) return;
+    window.VPQuiz2.del(nm); refreshQuizPick(); loadQuizIntoEditor(window.VPQuiz2.current());
+  };
+  if ($("qze-save-file")) $("qze-save-file").onclick = function () {
+    var nm = $("qze-name").value.trim() || "cau-do", content = $("qze-raw").value;
+    var fname = nm.replace(/[\\/:*?"<>|]/g, "_") + ".txt";
+    if (window.VPDesktop && window.VPDesktop.isApp && folders.books) { window.VPDesktop.saveFile(folders.books, fname, content, false).then(function (r) { toast(r.ok ? "Đã lưu: " + r.path : "Lỗi lưu."); }); return; }
+    var blob = new Blob([content], { type: "text/plain;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname; a.click(); toast("Đã lưu file " + fname);
+  };
+  if ($("qze-open")) $("qze-open").onclick = function () {
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = ".txt,text/plain";
+    inp.onchange = function () { var f = inp.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { $("qze-name").value = f.name.replace(/\.txt$/i, ""); $("qze-raw").value = String(rd.result || ""); }; rd.readAsText(f); };
+    inp.click();
+  };
+
   // ----- Quản lý nhiều lớp (chọn lớp đang dạy; lưu/mở theo file) -----
   function renderClassSwitch() {
     var box = $("class-switch"); if (!box || !window.VPClass) return;
@@ -1887,7 +1944,7 @@
 
   // Câu hỏi
   var qTab = "mcq";
-  if ($("btn-quiz")) $("btn-quiz").onclick = function () { showDialog("dlg-quiz"); };
+  if ($("btn-quiz")) $("btn-quiz").onclick = function () { showDialog("dlg-quized"); };
   document.querySelectorAll("[data-qtab]").forEach(function (b) {
     b.onclick = function () {
       qTab = b.dataset.qtab;
@@ -1910,7 +1967,7 @@
       });
       insertQuiz({ q: q, rows: rows }, "tf", 90, 90);
     }
-    hideDialog("dlg-quiz");
+    hideDialog("dlg-quized");
   };
 
   // ----- Hộp thoại & toast

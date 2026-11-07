@@ -594,6 +594,26 @@
   </div>
   <div id="shapes-menu" class="nr-menu shapes-menu"></div>
   <div id="geo-menu" class="nr-menu shapes-menu"></div>
+  <div id="dlg-quized" class="dlg">
+    <div class="dlg-card dlg-quiz-card">
+      <div class="dlg-head">Soạn câu đố <button data-close="dlg-quized" class="x">✕</button></div>
+      <div class="qze-row">
+        <select id="qze-pick" class="in"></select>
+        <input id="qze-name" class="in" placeholder="Tên bộ câu đố (VD: Ôn tập chương 1)" />
+      </div>
+      <textarea id="qze-raw" class="in" rows="12" placeholder="Nhập câu đố. Mỗi câu cách nhau 1 dòng trống hoặc ---&#10;Ví dụ:&#10;Thủ đô Việt Nam?&#10;*Hà Nội&#10;TP.HCM&#10;Đà Nẵng&#10;@Hà Nội là thủ đô từ 1010&#10;#20"></textarea>
+      <div class="hint">Dấu <b>*</b> đầu dòng = đáp án đúng · <b>@</b> = giải thích · <b>#20</b> = thời gian (giây) · <b>^2</b> = chữ khóa ô chữ (vị trí). Lưu ra file .txt để dùng máy khác.</div>
+      <div class="qze-foot">
+        <button id="qze-open" class="btn ghost small">📂 Mở file</button>
+        <button id="qze-save-file" class="btn ghost small">💾 Lưu file</button>
+        <button id="qze-del" class="btn ghost small danger">🗑 Xóa</button>
+        <span class="qze-spacer"></span>
+        <button id="qze-play" class="btn ghost">▶ Chơi ngay</button>
+        <button id="qze-save" class="btn">Lưu</button>
+      </div>
+    </div>
+  </div>
+
   <div id="dlg-class" class="dlg">
     <div class="dlg-card">
       <div class="dlg-head">Danh sách lớp <button data-close="dlg-class" class="x">✕</button></div>
@@ -631,6 +651,11 @@
     <button data-class="groups">👥 Chia nhóm ngẫu nhiên</button>
     <button data-class="attend">✅ Điểm danh</button>
     <button data-class="score">🏆 Bảng thi đua (cộng điểm)</button>
+    <hr/>
+    <div class="nr-menu-h">Trò chơi câu đố</div>
+    <button data-quiz="play">▶️ Chơi câu đố</button>
+    <button data-quiz="cross">🔤 Ô chữ bí mật (điền từ)</button>
+    <button data-quiz="edit">✏️ Soạn / Sửa câu đố…</button>
     <hr/>
     <button data-class="timer">⏱ Đồng hồ đếm ngược</button>
   </div>
@@ -812,6 +837,7 @@
   <script src="js/tools-geo.js"></script>
   <script src="js/tools-quiz.js"></script>
   <script src="js/tools-class.js"></script>
+  <script src="js/tools-quiz.js"></script>
   <script src="js/tools-science.js"></script>
   <script src="js/tools-diagram.js"></script>
   <script src="js/tools-formula.js"></script>
