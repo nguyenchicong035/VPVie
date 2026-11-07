@@ -27,6 +27,12 @@
   // ----- Vẽ nền giấy (kẻ dòng / ô vuông / chấm / trơn) – vẽ trước mọi nét
   var _imgCache = {};
   function getImg(url) { if (_imgCache[url]) return _imgCache[url]; var im = new Image(); im.onload = function () { redraw(); }; im.src = url; _imgCache[url] = im; return im; }
+  function shade(hex, d) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return hex || "#CBD8E8";
+    var n = parseInt(m[1], 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    function c(v) { return Math.max(0, Math.min(255, v + d)); }
+    return "rgb(" + c(r) + "," + c(g) + "," + c(b) + ")";
+  }
   function drawPaper() {
     var w = canvas.clientWidth, h = canvas.clientHeight, p = state.paper;
     ctx.save();
@@ -52,6 +58,30 @@
     } else if (p.style === "dot") {
       ctx.fillStyle = lc;
       for (y = sp; y < h; y += sp) for (x = sp; x < w; x += sp) { ctx.beginPath(); ctx.arc(x, y, (p.thickness || 1) + 0.6, 0, 6.2832); ctx.fill(); }
+    } else if (p.style === "taptviet") {
+      // Vở tập viết: mỗi dòng gồm 4 đường (trên · giữa nét đứt · chân chữ · đáy)
+      var rowH = Math.max(28, (p.spacing || 34) * 1.6);
+      for (y = rowH; y < h; y += rowH) {
+        var top = y - rowH * 0.62, mid = y - rowH * 0.31, base = y, bot = y + 0; // base là chân chữ
+        ctx.strokeStyle = lc; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, top + 0.5); ctx.lineTo(w, top + 0.5); ctx.stroke();            // đỉnh
+        ctx.beginPath(); ctx.moveTo(0, base + 0.5); ctx.lineTo(w, base + 0.5); ctx.stroke();           // chân chữ (đậm hơn)
+        ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = lc;
+        ctx.beginPath(); ctx.moveTo(0, mid + 0.5); ctx.lineTo(w, mid + 0.5); ctx.stroke(); ctx.restore(); // đường giữa nét đứt
+      }
+    } else if (p.style === "oli") {
+      // Ô li: lưới ô vuông nhỏ, đường chính đậm mỗi 5 ô
+      var u = Math.max(10, Math.min(sp, 22));
+      ctx.lineWidth = 1; var i2 = 0;
+      for (x = 0; x <= w; x += u, i2++) { ctx.strokeStyle = (i2 % 5 === 0) ? shade(lc, -22) : lc; ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, h); ctx.stroke(); }
+      i2 = 0; for (y = 0; y <= h; y += u, i2++) { ctx.strokeStyle = (i2 % 5 === 0) ? shade(lc, -22) : lc; ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(w, y + 0.5); ctx.stroke(); }
+    } else if (p.style === "music") {
+      // Khuông nhạc: các khuông 5 dòng
+      var staff = Math.max(10, (p.spacing || 34) * 0.42), gap = staff * 3.2;
+      ctx.strokeStyle = lc; ctx.lineWidth = 1;
+      for (y = gap; y < h; y += (staff * 4 + gap)) {
+        for (var k = 0; k < 5; k++) { var yy = y + k * staff; ctx.beginPath(); ctx.moveTo(24, yy + 0.5); ctx.lineTo(w - 24, yy + 0.5); ctx.stroke(); }
+      }
     }
     // Đường lề dọc (màu đỏ, kiểu vở)
     if (p.margin) { ctx.strokeStyle = "#E8A6B2"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(52.5, 0); ctx.lineTo(52.5, h); ctx.stroke(); }
