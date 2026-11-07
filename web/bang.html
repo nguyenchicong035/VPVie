@@ -352,6 +352,14 @@
           <label class="setchk" style="margin-top:12px"><input type="checkbox" id="set-autosave" checked/> Tự động lưu</label>
           <label class="setchk"><input type="checkbox" id="set-penlead" checked/> Nét bám đầu bút</label>
           <label class="setchk"><input type="checkbox" id="set-scratchrase"/> Viết nguệch ngoạc để xoá</label>
+          <div id="set-folders" class="set-folders" hidden>
+            <div class="set-sub">Thư mục lưu sổ</div>
+            <input id="fold-books" class="in" readonly/>
+            <div class="fold-btns"><button id="fold-books-pick" class="btn ghost small">Đổi thư mục…</button><button id="fold-books-open" class="btn ghost small">Mở thư mục</button></div>
+            <div class="set-sub" style="margin-top:12px">Thư mục video</div>
+            <input id="fold-videos" class="in" readonly/>
+            <div class="fold-btns"><button id="fold-videos-pick" class="btn ghost small">Đổi thư mục…</button><button id="fold-videos-open" class="btn ghost small">Mở thư mục</button></div>
+          </div>
         </div>
       </div>
       <div class="dlg-foot"><button data-close="dlg-settings" class="btn ghost">Hủy</button><button id="set-apply" class="btn" data-close="dlg-settings">Áp dụng</button></div>

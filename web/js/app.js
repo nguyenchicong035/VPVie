@@ -1087,7 +1087,33 @@
     cur = Math.min(obj.cur || 0, pages.length - 1); restore(); makeThumbs();
   }
   function loadLocal() { try { var s = localStorage.getItem("vpvie.book"); if (s) loadBook(JSON.parse(s)); } catch (e) {} }
-  function downloadBook() { var b = new Blob([serialize()], { type: "application/json" }); var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "so-bai-giang.vpvie.json"; a.click(); }
+  // ----- Thư mục lưu sổ / video (app desktop)
+  var folders = { books: "", videos: "" };
+  function loadFolders() { try { var f = JSON.parse(localStorage.getItem("vpvie.folders") || "null"); if (f) folders = f; } catch (e) {} }
+  function saveFolders() { try { localStorage.setItem("vpvie.folders", JSON.stringify(folders)); } catch (e) {} }
+  async function initFolders() {
+    if (!window.VPDesktop || !window.VPDesktop.isApp) return;
+    loadFolders();
+    if (!folders.books || !folders.videos) { try { var d = await window.VPDesktop.defaultFolders(); folders.books = folders.books || d.books; folders.videos = folders.videos || d.videos; saveFolders(); } catch (e) {} }
+    var sec = $("set-folders"); if (sec) sec.hidden = false;
+    if ($("fold-books")) $("fold-books").value = folders.books || "";
+    if ($("fold-videos")) $("fold-videos").value = folders.videos || "";
+    function bind(pickId, openId, key, inputId) {
+      if ($(pickId)) $(pickId).onclick = async function () { var p = await window.VPDesktop.pickFolder(); if (p) { folders[key] = p; saveFolders(); $(inputId).value = p; toast("Đã đổi thư mục."); } };
+      if ($(openId)) $(openId).onclick = function () { window.VPDesktop.openFolder(folders[key]); };
+    }
+    bind("fold-books-pick", "fold-books-open", "books", "fold-books");
+    bind("fold-videos-pick", "fold-videos-open", "videos", "fold-videos");
+  }
+  initFolders();
+  function downloadBook() {
+    var json = serialize(), name = "so-bai-giang-" + Date.now() + ".vpvie.json";
+    if (window.VPDesktop && window.VPDesktop.isApp && folders.books) {
+      window.VPDesktop.saveFile(folders.books, name, json, false).then(function (r) { toast(r.ok ? "Đã lưu sổ vào: " + r.path : "Lỗi lưu sổ."); });
+      return;
+    }
+    var b = new Blob([json], { type: "application/json" }); var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "so-bai-giang.vpvie.json"; a.click();
+  }
   function openBookFile() {
     var inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
     inp.onchange = function () { var f = inp.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { try { loadBook(JSON.parse(rd.result)); scheduleSave(); toast("Đã mở sổ bài giảng."); } catch (e) { toast("Tệp không hợp lệ."); } }; rd.readAsText(f); };
@@ -1310,9 +1336,15 @@
       mediaRec.ondataavailable = function (ev) { if (ev.data.size) recChunks.push(ev.data); };
       mediaRec.onstop = function () {
         stream.getTracks().forEach(function (t) { t.stop(); });
-        var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(recChunks, { type: "video/webm" }));
-        a.download = "bai-giang-" + Date.now() + ".webm"; a.click();
-        btn.classList.remove("active"); toast("Đã lưu video bài giảng (.webm).");
+        var blob = new Blob(recChunks, { type: "video/webm" }), name = "bai-giang-" + Date.now() + ".webm";
+        btn.classList.remove("active");
+        if (window.VPDesktop && window.VPDesktop.isApp && folders.videos) {
+          var fr = new FileReader();
+          fr.onload = function () { var b64 = fr.result.split(",")[1]; window.VPDesktop.saveFile(folders.videos, name, b64, true).then(function (r) { toast(r.ok ? "Đã lưu video vào: " + r.path : "Lỗi lưu video."); }); };
+          fr.readAsDataURL(blob); return;
+        }
+        var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+        toast("Đã lưu video bài giảng (.webm).");
       };
       mediaRec.start(); btn.classList.add("active"); toast("Đang quay màn hình… bấm lại để dừng.");
     } catch (e) { toast("Đã hủy quay màn hình."); }

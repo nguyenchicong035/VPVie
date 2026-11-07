@@ -410,3 +410,7 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .lic-gate .btn.ghost{background:#eef1f4;color:#1f2328}
 .lic-gate-msg{font-size:13px;margin-top:12px;min-height:18px}
 .lic-gate-msg.err{color:var(--maroon,#7a1020)}.lic-gate-msg.ok{color:#1a7f37}
+/* Thư mục lưu sổ / video (app desktop) */
+.set-folders{margin-top:14px;border-top:1px solid var(--nrline,#e2e6ea);padding-top:12px}
+.set-folders .in{width:100%;padding:8px 10px;border:1px solid var(--line,#e2e6ea);border-radius:8px;font:inherit;font-size:12.5px;background:#f6f7f9;margin-bottom:6px}
+.fold-btns{display:flex;gap:8px}

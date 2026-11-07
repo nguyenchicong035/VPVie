@@ -2,8 +2,32 @@
 // Khởi động: nếu có Python + phụ thuộc -> chạy máy chủ FastAPI (đủ AI máy chủ);
 // nếu không -> chạy máy chủ tĩnh Node (đủ mọi tính năng ngoại tuyến).
 'use strict';
-const { app, BrowserWindow, Menu, shell, dialog, desktopCapturer, session } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, desktopCapturer, session, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+// ---- Thư mục lưu sổ / video (app desktop) ----
+function defaultFolders() {
+  return {
+    books: path.join(app.getPath('documents'), 'VPVie'),
+    videos: path.join(app.getPath('videos'), 'VPVie')
+  };
+}
+function ensureDir(d) { try { fs.mkdirSync(d, { recursive: true }); } catch (e) {} }
+ipcMain.handle('folders:default', () => defaultFolders());
+ipcMain.handle('folders:pick', async () => {
+  const r = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
+  return r.canceled || !r.filePaths[0] ? null : r.filePaths[0];
+});
+ipcMain.handle('folders:open', (e, dir) => { ensureDir(dir); return shell.openPath(dir); });
+ipcMain.handle('file:save', (e, dir, name, data, isBase64) => {
+  try {
+    ensureDir(dir);
+    const full = path.join(dir, name);
+    fs.writeFileSync(full, isBase64 ? Buffer.from(data, 'base64') : data);
+    return { ok: true, path: full };
+  } catch (err) { return { ok: false, error: String(err) }; }
+});
 const http = require('http');
 const { spawn, spawnSync } = require('child_process');
 const { startStaticServer } = require('./static-server');
