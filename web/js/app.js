@@ -625,10 +625,10 @@
   };
   var GEO_COLS = [
     [["h", "Hình vẽ"], ["opt", "showdots", "Hiện chấm tròn ở các điểm của hình"], ["opt", "snap", "Bắt điểm lưới"],
-     ["h", "Kí hiệu"], ["todo", "Góc (số đo)"], ["todo", "Kí hiệu góc"], ["todo", "Kí hiệu góc vuông"], ["todo", "Kí hiệu đoạn thẳng bằng nhau"], ["todo", "Kí hiệu hai góc bằng nhau"],
+     ["h", "Kí hiệu"], ["todo", "Góc (số đo)", "ic-angle"], ["todo", "Kí hiệu góc", "ic-arc"], ["todo", "Kí hiệu góc vuông", "ic-right"], ["todo", "Kí hiệu đoạn thẳng bằng nhau", "ic-tick"], ["todo", "Kí hiệu hai góc bằng nhau", "ic-2arc"],
      ["h", "Phép biến hình"], ["t", "sym-line", "Đối xứng trục"], ["t", "sym-point", "Đối xứng tâm"], ["t", "translate", "Tịnh tiến"], ["t", "rotate", "Phép quay"], ["t", "homothety", "Phép vị tự"]],
-    [["h", "Vẽ"], ["t", "move", "Di chuyển điểm", "U"], ["t", "point", "Điểm"], ["t", "segment", "Đoạn thẳng qua 2 điểm"], ["t", "line", "Đường thẳng qua 2 điểm"], ["t", "ray", "Tia"], ["t", "ray-opp", "Tia đối"], ["todo", "Đa giác"], ["t", "circle", "Đường tròn (tâm, điểm)"], ["todo", "Cung tròn qua 3 điểm"]],
-    [["h", "Dựng hình"], ["t", "mid", "Trung điểm"], ["t", "perp", "Đường vuông góc"], ["t", "parallel", "Đường song song"], ["t", "altitude", "Đường cao (chân đường vuông góc)"], ["t", "bisector", "Tia phân giác"], ["t", "intersect", "Giao điểm"], ["todo", "Tiếp tuyến của đường tròn"], ["todo", "Tiếp tuyến chung hai đường tròn"]],
+    [["h", "Vẽ"], ["t", "move", "Di chuyển điểm", "U"], ["t", "point", "Điểm"], ["t", "segment", "Đoạn thẳng qua 2 điểm"], ["t", "line", "Đường thẳng qua 2 điểm"], ["t", "ray", "Tia"], ["t", "ray-opp", "Tia đối"], ["todo", "Đa giác", "ic-poly"], ["t", "circle", "Đường tròn (tâm, điểm)"], ["todo", "Cung tròn qua 3 điểm", "ic-arc3"]],
+    [["h", "Dựng hình"], ["t", "mid", "Trung điểm"], ["t", "perp", "Đường vuông góc"], ["t", "parallel", "Đường song song"], ["t", "altitude", "Đường cao (chân đường vuông góc)"], ["t", "bisector", "Tia phân giác"], ["t", "intersect", "Giao điểm"], ["todo", "Tiếp tuyến của đường tròn", "ic-tan"], ["todo", "Tiếp tuyến chung hai đường tròn", "ic-tan2"]],
     [["h", "Tâm tam giác"], ["t", "centroid", "Trọng tâm"], ["t", "ortho", "Trực tâm"], ["t", "circum", "Tâm đường tròn ngoại tiếp"], ["t", "incenter", "Tâm đường tròn nội tiếp"], ["t", "circum", "Đường tròn ngoại tiếp (qua 3 đỉnh)"], ["t", "incircle", "Đường tròn nội tiếp (tiếp xúc 3 cạnh)"]]
   ];
   // Vẽ icon schematic nhỏ cho từng công cụ dựng hình
@@ -662,6 +662,15 @@
       case "translate": arr(x0, y1, x1 - 3, y0 + 3); break;
       case "rotate": g.beginPath(); g.arc(cx, cy, 6, -0.5, 3.6); g.stroke(); dot(cx, cy); break;
       case "homothety": dot(x0 + 2, cy); ln(x0 + 2, cy, x1 - 2, cy); dot(cx, cy); dot(x1 - 2, cy, 3); break;
+      case "ic-angle": ln(x0 + 2, y1, x1, y0 + 2); ln(x0 + 2, y1, x1, y1); g.beginPath(); g.arc(x0 + 2, y1, 9, -0.9, 0); g.stroke(); break;
+      case "ic-arc": ln(x0 + 2, y1, x1, y0 + 2); ln(x0 + 2, y1, x1, y1); g.beginPath(); g.arc(x0 + 2, y1, 10, -0.95, 0); g.stroke(); break;
+      case "ic-right": ln(x0 + 3, y0 + 2, x0 + 3, y1); ln(x0 + 3, y1, x1, y1); g.strokeRect(x0 + 3, y1 - 7, 7, 7); break;
+      case "ic-tick": ln(x0, cy, x1, cy); ln(cx - 3, cy - 5, cx + 3, cy + 5); break;
+      case "ic-2arc": ln(x0 + 2, y1, x1, y0 + 2); ln(x0 + 2, y1, x1, y1); g.beginPath(); g.arc(x0 + 2, y1, 8, -0.95, 0); g.stroke(); g.beginPath(); g.arc(x0 + 2, y1, 11, -0.95, 0); g.stroke(); break;
+      case "ic-poly": g.beginPath(); for (var pi = 0; pi < 5; pi++) { var pa = -1.57 + pi * 1.2566, px = cx + 9 * Math.cos(pa), py = cy + 9 * Math.sin(pa); pi ? g.lineTo(px, py) : g.moveTo(px, py); } g.closePath(); g.stroke(); break;
+      case "ic-arc3": g.beginPath(); g.arc(cx, cy + 5, 9, -2.4, -0.7); g.stroke(); dot(cx - 8, cy); dot(cx, cy - 4); dot(cx + 8, cy); break;
+      case "ic-tan": g.beginPath(); g.arc(cx - 3, cy, 7, 0, 6.28); g.stroke(); ln(cx + 4, y0 + 2, cx + 4, y1); break;
+      case "ic-tan2": g.beginPath(); g.arc(x0 + 7, cy, 5, 0, 6.28); g.stroke(); g.beginPath(); g.arc(x1 - 7, cy, 5, 0, 6.28); g.stroke(); ln(x0 + 7, cy - 5, x1 - 7, cy - 5); break;
       default: g.beginPath(); g.arc(cx, cy, 3, 0, 6.28); g.stroke();
     }
   }
@@ -688,6 +697,7 @@
           b.onclick = function () { state.opt[row[1]] = !state.opt[row[1]]; ck.textContent = state.opt[row[1]] ? "✓" : ""; b.classList.toggle("on", state.opt[row[1]]); saveSettings(); redraw(); };
         } else if (row[0] === "todo") {
           var ic0 = document.createElement("canvas"); ic0.className = "sm-ic"; ic0.width = 30; ic0.height = 24; b.appendChild(ic0);
+          if (row[2]) try { drawGeoIcon(ic0, row[2]); } catch (e) {}
           var sp2 = document.createElement("span"); sp2.textContent = row[1]; b.appendChild(sp2);
           b.onclick = function () { toast("Công cụ \"" + row[1] + "\" đang được hoàn thiện."); };
         } else {
