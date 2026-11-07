@@ -175,10 +175,20 @@
     for (var i = 0; i < state.items.length; i++) drawItem(state.items[i]);
     if (state.cur) drawItem(state.cur);
     if (window.VPGeo) window.VPGeo.render(ctx, canvas.clientWidth, canvas.clientHeight);
-    // Lớp chọn vùng
+    // Lớp chọn vùng + tay cầm đổi kích thước
     if (state.selected && state.selected.length) {
       ctx.save(); ctx.strokeStyle = "#7a1020"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
       state.selected.forEach(function (i) { var it = state.items[i]; if (!it) return; var b = itemBox(it); ctx.strokeRect(b.minx - 4, b.miny - 4, (b.maxx - b.minx) + 8, (b.maxy - b.miny) + 8); });
+      // hộp bao chung + 8 tay cầm (chỉ khi dùng công cụ chọn)
+      if (state.tool === "select" && !state.selBox) {
+        var ub = selUnionBox();
+        ctx.setLineDash([]); ctx.strokeStyle = "#7a1020"; ctx.lineWidth = 1;
+        ctx.strokeRect(ub.minx - 4, ub.miny - 4, (ub.maxx - ub.minx) + 8, (ub.maxy - ub.miny) + 8);
+        selHandles().forEach(function (h) {
+          ctx.beginPath(); ctx.arc(h.x, h.y, 5, 0, 6.2832);
+          ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#7a1020"; ctx.stroke();
+        });
+      }
       ctx.restore();
     }
     if (state.selBox) { ctx.save(); ctx.strokeStyle = "#7a1020"; ctx.fillStyle = "rgba(122,16,32,.08)"; ctx.setLineDash([5, 4]); var sb = state.selBox; ctx.fillRect(sb.x1, sb.y1, sb.x2 - sb.x1, sb.y2 - sb.y1); ctx.strokeRect(sb.x1, sb.y1, sb.x2 - sb.x1, sb.y2 - sb.y1); ctx.restore(); }
@@ -243,6 +253,35 @@
     else if (it.type === "circle" || it.type === "ellipse") { it.cx += dx; it.cy += dy; }
     else if (it.type === "solid") { (it.segs || []).forEach(function (s) { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; }); (it.ellipses || []).forEach(function (e) { e.cx += dx; e.cy += dy; }); (it.labels || []).forEach(function (l) { l.x += dx; l.y += dy; }); }
   }
+  // Phóng to/thu nhỏ một hình quanh điểm neo (ox,oy) theo hệ số (sx,sy)
+  function scaleItem(it, sx, sy, ox, oy) {
+    function sp(p) { p.x = ox + (p.x - ox) * sx; p.y = oy + (p.y - oy) * sy; }
+    if (it.type === "stroke" || it.type === "triangle" || it.type === "poly" || it.type === "path") (it.points || it.pts).forEach(sp);
+    else if (it.type === "line" || it.type === "arrow") { var a = { x: it.x1, y: it.y1 }, b = { x: it.x2, y: it.y2 }; sp(a); sp(b); it.x1 = a.x; it.y1 = a.y; it.x2 = b.x; it.y2 = b.y; }
+    else if (it.type === "rect") { var tl = { x: it.x, y: it.y }; sp(tl); it.x = tl.x; it.y = tl.y; it.w *= sx; it.h *= sy; if (it.w < 0) { it.x += it.w; it.w = -it.w; } if (it.h < 0) { it.y += it.h; it.h = -it.h; } }
+    else if (it.type === "circle") { var c = { x: it.cx, y: it.cy }; sp(c); it.cx = c.x; it.cy = c.y; var f = (Math.abs(sx) + Math.abs(sy)) / 2; if (Math.abs(sx - sy) > 0.03) { it.type = "ellipse"; it.rx = it.r * sx; it.ry = it.r * sy; delete it.r; } else it.r *= f; }
+    else if (it.type === "ellipse") { var e = { x: it.cx, y: it.cy }; sp(e); it.cx = e.x; it.cy = e.y; it.rx *= sx; it.ry *= sy; }
+    else if (it.type === "solid") {
+      (it.segs || []).forEach(function (s) { var p1 = { x: s.x1, y: s.y1 }, p2 = { x: s.x2, y: s.y2 }; sp(p1); sp(p2); s.x1 = p1.x; s.y1 = p1.y; s.x2 = p2.x; s.y2 = p2.y; });
+      (it.ellipses || []).forEach(function (e2) { var c2 = { x: e2.cx, y: e2.cy }; sp(c2); e2.cx = c2.x; e2.cy = c2.y; e2.rx *= sx; e2.ry *= sy; });
+      (it.labels || []).forEach(function (l) { var p = { x: l.x, y: l.y }; sp(p); l.x = p.x; l.y = p.y; });
+    }
+  }
+  // 8 tay cầm trên hộp bao vùng chọn
+  function selHandles() {
+    var b = selUnionBox();
+    return [
+      { n: "nw", x: b.minx, y: b.miny }, { n: "n", x: (b.minx + b.maxx) / 2, y: b.miny }, { n: "ne", x: b.maxx, y: b.miny },
+      { n: "e", x: b.maxx, y: (b.miny + b.maxy) / 2 }, { n: "se", x: b.maxx, y: b.maxy }, { n: "s", x: (b.minx + b.maxx) / 2, y: b.maxy },
+      { n: "sw", x: b.minx, y: b.maxy }, { n: "w", x: b.minx, y: (b.miny + b.maxy) / 2 }
+    ];
+  }
+  function hitHandle(pt) {
+    if (!state.selected || !state.selected.length) return null;
+    var hs = selHandles();
+    for (var i = 0; i < hs.length; i++) if (Math.abs(pt.x - hs[i].x) <= 9 && Math.abs(pt.y - hs[i].y) <= 9) return hs[i];
+    return null;
+  }
   function boxHit(it, pt, tol) { var b = itemBox(it); tol = tol || 8; return pt.x >= b.minx - tol && pt.x <= b.maxx + tol && pt.y >= b.miny - tol && pt.y <= b.maxy + tol; }
   function selUnionBox() { var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity; state.selected.forEach(function (i) { var it = state.items[i]; if (!it) return; var b = itemBox(it); if (b.minx < mnx) mnx = b.minx; if (b.miny < mny) mny = b.miny; if (b.maxx > mxx) mxx = b.maxx; if (b.maxy > mxy) mxy = b.maxy; }); return { minx: mnx, miny: mny, maxx: mxx, maxy: mxy }; }
   function updateSelBar() {
@@ -270,6 +309,15 @@
     if (state.tool === "fill") { fillAt(pt); return; }   // tô màu miền
     if (state.tool === "select") {
       canvas.setPointerCapture(e.pointerId); state.drawing = true;
+      var h = hitHandle(pt);
+      if (h) {   // kéo tay cầm -> đổi kích thước quanh điểm neo (góc/cạnh đối diện)
+        pushHist(); state.selMode = "resize"; state.moved = false;
+        var b = selUnionBox();
+        var ax = /w/.test(h.n) ? b.maxx : (/e/.test(h.n) ? b.minx : (b.minx + b.maxx) / 2);
+        var ay = /n/.test(h.n) ? b.maxy : (/s/.test(h.n) ? b.miny : (b.miny + b.maxy) / 2);
+        state.resize = { anchor: { x: ax, y: ay }, last: pt, ax: /[ew]/.test(h.n), ay: /[ns]/.test(h.n) };
+        redraw(); return;
+      }
       var onSel = state.selected.length && state.selected.some(function (i) { return state.items[i] && boxHit(state.items[i], pt); });
       if (onSel) { pushHist(); state.selMode = "move"; state.moveStart = pt; state.moved = false; }
       else { state.selMode = "marquee"; state.selBox = { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y }; state.selected = []; }
@@ -292,6 +340,14 @@
     if (state.tool === "eraser") { if (state.eraserMode === "area") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } else eraseAt(pt); return; }
     if (state.tool === "select") {
       if (state.selMode === "marquee") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; }
+      else if (state.selMode === "resize" && state.resize) {
+        var rz = state.resize, ox = rz.anchor.x, oy = rz.anchor.y;
+        var sx = rz.ax && Math.abs(rz.last.x - ox) > 2 ? (pt.x - ox) / (rz.last.x - ox) : 1;
+        var sy = rz.ay && Math.abs(rz.last.y - oy) > 2 ? (pt.y - oy) / (rz.last.y - oy) : 1;
+        // giữ tỉ lệ cho tay cầm góc (cả 2 trục) để hình không méo
+        if (rz.ax && rz.ay) { var f = (Math.abs(sx) + Math.abs(sy)) / 2 || 1; sx = sx < 0 ? -f : f; sy = sy < 0 ? -f : f; }
+        if (sx !== 1 || sy !== 1) { state.moved = true; state.selected.forEach(function (i) { if (state.items[i]) scaleItem(state.items[i], sx, sy, ox, oy); }); rz.last = pt; }
+      }
       else { var ddx = pt.x - state.moveStart.x, ddy = pt.y - state.moveStart.y; if (ddx || ddy) state.moved = true; state.selected.forEach(function (i) { if (state.items[i]) translateItem(state.items[i], ddx, ddy); }); state.moveStart = pt; }
       redraw(); return;
     }
@@ -310,8 +366,9 @@
         if (Math.abs(bx.x2 - bx.x1) > 4 || Math.abs(bx.y2 - bx.y1) > 4) state.selected = itemsInBox(bx);
         else { var hit = hitItem({ x: bx.x1, y: bx.y1 }); if (hit >= 0) state.selected = [hit]; }   // bấm 1 lần: chọn đối tượng trên cùng
         state.selBox = null;
-      } else if (state.selMode === "move" && !state.moved) undoStack.pop();   // không di chuyển → bỏ bản lưu
-      redraw(); return;
+      } else if ((state.selMode === "move" || state.selMode === "resize") && !state.moved) undoStack.pop();   // không đổi gì → bỏ bản lưu
+      state.resize = null; state.selMode = null;
+      redraw(); scheduleSave(); return;
     }
     if (state.tool === "eraser") {
       state.erHist = null;
@@ -644,6 +701,8 @@
     ["btn-arrow", "btn-fill"].forEach(function (id) { if ($(id)) $(id).classList.remove("active"); });
     if ($("btn-select")) $("btn-select").classList.add("active");
   }
+  // Chọn luôn hình vừa chèn (để kéo-thả/đổi kích thước ngay)
+  function selectLast() { enterSelect(); state.selected = [state.items.length - 1]; redraw(); toast("Kéo thân để di chuyển, kéo tay cầm góc để đổi kích thước."); }
   function removeSel() { var set = {}; state.selected.forEach(function (i) { set[i] = 1; }); state.items = state.items.filter(function (it, i) { return !set[i]; }); state.selected = []; }
   function addClones(list, dx, dy) {
     var start = state.items.length;
@@ -830,11 +889,11 @@
   document.querySelectorAll("[data-solid]").forEach(function (b) {
     b.onclick = function () {
       pushHist(); state.items.push(window.VPSolid.make(b.dataset.solid, canvas.clientWidth / 2, canvas.clientHeight / 2, 100, state.color, state.size || 2));
-      redraw(); hideDialog("dlg-solid");
+      hideDialog("dlg-solid"); selectLast();
     };
   });
   document.querySelectorAll("[data-shape]").forEach(function (b) {
-    b.onclick = function () { addShapeTemplate(b.dataset.shape); hideDialog("dlg-shapes"); };
+    b.onclick = function () { addShapeTemplate(b.dataset.shape); hideDialog("dlg-shapes"); selectLast(); };
   });
   function regPoly(cx, cy, r, n, rot) { var a = []; for (var i = 0; i < n; i++) { var t = rot + i * 2 * Math.PI / n; a.push({ x: cx + r * Math.cos(t), y: cy + r * Math.sin(t) }); } return a; }
   function addShapeTemplate(kind) {
