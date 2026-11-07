@@ -11,7 +11,7 @@
   <!-- Thanh tiêu đề kiểu NoteRenderer -->
   <header class="nr-title">
     <div class="nr-title-left"><a href="/" class="nr-home" title="Về trang chủ">△</a><span id="doc-title">Sổ bài giảng – VPVie</span></div>
-    <div class="nr-title-right"><span id="ai-note" class="ai-note">⚠ Chưa bật AI</span></div>
+    <div class="nr-title-right"><span id="ai-note" class="ai-note">⚠ Chưa bật AI</span><button id="btn-gdrive" class="appbar-btn" title="Đăng nhập Google & đồng bộ Drive">☁ Google Drive</button></div>
   </header>
 
   <!-- Hàng 1: tệp & điều hướng -->
@@ -396,6 +396,31 @@
     <button data-arrow="brace">︵ Ngoặc nhọn</button>
   </div>
 
+  <!-- Hộp thoại Google Drive -->
+  <div id="dlg-gdrive" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">☁ Đăng nhập Google &amp; đồng bộ Drive <button data-close="dlg-gdrive" class="x">✕</button></div>
+      <div class="gd-row"><span id="gd-status" class="gd-status">Chưa đăng nhập</span></div>
+      <div class="gd-actions">
+        <button id="gd-signin" class="btn">Đăng nhập Google</button>
+        <button id="gd-save" class="btn ghost">☁↑ Lưu sổ lên Drive</button>
+        <button id="gd-load" class="btn ghost">☁↓ Mở sổ từ Drive</button>
+        <button id="gd-signout" class="btn ghost">Đăng xuất</button>
+      </div>
+      <div class="set-sub" style="margin-top:14px">Google OAuth Client ID (của bạn)</div>
+      <div class="gd-row">
+        <input id="gd-clientid" class="in" placeholder="xxxxxxxx.apps.googleusercontent.com" style="flex:1"/>
+        <button id="gd-save-cid" class="btn ghost small">Lưu ID</button>
+      </div>
+      <div class="hint">
+        Cách lấy Client ID (một lần): vào <b>Google Cloud Console → APIs &amp; Services → Credentials</b> →
+        tạo <b>OAuth client ID</b> loại <b>Web application</b>, bật <b>Google Drive API</b>, thêm địa chỉ trang này vào
+        <b>Authorized JavaScript origins</b>, rồi dán Client ID vào ô trên. Phần mềm chỉ xin quyền
+        <b>drive.file</b> (chỉ truy cập tệp do phần mềm tạo) — dữ liệu nằm trong Google Drive của chính bạn.
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/vendor/pdfjs/pdf.min.js"></script>
@@ -421,6 +446,7 @@
   <script src="/js/tools-var.js"></script>
   <script src="/js/tools-ruler.js"></script>
   <script src="/js/tools-export.js"></script>
+  <script src="/js/gdrive.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

@@ -346,3 +346,9 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 /* Nhãn AI trên thanh tiêu đề */
 .ai-note{display:none;font-size:11px;padding:2px 8px;border-radius:12px;background:#fde8ea;color:#7a1020;border:1px solid #f0c4cc;margin-left:8px}
 .ai-note.ok{background:#e7f6ea;color:#1a7f37;border-color:#bfe4c8}
+
+/* Google Drive */
+.gd-row{display:flex;gap:8px;align-items:center;margin:8px 0}
+.gd-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.gd-status{font-size:13px;color:var(--muted);padding:4px 10px;border-radius:12px;background:#f3f5f7}
+.gd-status.ok{background:#e7f6ea;color:#1a7f37}

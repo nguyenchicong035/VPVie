@@ -780,6 +780,31 @@
   if ($("page-del")) $("page-del").onclick = delPage;
   if ($("book-save")) $("book-save").onclick = downloadBook;
   if ($("book-open")) $("book-open").onclick = openBookFile;
+  // ----- Google Drive
+  function gdStatus(t, ok) { var el = $("gd-status"); if (el) { el.textContent = t; el.classList.toggle("ok", !!ok); } }
+  if ($("btn-gdrive")) $("btn-gdrive").onclick = function () {
+    if ($("gd-clientid")) $("gd-clientid").value = window.VPDrive.getClientId();
+    gdStatus(window.VPDrive.isSignedIn() ? "Đã đăng nhập" : (window.VPDrive.isConfigured() ? "Đã có Client ID — bấm Đăng nhập" : "Chưa có Client ID"), window.VPDrive.isSignedIn());
+    showDialog("dlg-gdrive");
+  };
+  if ($("gd-save-cid")) $("gd-save-cid").onclick = function () { window.VPDrive.setClientId($("gd-clientid").value); gdStatus("Đã lưu Client ID — bấm Đăng nhập", false); toast("Đã lưu Client ID."); };
+  if ($("gd-signin")) $("gd-signin").onclick = async function () {
+    if ($("gd-clientid") && $("gd-clientid").value.trim()) window.VPDrive.setClientId($("gd-clientid").value);
+    gdStatus("Đang đăng nhập…");
+    try { await window.VPDrive.signIn(); gdStatus("Đã đăng nhập Google ✓", true); toast("Đã đăng nhập Google."); }
+    catch (e) { gdStatus("Lỗi: " + (e.code === "NO_CLIENT_ID" ? "chưa nhập Client ID" : e.message)); toast(e.code === "NO_CLIENT_ID" ? "Hãy nhập Client ID trước." : e.message); }
+  };
+  if ($("gd-save")) $("gd-save").onclick = async function () {
+    gdStatus("Đang lưu lên Drive…");
+    try { await window.VPDrive.save(serialize()); gdStatus("Đã lưu sổ lên Drive ✓", true); toast("Đã đồng bộ sổ lên Google Drive."); }
+    catch (e) { gdStatus("Lỗi lưu: " + e.message); toast(e.code === "NO_CLIENT_ID" ? "Hãy nhập Client ID trước." : e.message); }
+  };
+  if ($("gd-load")) $("gd-load").onclick = async function () {
+    gdStatus("Đang mở từ Drive…");
+    try { var s = await window.VPDrive.load(); loadBook(JSON.parse(s)); scheduleSave(); gdStatus("Đã mở sổ từ Drive ✓", true); toast("Đã mở sổ từ Google Drive."); hideDialog("dlg-gdrive"); }
+    catch (e) { gdStatus("Lỗi mở: " + (e.code === "NO_FILE" ? "Drive chưa có sổ nào" : e.message)); toast(e.code === "NO_FILE" ? "Drive chưa có sổ. Hãy Lưu lên Drive trước." : e.message); }
+  };
+  if ($("gd-signout")) $("gd-signout").onclick = function () { window.VPDrive.signOut(); gdStatus("Đã đăng xuất"); toast("Đã đăng xuất Google."); };
   function movePage(d) { var j = cur + d; if (j < 0 || j >= pages.length) return; capture(); snapshotThumb(); var tmp = pages[cur]; pages[cur] = pages[j]; pages[j] = tmp; cur = j; restore(); makeThumbs(); scheduleSave(); }
   if ($("th-up")) $("th-up").onclick = function () { movePage(-1); };
   if ($("th-down")) $("th-down").onclick = function () { movePage(1); };
