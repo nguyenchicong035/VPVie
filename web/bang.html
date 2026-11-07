@@ -20,7 +20,7 @@
   <!-- Thanh tiêu đề kiểu NoteRenderer -->
   <header class="nr-title">
     <div class="nr-title-left"><a href="index.html" class="nr-home" title="Về trang chủ">△</a><span id="doc-title">Sổ bài giảng – VPVie</span></div>
-    <div class="nr-title-right"><span id="lic-badge" class="lic-badge" hidden>✔ Bản quyền</span><span id="ai-note" class="ai-note">⚠ Chưa bật AI</span><button id="btn-license" class="appbar-btn" title="Kích hoạt bản quyền theo máy">🔑 Kích hoạt</button><button id="btn-gdrive" class="appbar-btn" title="Đăng nhập Google & đồng bộ Drive">☁ Google Drive</button></div>
+    <div class="nr-title-right"><span id="lic-badge" class="lic-badge" hidden>✔ Bản quyền</span><span id="ai-note" class="ai-note">⚠ Chưa bật AI</span><button id="btn-license" class="appbar-btn" title="Kích hoạt bản quyền theo máy">🔑 Kích hoạt</button></div>
   </header>
 
   <!-- Hàng 1: tệp & điều hướng -->
@@ -534,6 +534,20 @@
           <button id="ink-reset" class="btn ghost small">Xoá hết mẫu đã dạy</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Màn hình khoá: phải nhập key mới dùng được -->
+  <div id="lic-gate" class="lic-gate" hidden>
+    <div class="lic-gate-card">
+      <div class="lic-gate-logo">△ VPVie</div>
+      <h2>Kích hoạt phần mềm</h2>
+      <p class="lic-gate-sub">Phần mềm cần Key bản quyền để sử dụng. Gửi <b>Mã máy</b> dưới đây cho người cấp phép để nhận Key.</p>
+      <label>Mã máy của bạn</label>
+      <div class="lic-gate-row"><input id="gate-mid" readonly/><button id="gate-copy" class="btn ghost">⧉ Chép</button></div>
+      <label>Dán Key kích hoạt</label>
+      <div class="lic-gate-row"><input id="gate-key" placeholder="VPL1...."/><button id="gate-activate" class="btn">Kích hoạt</button></div>
+      <div id="gate-msg" class="lic-gate-msg"></div>
     </div>
   </div>
 

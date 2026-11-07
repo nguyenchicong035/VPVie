@@ -394,3 +394,19 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .ink-guess{font-size:13px;color:#555;min-height:18px}
 .ink-guess b{color:var(--maroon);font-size:16px}
 .ink-count{font-size:12px;color:#888;margin-top:4px}
+
+/* Màn hình khoá bản quyền */
+.lic-gate{position:fixed;inset:0;z-index:9999;background:rgba(30,20,22,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center}
+.lic-gate[hidden]{display:none}
+.lic-gate-card{background:#fff;border-radius:16px;padding:30px 34px;width:min(460px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
+.lic-gate-logo{color:var(--maroon,#7a1020);font-weight:800;font-size:26px;margin-bottom:6px}
+.lic-gate-card h2{margin:4px 0 8px;font-size:20px}
+.lic-gate-sub{color:#555;font-size:13.5px;margin:0 0 18px;line-height:1.5}
+.lic-gate-card label{display:block;text-align:left;font-weight:600;font-size:13px;margin:12px 0 5px}
+.lic-gate-row{display:flex;gap:8px}
+.lic-gate-row input{flex:1;padding:10px 12px;border:1px solid var(--line,#e2e6ea);border-radius:9px;font:inherit}
+#gate-mid{font-weight:700;letter-spacing:1px;text-align:center}
+.lic-gate .btn{background:var(--maroon,#7a1020);color:#fff;border:none;padding:10px 16px;border-radius:9px;font-weight:700;cursor:pointer;white-space:nowrap}
+.lic-gate .btn.ghost{background:#eef1f4;color:#1f2328}
+.lic-gate-msg{font-size:13px;margin-top:12px;min-height:18px}
+.lic-gate-msg.err{color:var(--maroon,#7a1020)}.lic-gate-msg.ok{color:#1a7f37}

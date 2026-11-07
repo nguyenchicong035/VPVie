@@ -1082,8 +1082,32 @@
       } else { note.textContent = "Chưa kích hoạt — máy này đang dùng bản miễn phí."; note.className = "lic-state no"; }
     }
   }
+  // ----- Màn hình khoá: phải nhập Key mới dùng được phần mềm
+  function gateMsg(t, ok) { var m = $("gate-msg"); if (m) { m.textContent = t || ""; m.className = "lic-gate-msg" + (t ? (ok ? " ok" : " err") : ""); } }
+  async function showGateIfLocked() {
+    if (!window.VPLicense || !$("lic-gate")) return;
+    await window.VPLicense.check();
+    if (window.VPLicense.isActive()) { $("lic-gate").hidden = true; return; }
+    $("gate-mid").value = await window.VPLicense.machineId();
+    $("lic-gate").hidden = false;
+  }
+  if ($("gate-copy")) $("gate-copy").onclick = function () {
+    var v = $("gate-mid").value; if (!v) return;
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(function () { toast("Đã chép Mã máy."); }, function () {});
+    else { $("gate-mid").select(); document.execCommand("copy"); toast("Đã chép Mã máy."); }
+  };
+  if ($("gate-activate")) $("gate-activate").onclick = async function () {
+    var key = $("gate-key") ? $("gate-key").value.trim() : "";
+    if (!key) { gateMsg("Hãy dán Key kích hoạt.", false); return; }
+    gateMsg("Đang kích hoạt…");
+    var r = await window.VPLicense.activate(key);
+    if (r.ok) { gateMsg("Kích hoạt thành công! Đang mở phần mềm…", true); setTimeout(function () { $("lic-gate").hidden = true; }, 700); refreshLicUI(); }
+    else gateMsg(r.reason || "Key không hợp lệ.", false);
+  };
+  if ($("gate-key")) $("gate-key").addEventListener("keydown", function (e) { if (e.key === "Enter") $("gate-activate").click(); });
+
   if (window.VPLicense) {
-    window.VPLicense.check().then(function () { refreshLicUI(); }).catch(function () {});
+    window.VPLicense.check().then(function () { refreshLicUI(); showGateIfLocked(); }).catch(function () {});
     if ($("btn-license")) $("btn-license").onclick = async function () {
       showDialog("dlg-license"); licMsg("");
       if ($("lic-mid")) $("lic-mid").value = await window.VPLicense.machineId();
