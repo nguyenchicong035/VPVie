@@ -14,8 +14,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
-      - name: Cài phụ thuộc & đóng gói .exe/.msi
+      - name: Đóng gói VPVie (.exe/.msi)
         working-directory: desktop
+        run: |
+          npm install
+          npm run dist:win
+      - name: Đóng gói Trình cấp key (.exe)
+        working-directory: keytool
         run: |
           npm install
           npm run dist:win
@@ -26,6 +31,7 @@ jobs:
           path: |
             desktop/dist/*.exe
             desktop/dist/*.msi
+            keytool/dist/*.exe
       - name: Tạo GitHub Release (khi đẩy tag)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -33,4 +39,5 @@ jobs:
           files: |
             desktop/dist/*.exe
             desktop/dist/*.msi
+            keytool/dist/*.exe
           generate_release_notes: true
