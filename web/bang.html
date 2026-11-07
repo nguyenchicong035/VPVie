@@ -34,8 +34,8 @@
   <div class="nr-row nr-row-tools">
     <button id="btn-shapes-fav" class="nr-ic" title="Mẫu hình yêu thích">★</button>
     <span class="nr-sep"></span>
-    <button data-tool="pen" data-pen="ball" class="nr-ic tool active" title="Bút bi">🖊</button>
-    <button data-tool="eraser" class="nr-ic tool" title="Tẩy">⌫</button>
+    <button data-tool="pen" data-pen="ball" class="nr-ic tool active" title="Bút bi">🖊</button><button id="btn-pen-dd" class="nr-dd" title="Tuỳ chọn bút">▾</button>
+    <button data-tool="eraser" data-erase="stroke" class="nr-ic tool" title="Tẩy">⌫</button><button id="btn-eraser-dd" class="nr-dd" title="Tuỳ chọn tẩy">▾</button>
     <button data-tool="pen" data-pen="brush" class="nr-ic tool" title="Bút dạ (nét theo lực)">〰</button>
     <button data-tool="pen" data-pen="pencil" class="nr-ic tool" title="Bút chì">✎</button>
     <button id="beautify" class="nr-ic on" title="Làm đẹp nét (giữ tay thành hình/đường thẳng)">✨</button>
@@ -80,7 +80,7 @@
   <div class="nr-row nr-row-tools2">
     <button id="btn-text" class="nr-ic" title="Chữ">T</button>
     <button id="btn-fill" class="nr-ic" title="Tô màu miền">◆</button>
-    <button data-tool="eraser" class="nr-ic tool" title="Tẩy vùng">▨</button>
+    <button data-tool="eraser" data-erase="area" class="nr-ic tool" title="Tẩy vùng (khoanh để xoá)">▨</button>
     <button id="btn-select" class="nr-ic" title="Chọn vùng">⬚</button>
     <button data-tool="pan" class="nr-ic tool" title="Di chuyển trang">✋</button>
     <button id="clear" class="nr-ic" title="Xóa trang">🗑</button>
@@ -106,7 +106,9 @@
       <canvas id="paper"></canvas>
       <div id="overlay" class="overlay"></div>
       <div id="sel-bar" class="sel-bar">
-        <button data-act="dup" title="Nhân bản">⧉ Nhân bản</button>
+        <button data-act="copy" title="Sao chép (Ctrl+C)">⎘ Chép</button>
+        <button data-act="cut" title="Cắt (Ctrl+X)">✂ Cắt</button>
+        <button data-act="dup" title="Nhân bản (Ctrl+D)">⧉ Nhân bản</button>
         <button data-act="fill" title="Tô màu">🎨 Tô</button>
         <button data-act="stroke" title="Màu viền">✏ Viền</button>
         <button data-act="del" title="Xoá">🗑 Xoá</button>
@@ -388,6 +390,43 @@
     <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
   </div>
 
+  <div id="ctx-menu" class="nr-menu">
+    <button data-act="copy">⎘ Sao chép<kbd>Ctrl+C</kbd></button>
+    <button data-act="cut">✂ Cắt<kbd>Ctrl+X</kbd></button>
+    <button data-act="paste">📋 Dán<kbd>Ctrl+V</kbd></button>
+    <button data-act="dup">⧉ Nhân bản<kbd>Ctrl+D</kbd></button>
+    <hr/>
+    <button data-act="front">⬆ Đưa lên trên cùng</button>
+    <button data-act="back">⬇ Đưa xuống dưới cùng</button>
+    <button data-act="fill">🎨 Tô màu đang chọn</button>
+    <button data-act="stroke">✏ Đổi màu viền</button>
+    <hr/>
+    <button data-act="all">⬚ Chọn tất cả<kbd>Ctrl+A</kbd></button>
+    <button data-act="del" class="danger">🗑 Xoá<kbd>Del</kbd></button>
+  </div>
+  <div id="pen-menu" class="nr-menu">
+    <div class="nr-menu-h">Loại bút</div>
+    <button data-pm="ball">🖊 Bút bi</button>
+    <button data-pm="brush">〰 Bút dạ (theo lực nhấn)</button>
+    <button data-pm="pencil">✎ Bút chì</button>
+    <button data-pm="hl">▮ Bút dạ quang</button>
+    <hr/>
+    <div class="nr-menu-h">Độ dày nét</div>
+    <button data-pz="2">— Mảnh</button>
+    <button data-pz="4">━ Vừa</button>
+    <button data-pz="8">▬ Đậm</button>
+    <button data-pz="14">█ Rất đậm</button>
+    <hr/>
+    <button data-pb="1">✨ Làm đẹp nét</button>
+  </div>
+  <div id="eraser-menu" class="nr-menu">
+    <button data-em="stroke">⌫ Tẩy cả nét</button>
+    <button data-em="part">◌ Tẩy một phần nét</button>
+    <button data-em="area">▨ Tẩy vùng (khoanh)</button>
+    <hr/>
+    <button data-ex="ink">✋ Xoá mọi nét viết tay</button>
+    <button data-ex="page" class="danger">🗑 Xoá toàn trang</button>
+  </div>
   <div id="arrow-menu" class="nr-menu">
     <button data-arrow="arrow">→ Mũi tên</button>
     <button data-arrow="darrow">↔ Hai chiều</button>
