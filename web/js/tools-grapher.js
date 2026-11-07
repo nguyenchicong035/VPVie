@@ -53,13 +53,17 @@
     var xmin = opts.xmin != null ? opts.xmin : -10, xmax = opts.xmax != null ? opts.xmax : 10;
     var ymin = opts.ymin != null ? opts.ymin : -7.5, ymax = opts.ymax != null ? opts.ymax : 7.5;
 
+    // Danh sách hàm cần vẽ: ưu tiên opts.funcs (nhiều hàm, mỗi hàm 1 màu)
+    var funcList = (opts.funcs && opts.funcs.length) ? opts.funcs.map(function (f) { return { expr: f.expr, color: f.color || CURVE, c: compile((f.expr || "").replace(/^\s*y\s*=\s*/i, "")) }; }).filter(function (f) { return f.c; }) : [];
     // Tự co giãn y theo hàm (nếu là hàm thường)
     var mainC = null;
     if (!ineqs.length) {
-      var e2 = expr.replace(/^\s*y\s*=\s*/i, ""); mainC = compile(e2);
-      if (mainC && opts.autoY !== false) {
+      if (funcList.length) mainC = funcList[0].c;
+      else { var e2 = expr.replace(/^\s*y\s*=\s*/i, ""); mainC = compile(e2); }
+      var cc = funcList.length ? funcList : (mainC ? [{ c: mainC }] : []);
+      if (cc.length && opts.autoY !== false) {
         var lo = Infinity, hi = -Infinity;
-        for (var sx = xmin; sx <= xmax; sx += (xmax - xmin) / 200) { var sy = val(mainC, sx); if (!isNaN(sy) && Math.abs(sy) < 1e4) { if (sy < lo) lo = sy; if (sy > hi) hi = sy; } }
+        cc.forEach(function (f) { for (var sx = xmin; sx <= xmax; sx += (xmax - xmin) / 200) { var sy = val(f.c, sx); if (!isNaN(sy) && Math.abs(sy) < 1e4) { if (sy < lo) lo = sy; if (sy > hi) hi = sy; } } });
         if (isFinite(lo) && isFinite(hi) && hi - lo > 0.5) { var pad = (hi - lo) * 0.18; ymin = Math.max(-40, Math.min(-1, lo - pad)); ymax = Math.min(40, Math.max(1, hi + pad)); }
       }
     }
@@ -83,8 +87,10 @@
     // --- Đường biên bất phương trình (nét đứt nếu < > ; liền nếu ≤ ≥)
     ineqs.forEach(function (iq) { plotCurve(g, iq.boundary, X, Y, xmin, xmax, iq.strict ? [6, 5] : [], MARK, H); });
 
-    // --- Vẽ hàm chính + đánh dấu
-    if (mainC) {
+    // --- Vẽ các hàm (nhiều hàm mỗi màu) + đánh dấu cho hàm đầu
+    if (funcList.length) {
+      funcList.forEach(function (f, i) { plotCurve(g, f.c, X, Y, xmin, xmax, [], f.color, H); if (i === 0 && opts.marks !== false) markup(g, f.c, f.expr, X, Y, xmin, xmax, ymin, ymax, W, H); });
+    } else if (mainC) {
       plotCurve(g, mainC, X, Y, xmin, xmax, [], CURVE, H);
       if (opts.marks !== false) markup(g, mainC, expr, X, Y, xmin, xmax, ymin, ymax, W, H);
     }

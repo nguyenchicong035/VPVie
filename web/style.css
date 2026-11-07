@@ -437,3 +437,16 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .plot-row .plot-ys{font-style:italic;font-weight:600;color:var(--maroon,#7a1020)}
 .plot-row .in{flex:1}
 .plot-preview{margin-top:12px;border:1px solid var(--line,#e2e6ea);border-radius:10px;min-height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+/* Bảng đồ thị nhiều hàm */
+.plot-cols{display:flex;gap:18px;margin-top:6px}
+.plot-left{flex:0 0 330px;max-width:340px}
+.plot-right{flex:1;min-width:300px}
+.plot-h{font-size:12px;font-weight:700;color:#8a8f98;letter-spacing:.4px;margin-bottom:8px}
+.plot-func{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.plot-func .pf-color{width:22px;height:22px;flex:0 0 22px;border-radius:5px;border:1px solid var(--line,#e2e6ea);cursor:pointer;padding:0}
+.plot-func .pf-ys{font-style:italic;font-weight:600;color:#444;flex:0 0 auto}
+.plot-func .pf-expr{flex:1;padding:7px 9px;border:1px solid var(--line,#e2e6ea);border-radius:8px;font:inherit}
+.plot-func .pf-del{flex:0 0 auto;border:none;background:#f0f2f4;border-radius:6px;width:24px;height:24px;cursor:pointer;color:#888}
+.plot-func .pf-del:hover{background:#fde8ea;color:var(--maroon,#7a1020)}
+.plot-add{margin-top:4px;background:none;border:none;color:var(--maroon,#7a1020);font-weight:600;cursor:pointer;font-size:13.5px;padding:4px 0}
+.plot-preview{border:1px solid var(--line,#e2e6ea);border-radius:10px;min-height:300px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}

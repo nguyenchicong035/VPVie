@@ -434,7 +434,13 @@
       if (data.size) body.style.fontSize = data.size + "px";
     }
     else if (kind === "text") { body.textContent = data.text; if (data.font) body.style.fontFamily = data.font; if (data.size) body.style.fontSize = data.size + "px"; }
-    else if (kind === "plot") window.VPCalc.buildGraph(body, data.expr, data);
+    else if (kind === "plot") {
+      if (data.funcs && data.funcs.length && window.VPGrapher) {
+        body.innerHTML = "";
+        try { window.VPGrapher.draw(body, data.funcs[0].expr || "x^2", { w: data.w || 380, h: data.h || 300, funcs: data.funcs, autoY: data.autoY !== false }); }
+        catch (e) { body.textContent = "Không vẽ được đồ thị."; }
+      } else window.VPCalc.buildGraph(body, data.expr, data);
+    }
     else if (kind === "calc") window.VPSci.build(body);
     else if (kind === "quiz") data.sub === "tf" ? window.VPQuiz.buildTF(body, data) : window.VPQuiz.buildMCQ(body, data);
     else if (kind === "var") window.VPVar.build(body, data);
@@ -1004,24 +1010,44 @@
   // Hộp thoại đồ thị
   // Đồ thị: kéo chọn vùng trước, rồi hiện bảng điền hàm số
   $("btn-plot").onclick = function () { state.tool = "plotregion"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Kéo chuột để chọn vùng chứa đồ thị."); };
-  var plotRegion = null;
-  function openPlotDialog(region) {
-    plotRegion = region; showDialog("dlg-plot");
-    var inp = $("plot-input"); inp.value = inp.value || "x^2 - 2"; inp.focus(); inp.select();
-    renderPlotPreview();
+  var plotRegion = null, plotFuncs = [{ expr: "x^2 - 2", color: "#C21807" }];
+  var PLOT_COLORS = ["#C21807", "#1F6FEB", "#1A7F37", "#7A3FB3", "#E3A008", "#0E7490"];
+  function buildFuncRows() {
+    var host = $("plot-funcs"); if (!host) return; host.innerHTML = "";
+    plotFuncs.forEach(function (f, i) {
+      var row = document.createElement("div"); row.className = "plot-func";
+      var col = document.createElement("input"); col.type = "color"; col.className = "pf-color"; col.value = f.color;
+      col.oninput = function () { f.color = col.value; schedulePreview(); };
+      var ys = document.createElement("span"); ys.className = "pf-ys"; ys.textContent = "y =";
+      var ex = document.createElement("input"); ex.className = "pf-expr"; ex.value = f.expr; ex.placeholder = "x^2 - 2";
+      ex.oninput = function () { f.expr = ex.value; schedulePreview(); };
+      ex.onkeydown = function (e) { if (e.key === "Enter") $("plot-ok").click(); };
+      var del = document.createElement("button"); del.className = "pf-del"; del.textContent = "✕"; del.title = "Xoá hàm";
+      del.onclick = function () { if (plotFuncs.length > 1) { plotFuncs.splice(i, 1); buildFuncRows(); schedulePreview(); } };
+      row.appendChild(col); row.appendChild(ys); row.appendChild(ex); row.appendChild(del);
+      host.appendChild(row);
+    });
   }
+  function schedulePreview() { clearTimeout(window._pvT); window._pvT = setTimeout(renderPlotPreview, 220); }
   function renderPlotPreview() {
     var pv = $("plot-preview"); if (!pv || !window.VPGrapher) return;
-    try { window.VPGrapher.draw(pv, ($("plot-input").value || "x^2").replace(/^\s*y\s*=\s*/i, ""), { w: pv.clientWidth || 360, h: 260 }); }
+    var fs = plotFuncs.filter(function (f) { return (f.expr || "").trim(); });
+    try { window.VPGrapher.draw(pv, (fs[0] && fs[0].expr) || "x^2", { w: pv.clientWidth || 360, h: 300, funcs: fs, autoY: $("plot-autofit") ? $("plot-autofit").checked : true }); }
     catch (e) { pv.textContent = "Không vẽ được — kiểm tra lại hàm."; }
   }
-  if ($("plot-input")) $("plot-input").addEventListener("input", function () { clearTimeout(window._pvT); window._pvT = setTimeout(renderPlotPreview, 250); });
+  function openPlotDialog(region) {
+    plotRegion = region; showDialog("dlg-plot");
+    buildFuncRows(); renderPlotPreview();
+    var first = document.querySelector("#plot-funcs .pf-expr"); if (first) { first.focus(); first.select(); }
+  }
+  if ($("plot-add")) $("plot-add").onclick = function () { plotFuncs.push({ expr: "", color: PLOT_COLORS[plotFuncs.length % PLOT_COLORS.length] }); buildFuncRows(); var rows = document.querySelectorAll("#plot-funcs .pf-expr"); if (rows.length) rows[rows.length - 1].focus(); };
+  if ($("plot-autofit")) $("plot-autofit").onchange = renderPlotPreview;
   $("plot-ok").onclick = function () {
-    var expr = $("plot-input").value; if (!expr.trim()) { toast("Hãy nhập hàm số."); return; }
+    var fs = plotFuncs.filter(function (f) { return (f.expr || "").trim(); });
+    if (!fs.length) { toast("Hãy nhập ít nhất một hàm số."); return; }
     var r = plotRegion || { x: 90, y: 90, w: 380, h: 300 };
-    insertPlot(expr, r.x, r.y, r.w, r.h);
-    hideDialog("dlg-plot"); plotRegion = null;
-    state.tool = "pen"; clearActive();
+    addOverlayData("plot", { funcs: fs.map(function (f) { return { expr: f.expr, color: f.color }; }), expr: fs[0].expr, w: r.w, h: r.h, autoY: $("plot-autofit") ? $("plot-autofit").checked : true }, r.x, r.y);
+    hideDialog("dlg-plot"); plotRegion = null; state.tool = "pen"; clearActive();
   };
 
   // Mẫu hình học
