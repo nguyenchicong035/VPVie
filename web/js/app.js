@@ -169,6 +169,7 @@
       ctx.restore();
     }
     if (state.selBox) { ctx.save(); ctx.strokeStyle = "#7a1020"; ctx.fillStyle = "rgba(122,16,32,.08)"; ctx.setLineDash([5, 4]); var sb = state.selBox; ctx.fillRect(sb.x1, sb.y1, sb.x2 - sb.x1, sb.y2 - sb.y1); ctx.strokeRect(sb.x1, sb.y1, sb.x2 - sb.x1, sb.y2 - sb.y1); ctx.restore(); }
+    if (typeof updateSelBar === "function") updateSelBar();
     if (typeof scheduleSave === "function") scheduleSave();
   }
 
@@ -216,6 +217,12 @@
     else if (it.type === "solid") { (it.segs || []).forEach(function (s) { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; }); (it.ellipses || []).forEach(function (e) { e.cx += dx; e.cy += dy; }); (it.labels || []).forEach(function (l) { l.x += dx; l.y += dy; }); }
   }
   function boxHit(it, pt, tol) { var b = itemBox(it); tol = tol || 8; return pt.x >= b.minx - tol && pt.x <= b.maxx + tol && pt.y >= b.miny - tol && pt.y <= b.maxy + tol; }
+  function selUnionBox() { var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity; state.selected.forEach(function (i) { var it = state.items[i]; if (!it) return; var b = itemBox(it); if (b.minx < mnx) mnx = b.minx; if (b.miny < mny) mny = b.miny; if (b.maxx > mxx) mxx = b.maxx; if (b.maxy > mxy) mxy = b.maxy; }); return { minx: mnx, miny: mny, maxx: mxx, maxy: mxy }; }
+  function updateSelBar() {
+    var bar = document.getElementById("sel-bar"); if (!bar) return;
+    if (state.tool === "select" && state.selected && state.selected.length && !state.selBox) { var b = selUnionBox(); bar.style.left = Math.max(2, b.minx - 4) + "px"; bar.style.top = Math.max(2, b.miny - 40) + "px"; bar.classList.add("show"); }
+    else bar.classList.remove("show");
+  }
   function fillAt(pt) {
     for (var i = state.items.length - 1; i >= 0; i--) { if (containsPoint(state.items[i], pt)) { state.items[i].fill = (state.items[i].fill === state.color) ? null : state.color; redraw(); return true; } }
     toast("Bấm vào trong một hình kín để tô màu.");
@@ -516,6 +523,18 @@
   // Tô màu miền / Chọn vùng (đang phát triển)
   if ($("btn-fill")) $("btn-fill").onclick = function () { state.tool = "fill"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Tô màu: bấm vào trong hình kín (bấm lại để bỏ tô)."); };
   if ($("btn-select")) $("btn-select").onclick = function () { state.tool = "select"; state.selected = []; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Chọn vùng: khoanh để chọn, kéo để di chuyển, Delete để xoá."); };
+  // Thanh ngữ cảnh cho vùng chọn: nhân bản / tô / viền / xoá
+  document.querySelectorAll("#sel-bar button").forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation(); if (!state.selected || !state.selected.length) return;
+      var act = b.dataset.act;
+      if (act === "del") { var set = {}; state.selected.forEach(function (i) { set[i] = 1; }); state.items = state.items.filter(function (it, i) { return !set[i]; }); state.selected = []; }
+      else if (act === "dup") { var clones = [], start = state.items.length; state.selected.forEach(function (i) { var c = JSON.parse(JSON.stringify(state.items[i])); translateItem(c, 18, 18); clones.push(c); }); clones.forEach(function (c) { state.items.push(c); }); state.selected = clones.map(function (_, k) { return start + k; }); }
+      else if (act === "fill") { state.selected.forEach(function (i) { var it = state.items[i]; if (it && ["rect", "circle", "ellipse", "triangle", "poly"].indexOf(it.type) >= 0) it.fill = state.color; }); }
+      else if (act === "stroke") { state.selected.forEach(function (i) { if (state.items[i]) state.items[i].color = state.color; }); }
+      redraw(); scheduleSave();
+    };
+  });
   // Phím Delete: xoá các item đang chọn
   document.addEventListener("keydown", function (e) {
     if ((e.key === "Delete" || e.key === "Backspace") && state.tool === "select" && state.selected && state.selected.length) {
