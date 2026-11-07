@@ -162,6 +162,13 @@
     for (var i = 0; i < state.items.length; i++) drawItem(state.items[i]);
     if (state.cur) drawItem(state.cur);
     if (window.VPGeo) window.VPGeo.render(ctx, canvas.clientWidth, canvas.clientHeight);
+    // Lớp chọn vùng
+    if (state.selected && state.selected.length) {
+      ctx.save(); ctx.strokeStyle = "#7a1020"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+      state.selected.forEach(function (i) { var it = state.items[i]; if (!it) return; var b = itemBox(it); ctx.strokeRect(b.minx - 4, b.miny - 4, (b.maxx - b.minx) + 8, (b.maxy - b.miny) + 8); });
+      ctx.restore();
+    }
+    if (state.selBox) { ctx.save(); ctx.strokeStyle = "#7a1020"; ctx.fillStyle = "rgba(122,16,32,.08)"; ctx.setLineDash([5, 4]); var sb = state.selBox; ctx.fillRect(sb.x1, sb.y1, sb.x2 - sb.x1, sb.y2 - sb.y1); ctx.strokeRect(sb.x1, sb.y1, sb.x2 - sb.x1, sb.y2 - sb.y1); ctx.restore(); }
     if (typeof scheduleSave === "function") scheduleSave();
   }
 
@@ -182,6 +189,8 @@
     return pt.x > b.minx - tol && pt.x < b.maxx + tol && pt.y > b.miny - tol && pt.y < b.maxy + tol;
   }
   function itemBox(it) {
+    if (it.type === "stroke") { var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity; it.points.forEach(function (p) { if (p.x < mnx) mnx = p.x; if (p.y < mny) mny = p.y; if (p.x > mxx) mxx = p.x; if (p.y > mxy) mxy = p.y; }); return { minx: mnx, maxx: mxx, miny: mny, maxy: mxy }; }
+    if (it.type === "solid") { var sx = [], sy = []; (it.segs || []).forEach(function (s) { sx.push(s.x1, s.x2); sy.push(s.y1, s.y2); }); (it.ellipses || []).forEach(function (e) { sx.push(e.cx - e.rx, e.cx + e.rx); sy.push(e.cy - e.ry, e.cy + e.ry); }); return sx.length ? { minx: Math.min.apply(0, sx), maxx: Math.max.apply(0, sx), miny: Math.min.apply(0, sy), maxy: Math.max.apply(0, sy) } : { minx: 0, maxx: 0, miny: 0, maxy: 0 }; }
     if (it.type === "line" || it.type === "arrow") return { minx: Math.min(it.x1, it.x2), maxx: Math.max(it.x1, it.x2), miny: Math.min(it.y1, it.y2), maxy: Math.max(it.y1, it.y2) };
     if (it.type === "rect") return { minx: it.x, maxx: it.x + it.w, miny: it.y, maxy: it.y + it.h };
     if (it.type === "circle") return { minx: it.cx - it.r, maxx: it.cx + it.r, miny: it.cy - it.r, maxy: it.cy + it.r };
@@ -198,6 +207,15 @@
     if (it.type === "triangle" || it.type === "poly") return inPoly(it.pts, pt);
     return false;
   }
+  // Dịch chuyển một item (cho công cụ chọn vùng)
+  function translateItem(it, dx, dy) {
+    if (it.type === "stroke" || it.type === "triangle" || it.type === "poly" || it.type === "path") (it.points || it.pts).forEach(function (p) { p.x += dx; p.y += dy; });
+    else if (it.type === "line" || it.type === "arrow") { it.x1 += dx; it.y1 += dy; it.x2 += dx; it.y2 += dy; }
+    else if (it.type === "rect") { it.x += dx; it.y += dy; }
+    else if (it.type === "circle" || it.type === "ellipse") { it.cx += dx; it.cy += dy; }
+    else if (it.type === "solid") { (it.segs || []).forEach(function (s) { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; }); (it.ellipses || []).forEach(function (e) { e.cx += dx; e.cy += dy; }); (it.labels || []).forEach(function (l) { l.x += dx; l.y += dy; }); }
+  }
+  function boxHit(it, pt, tol) { var b = itemBox(it); tol = tol || 8; return pt.x >= b.minx - tol && pt.x <= b.maxx + tol && pt.y >= b.miny - tol && pt.y <= b.maxy + tol; }
   function fillAt(pt) {
     for (var i = state.items.length - 1; i >= 0; i--) { if (containsPoint(state.items[i], pt)) { state.items[i].fill = (state.items[i].fill === state.color) ? null : state.color; redraw(); return true; } }
     toast("Bấm vào trong một hình kín để tô màu.");
@@ -216,6 +234,13 @@
     }
     if (state.tool === "pan") return;   // công cụ di chuyển: không vẽ
     if (state.tool === "fill") { fillAt(pt); return; }   // tô màu miền
+    if (state.tool === "select") {
+      canvas.setPointerCapture(e.pointerId); state.drawing = true;
+      var onSel = state.selected.length && state.selected.some(function (i) { return state.items[i] && boxHit(state.items[i], pt); });
+      if (onSel) { state.selMode = "move"; state.moveStart = pt; }
+      else { state.selMode = "marquee"; state.selBox = { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y }; state.selected = []; }
+      redraw(); return;
+    }
     canvas.setPointerCapture(e.pointerId);
     if (state.tool === "eraser") { state.drawing = true; eraseAt(pt); return; }
     if (state.tool === "arrow") { state.drawing = true; state.cur = { type: "arrow", x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, style: state.arrowStyle || "arrow", color: state.color, size: state.size }; return; }
@@ -227,6 +252,11 @@
     if (!state.drawing) return;
     var pt = pos(e);
     if (state.tool === "eraser") { eraseAt(pt); return; }
+    if (state.tool === "select") {
+      if (state.selMode === "marquee") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; }
+      else { var ddx = pt.x - state.moveStart.x, ddy = pt.y - state.moveStart.y; state.selected.forEach(function (i) { if (state.items[i]) translateItem(state.items[i], ddx, ddy); }); state.moveStart = pt; }
+      redraw(); return;
+    }
     if (state.tool === "arrow") { state.cur.x2 = pt.x; state.cur.y2 = pt.y; redraw(); return; }
     state.cur.points.push(pt);
     redraw();
@@ -235,6 +265,15 @@
     if (state.tool === "geo") { if (window.VPGeo) window.VPGeo.onUp(); state.geoDown = false; return; }
     if (!state.drawing) return;
     state.drawing = false;
+    if (state.tool === "select") {
+      if (state.selMode === "marquee" && state.selBox) {
+        var bx = { x1: Math.min(state.selBox.x1, state.selBox.x2), y1: Math.min(state.selBox.y1, state.selBox.y2), x2: Math.max(state.selBox.x1, state.selBox.x2), y2: Math.max(state.selBox.y1, state.selBox.y2) };
+        state.selected = [];
+        if (Math.abs(bx.x2 - bx.x1) > 4 || Math.abs(bx.y2 - bx.y1) > 4) state.items.forEach(function (it, i) { var b = itemBox(it); if (b.maxx >= bx.x1 && b.minx <= bx.x2 && b.maxy >= bx.y1 && b.miny <= bx.y2) state.selected.push(i); });
+        state.selBox = null;
+      }
+      redraw(); return;
+    }
     if (state.tool === "eraser") return;
     var s = state.cur; state.cur = null;
     if (!s) return;
@@ -377,7 +416,7 @@
   function $(id) { return document.getElementById(id); }
   var tools = document.querySelectorAll("[data-tool]");
   var geoBtns = document.querySelectorAll("[data-geo]");
-  function clearActive() { tools.forEach(function (x) { x.classList.remove("active"); }); geoBtns.forEach(function (x) { x.classList.remove("active"); }); ["btn-arrow", "btn-fill"].forEach(function (id) { if ($(id)) $(id).classList.remove("active"); }); }
+  function clearActive() { tools.forEach(function (x) { x.classList.remove("active"); }); geoBtns.forEach(function (x) { x.classList.remove("active"); }); ["btn-arrow", "btn-fill", "btn-select"].forEach(function (id) { if ($(id)) $(id).classList.remove("active"); }); if (state.selected && state.selected.length) { state.selected = []; redraw(); } }
   tools.forEach(function (b) {
     b.onclick = function () {
       state.tool = b.dataset.tool;
@@ -476,7 +515,17 @@
   if ($("btn-web")) $("btn-web").onclick = function () { var u = prompt("Địa chỉ trang web:", "https://"); if (u && u !== "https://") addOverlayData("web", { url: u }, 120, 110); };
   // Tô màu miền / Chọn vùng (đang phát triển)
   if ($("btn-fill")) $("btn-fill").onclick = function () { state.tool = "fill"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Tô màu: bấm vào trong hình kín (bấm lại để bỏ tô)."); };
-  if ($("btn-select")) $("btn-select").onclick = function () { toast("Công cụ chọn vùng đang phát triển."); };
+  if ($("btn-select")) $("btn-select").onclick = function () { state.tool = "select"; state.selected = []; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Chọn vùng: khoanh để chọn, kéo để di chuyển, Delete để xoá."); };
+  // Phím Delete: xoá các item đang chọn
+  document.addEventListener("keydown", function (e) {
+    if ((e.key === "Delete" || e.key === "Backspace") && state.tool === "select" && state.selected && state.selected.length) {
+      var t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      var set = {}; state.selected.forEach(function (i) { set[i] = 1; });
+      state.items = state.items.filter(function (it, i) { return !set[i]; });
+      state.selected = []; redraw();
+    }
+  });
   // Quay màn hình
   if ($("btn-record")) $("btn-record").onclick = toggleRecord;
   if ($("btn-timer")) $("btn-timer").onclick = function () { insertTimer(120, 90); };
