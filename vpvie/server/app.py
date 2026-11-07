@@ -11,6 +11,7 @@ from ..ai import recognize as ai_recognize, available as ai_available
 from ..ai.recognize import provider_info
 from ..ai import assist as ai_assist
 from ..ai import slides as ai_slides
+from .. import license as lic
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "web")
 
@@ -20,15 +21,27 @@ app = FastAPI(title=f"{APP_NAME} – Bảng dạy học", version=__version__)
 class RecognizeIn(BaseModel):
     image: str          # ảnh PNG mã hóa base64 (không kèm tiền tố data:)
     mode: str = "auto"  # auto | text | math
+    license: str = ""   # key kích hoạt (khi máy chủ bật VPVIE_REQUIRE_LICENSE)
+    machine: str = ""   # mã máy
+
+
+def _license_guard(body):
+    """Trả JSONResponse lỗi nếu bật kiểm tra bản quyền và key không hợp lệ; None nếu hợp lệ."""
+    r = lic.check_request(getattr(body, "license", ""), getattr(body, "machine", ""))
+    if not r["ok"]:
+        return JSONResponse(status_code=402, content={"ok": False, "need_license": True, "error": "Tính năng AI cần bản quyền: " + r["reason"] + "."})
+    return None
 
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "app": APP_NAME, "version": __version__, "ai": ai_available(), **provider_info()}
+    return {"ok": True, "app": APP_NAME, "version": __version__, "ai": ai_available(), "require_license": lic.require_license(), **provider_info()}
 
 
 @app.post("/api/recognize")
 def recognize(body: RecognizeIn):
+    g = _license_guard(body)
+    if g: return g
     if not ai_available():
         return JSONResponse(
             status_code=503,
@@ -47,10 +60,14 @@ def recognize(body: RecognizeIn):
 class AssistIn(BaseModel):
     text: str
     task: str = "rewrite"
+    license: str = ""
+    machine: str = ""
 
 
 @app.post("/api/assist")
 def assist(body: AssistIn):
+    g = _license_guard(body)
+    if g: return g
     if not ai_available():
         return JSONResponse(status_code=503, content={"ok": False, "error": "Chưa bật AI. Dùng Ollama (miễn phí) hoặc đặt ANTHROPIC_API_KEY."})
     try:
@@ -62,10 +79,14 @@ def assist(body: AssistIn):
 class SlidesIn(BaseModel):
     topic: str
     n: int = 6
+    license: str = ""
+    machine: str = ""
 
 
 @app.post("/api/slides")
 def slides(body: SlidesIn):
+    g = _license_guard(body)
+    if g: return g
     if not ai_available():
         return JSONResponse(status_code=503, content={"ok": False, "error": "Chưa bật AI. Dùng Ollama (miễn phí) hoặc đặt ANTHROPIC_API_KEY."})
     try:

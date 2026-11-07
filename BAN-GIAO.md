@@ -125,8 +125,8 @@ katex, function-plot (kèm d3), math.min.js (mathjs UMD `lib/browser/math.js`), 
 
 ## 5. CÒN LẠI (chưa làm) + hướng triển khai
 
-1. **Nhân bản (Nhân đôi) & menu ngữ cảnh đối tượng** (Sửa/Sao chép/Nhân bản/Cắt/Xóa) — ảnh mẫu có. Gợi ý: khi `state.selected` khác rỗng, hiện thanh nổi (DOM) cạnh vùng chọn; nhân bản = clone item + dịch 20px.
-2. **Menu thả xuống (▾) cho bút/tẩy/hình** để khớp 100% ảnh (hiện mới có menu mũi tên). Dùng lại mẫu `#arrow-menu` + `.nr-menu`.
+1. ~~Nhân bản & menu ngữ cảnh đối tượng~~ — **ĐÃ XONG** (menu chuột phải: Sao chép/Cắt/Dán/Nhân bản/Đưa lên-xuống/Tô/Viền/Chọn tất cả/Xoá; phím tắt Ctrl+C/X/V/D/A/Z/Y, Delete, mũi tên dịch chuyển; undo/redo thật bằng snapshot).
+2. ~~Menu thả xuống (▾) cho bút/tẩy~~ — **ĐÃ XONG** (`#pen-menu`: loại bút/độ dày/làm đẹp; `#eraser-menu`: tẩy cả nét / một phần nét / tẩy vùng / xoá nét tay / xoá trang). *Còn lại: menu ▾ cho nhóm Hình nếu muốn.*
 3. ~~Mở Word (.docx) để viết đè~~ — **ĐÃ XONG** (vendor `mammoth.browser.min.js` → HTML → html2canvas → `setPageBg`; nút "Thêm từ Word…" trong Cài đặt).
 4. ~~Đồng bộ Google Drive~~ — **ĐÃ XONG** (`web/js/gdrive.js` → `VPDrive`): Google Identity Services + Drive REST, quyền `drive.file`, lưu/mở sổ JSON `so-bai-giang.vpvie.json`. Nút "☁ Google Drive" trên thanh tiêu đề mở hộp thoại: Đăng nhập / Lưu lên Drive / Mở từ Drive / Đăng xuất + ô dán Client ID. **Người dùng tự tạo OAuth Client ID** (Web app, bật Drive API, thêm origin) rồi dán vào (Client ID không phải bí mật, không nhúng sẵn). *Đã test: UI + luồng tới bước consent của Google; đăng nhập thật cần trình duyệt thật của người dùng.*
 5. **Miền nghiệm nâng cao / TikZ** — dán đề TikZ hiện chưa parse (chỉ LaTeX/KaTeX). Khó; cân nhắc bỏ qua.
@@ -150,6 +150,32 @@ Trọng tâm: **nhận diện công thức toán viết tay → LaTeX** + **ch�
 - Mã provider: `vpvie/ai/recognize.py` — `_ollama`, `_pix2tex` (lazy `LatexOCR`), `_anthropic`. Prompt máy chủ đã tăng cường cho LaTeX (lũy thừa/phân số/căn/tích phân/nguyên hàm/đạo hàm/giới hạn/hệ PT/ma trận) + giữ dấu tiếng Việt.
 - Web: `recognize.js` có `preprocess` (Otsu + giãn nét), `mathToLatex`, `looksMath`; `app.js` tách dòng (`strokeLines`) cho chữ Việt, chế độ math mở bộ công thức.
 - **Muốn AI mạnh nhất mà vẫn miễn phí:** chạy Ollama với `qwen2.5vl` (hoặc model thị giác lớn hơn nếu máy đủ khỏe), hoặc bật pix2tex cho riêng công thức.
+
+## 5c. Bản quyền theo máy & chống crack (MỚI)
+
+Hệ thống cấp phép gắn **theo từng máy**, ký số **ECDSA P-256**, chạy **ngoại tuyến**.
+
+**Luồng:** máy tính ra *Mã máy* `VPV-XXXX-XXXX-XXXX` (vân tay trình duyệt+phần cứng,
+băm SHA-256) → người phát hành ký ra *Key* `VPL1.<payload>.<chữ ký>` gắn đúng Mã máy →
+người dùng dán vào nút **🔑 Kích hoạt**. App chỉ nhúng **khoá công khai** để kiểm tra.
+
+**Tệp:**
+- `web/js/license.js` → `VPLicense` (machineId / check / activate / deactivate / isPro / creds).
+  Biến `PUBKEY_SPKI_B64URL` = khoá công khai (thay bằng khoá của bạn khi phát hành thật).
+- `vpvie/license.py` → kiểm key phía máy chủ (dùng `cryptography`), **chống crack**.
+- `tools/vpvie-keygen/` → `keygen.js` (genkeys / issue / batch), `cap-key.html` (cấp key
+  bằng trình duyệt, ngoại tuyến), `README.md`. **KHOÁ RIÊNG** `private-key.b64` KHÔNG commit
+  (đã có `.gitignore`).
+
+**Chống crack (hướng D — đã làm):** các API AI `/api/recognize`, `/api/assist`, `/api/slides`
+yêu cầu Key hợp lệ khi bật `VPVIE_REQUIRE_LICENSE=1`. Dù client bị sửa "đã kích hoạt" cũng
+**không lấy được kết quả AI** nếu không có Key thật (không ký giả được). Client gửi kèm
+`{license, machine}` qua `VPLicense.creds()`. Thu hồi key: tệp JSON trỏ bởi `VPVIE_REVOKED_KEYS`.
+Mặc định TẮT để bản miễn phí/phát triển vẫn chạy.
+
+> Lưu ý thật: phần vẽ chạy 100% trong trình duyệt + mã nguồn mở thì **không chống crack tuyệt đối**
+> (ai cũng sửa được `isPro()`); key offline chỉ chống *làm giả key*. Giá trị bán thật nên đặt ở
+> **AI máy chủ** (đã khoá) hoặc kích hoạt online (hướng C — chưa làm).
 
 ## 6. Lỗi đã gặp & cách xử lý (để không lặp lại)
 - CDN bị chặn trong trình duyệt → vendor hết thư viện cục bộ.

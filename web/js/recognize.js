@@ -138,7 +138,7 @@
   async function recognizeServer(pngDataUrl, mode) {
     var res = await fetch("/api/recognize", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: pngDataUrl, mode: mode || "auto" }),
+      body: JSON.stringify(Object.assign({ image: pngDataUrl, mode: mode || "auto" }, (window.VPLicense ? window.VPLicense.creds() : {}))),
     });
     var d = {}; try { d = await res.json(); } catch (e) { d = {}; }
     if (!res.ok || !d.ok) throw new Error(d.error || ("Lỗi máy chủ (" + res.status + ")"));

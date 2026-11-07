@@ -114,5 +114,10 @@
   }
   function deactivate() { try { localStorage.removeItem(STORE); } catch (e) {} _status = { active: false, plan: "free", reason: "đã gỡ kích hoạt" }; }
 
-  window.VPLicense = { machineId: machineId, status: status, isPro: isPro, isActive: isActive, check: check, activate: activate, deactivate: deactivate, verifyKey: verifyKey };
+  // Thông tin gửi kèm request AI (để máy chủ kiểm bản quyền nếu bật).
+  function creds() {
+    var key = ""; try { key = localStorage.getItem(STORE) || ""; } catch (e) {}
+    return { license: key, machine: _mid || "" };
+  }
+  window.VPLicense = { machineId: machineId, status: status, isPro: isPro, isActive: isActive, check: check, activate: activate, deactivate: deactivate, verifyKey: verifyKey, creds: creds };
 })();

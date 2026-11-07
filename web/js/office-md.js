@@ -20,7 +20,7 @@
     var a = src.selectionStart, z = src.selectionEnd, selText = src.value.slice(a, z);
     var text = selText || src.value; if (!text.trim()) { alert("Chưa có nội dung."); return; }
     saveNote.textContent = "AI đang xử lý…";
-    try { var res = await fetch("/api/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, task: b.dataset.task }) }); var d = await res.json(); if (!res.ok || !d.ok) throw new Error(d.error || "Lỗi");
+    try { var res = await fetch("/api/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ text: text, task: b.dataset.task }, (window.VPLicense ? window.VPLicense.creds() : {}))) }); var d = await res.json(); if (!res.ok || !d.ok) throw new Error(d.error || "Lỗi");
       if (selText) { src.setRangeText(d.text, a, z, "end"); } else { src.value += "\n\n" + d.text; } render(); save(); saveNote.textContent = "";
     } catch (err) { saveNote.textContent = ""; alert(err.message || "Lỗi AI"); }
   }; });
