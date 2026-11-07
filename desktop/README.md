@@ -43,3 +43,28 @@ HTTPS thì iPad mới cài được.
 ## Biểu tượng
 `desktop/build/icon.ico` (Windows), `icon.png` (mac/Linux), `web/icons/*` (PWA).
 Thay bằng logo của bạn nếu muốn, giữ nguyên tên tệp.
+
+## Tự cập nhật (auto-update)
+
+App `.exe` tự cập nhật từ **GitHub Releases** (electron-updater): mở app sẽ kiểm tra,
+có bản mới thì tải ngầm rồi hỏi "Khởi động lại & cập nhật". Menu ☰ → **Kiểm tra cập
+nhật** để kiểm tra ngay.
+
+**Quy trình phát hành bản mới (quan trọng):**
+1. Sửa code.
+2. **Tăng số phiên bản** trong `desktop/package.json` (`"version"`) — vd 1.0.0 → 1.0.1.
+   (Auto-update chỉ nhận ra bản mới khi version CAO HƠN bản đang cài.)
+3. Commit, rồi đẩy tag trùng version:
+   ```
+   git tag v1.0.1
+   git push origin v1.0.1
+   ```
+4. GitHub Actions tự build và **publish** lên Release: `VPVie Setup 1.0.1.exe` +
+   `latest.yml` (tệp để app dò bản mới) + `.blockmap`.
+5. Các máy đã cài sẽ tự thấy bản mới ở lần mở kế tiếp.
+
+> `latest.yml` do electron-builder tạo khi publish — KHÔNG xoá khỏi Release.
+> Bản chưa ký số vẫn tự cập nhật được (NSIS), chỉ hiện cảnh báo SmartScreen khi cài lần đầu.
+
+**Web/PWA** (GitHub Pages/Netlify): service worker dùng network-first cho mã ứng dụng
+nên **mở lại là có bản mới** khi online; menu Kiểm tra cập nhật ép tải bản mới ngay.

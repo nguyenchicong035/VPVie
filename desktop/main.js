@@ -137,7 +137,38 @@ async function createWindow() {
   }
 }
 
-app.whenReady().then(createWindow);
+// ---- Tự cập nhật từ GitHub Releases (electron-updater) ----
+let autoUpdater = null;
+function setupUpdater() {
+  if (!app.isPackaged) return;
+  try { autoUpdater = require('electron-updater').autoUpdater; } catch (e) { return; }
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  function send(ch, data) { try { if (win && win.webContents) win.webContents.send(ch, data); } catch (e) {} }
+  autoUpdater.on('checking-for-update', () => send('update:status', { state: 'checking' }));
+  autoUpdater.on('update-available', (info) => send('update:status', { state: 'available', version: info && info.version }));
+  autoUpdater.on('update-not-available', () => send('update:status', { state: 'none' }));
+  autoUpdater.on('error', (err) => send('update:status', { state: 'error', message: String(err && err.message || err) }));
+  autoUpdater.on('download-progress', (p) => send('update:status', { state: 'downloading', percent: Math.round(p.percent) }));
+  autoUpdater.on('update-downloaded', (info) => {
+    send('update:status', { state: 'downloaded', version: info && info.version });
+    dialog.showMessageBox(win, {
+      type: 'info', buttons: ['Khởi động lại & cập nhật', 'Để sau'], defaultId: 0,
+      title: 'Có bản cập nhật', message: 'Đã tải VPVie phiên bản mới' + (info && info.version ? ' ' + info.version : '') + '.',
+      detail: 'Khởi động lại để cài bản mới ngay bây giờ?'
+    }).then(function (r) { if (r.response === 0) autoUpdater.quitAndInstall(); });
+  });
+  // kiểm tra khi mở app + mỗi 2 giờ
+  setTimeout(function () { try { autoUpdater.checkForUpdates(); } catch (e) {} }, 4000);
+  setInterval(function () { try { autoUpdater.checkForUpdates(); } catch (e) {} }, 2 * 60 * 60 * 1000);
+}
+ipcMain.handle('update:check', () => {
+  if (!app.isPackaged) return { ok: false, reason: 'dev' };
+  try { if (!autoUpdater) setupUpdater(); if (autoUpdater) { autoUpdater.checkForUpdates(); return { ok: true }; } } catch (e) {}
+  return { ok: false };
+});
+
+app.whenReady().then(function () { createWindow(); setupUpdater(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 function cleanup() { try { backendProc && backendProc.kill(); } catch (e) {} try { staticServer && staticServer.close(); } catch (e) {} }

@@ -839,7 +839,24 @@
     delpage: function () { delPage(); },
     toolbar: function () { document.querySelectorAll(".nr-row-tools, .nr-row-tools2").forEach(function (r) { r.classList.toggle("hidden"); }); },
     license: function () { if ($("btn-license")) $("btn-license").click(); },
-    update: function () { toast("Bạn đang dùng phiên bản mới nhất của VPVie."); },
+    update: function () {
+      if (window.VPDesktop && window.VPDesktop.isApp && window.VPDesktop.checkUpdate) {
+        toast("Đang kiểm tra cập nhật…");
+        window.VPDesktop.checkUpdate().then(function (r) { if (r && r.reason === "dev") toast("Bản đang chạy từ mã nguồn (không tự cập nhật)."); });
+        return;
+      }
+      // Web/PWA: cập nhật qua service worker
+      if ("serviceWorker" in navigator) {
+        toast("Đang kiểm tra cập nhật…");
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+          if (!reg) { toast("Không có cập nhật tự động ở chế độ này."); return; }
+          reg.update().then(function () {
+            if (reg.waiting) { reg.waiting.postMessage({ type: "SKIP_WAITING" }); toast("Đang tải bản mới…"); }
+            else toast("Bạn đang dùng bản mới nhất.");
+          }).catch(function () { toast("Không kiểm tra được cập nhật."); });
+        });
+      } else toast("Bạn đang dùng bản mới nhất của VPVie.");
+    },
     about: function () {
       alert("VPVie – Bảng dạy học\n\nPhím tắt:\n  Ctrl+Z / Ctrl+Y : Hoàn tác / Làm lại\n  Ctrl+C/X/V/D : Chép/Cắt/Dán/Nhân bản\n  Ctrl+A : Chọn tất cả · Delete : Xoá\n  L : Đoạn thẳng · V : Vectơ · C : Đường tròn\n  Q : Hình vuông · 3 : Tam giác\n\nPhần mềm văn phòng + dạy học tiếng Việt, mã nguồn mở.");
     },
@@ -856,6 +873,16 @@
       if (b.dataset.lang === "en") toast("Giao diện tiếng Anh đang được hoàn thiện.");
     };
   });
+  // Thông báo tiến trình tự cập nhật (app .exe)
+  if (window.VPDesktop && window.VPDesktop.onUpdateStatus) {
+    window.VPDesktop.onUpdateStatus(function (d) {
+      if (!d) return;
+      if (d.state === "available") toast("Có bản cập nhật " + (d.version || "") + " — đang tải…");
+      else if (d.state === "downloading") toast("Đang tải cập nhật… " + (d.percent || 0) + "%");
+      else if (d.state === "none") toast("Bạn đang dùng bản mới nhất.");
+      else if (d.state === "error") toast("Lỗi kiểm tra cập nhật.");
+    });
+  }
   // Phím tắt F11 / Ctrl+N / Ctrl+O / Ctrl+S
   document.addEventListener("keydown", function (e) {
     var t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;

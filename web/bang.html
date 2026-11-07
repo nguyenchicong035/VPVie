@@ -671,7 +671,22 @@
   <script src="js/ink-recognize.js"></script>
   <script src="js/license.js"></script>
   <script src="js/app.js"></script>
-  <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+  <script>
+  if("serviceWorker" in navigator){
+    var _reloaded=false;
+    navigator.serviceWorker.addEventListener("controllerchange",function(){ if(_reloaded)return; _reloaded=true; location.reload(); });
+    window.addEventListener("load",function(){
+      navigator.serviceWorker.register("sw.js").then(function(reg){
+        // Có bản mới đang chờ -> áp dụng ngay
+        function apply(w){ if(w) w.postMessage({type:"SKIP_WAITING"}); }
+        if(reg.waiting) apply(reg.waiting);
+        reg.addEventListener("updatefound",function(){ var nw=reg.installing; if(nw) nw.addEventListener("statechange",function(){ if(nw.state==="installed" && navigator.serviceWorker.controller) apply(nw); }); });
+        // kiểm tra cập nhật định kỳ
+        setInterval(function(){ reg.update().catch(function(){}); }, 60*60*1000);
+      }).catch(function(){});
+    });
+  }
+  </script>
 
 </body>
 </html>

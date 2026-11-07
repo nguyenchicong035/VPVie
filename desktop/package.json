@@ -9,8 +9,12 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "dist:win": "electron-builder --win nsis msi",
+    "dist:win": "electron-builder --win nsis",
+    "publish": "electron-builder --win nsis --publish always",
     "dist:dir": "electron-builder --dir"
+  },
+  "dependencies": {
+    "electron-updater": "6.3.9"
   },
   "devDependencies": {
     "electron": "^33.2.1",
@@ -19,6 +23,14 @@
   "build": {
     "appId": "vn.vpvie.app",
     "productName": "VPVie",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "nguyenchicong035",
+        "repo": "VPVie",
+        "releaseType": "release"
+      }
+    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -49,8 +61,7 @@
     ],
     "win": {
       "target": [
-        "nsis",
-        "msi"
+        "nsis"
       ],
       "icon": "build/icon.ico"
     },
