@@ -93,6 +93,7 @@
     if (it.type === "stroke") {
       var p = it.points, base = it.size || state.size, pen = it.pen || "ball";
       ctx.save();
+      if (pen === "laser" || pen === "laserp") { drawLaserStroke(p, base, it.color, it._alpha); ctx.restore(); return; }
       if (pen === "hl") { ctx.globalAlpha = 0.38; ctx.lineCap = "butt"; base = Math.max(base * 3.2, 16); }
       else if (pen === "pencil") { ctx.globalAlpha = 0.72; }
       if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0].x, p[0].y, base / 2, 0, 6.2832); ctx.fillStyle = it.color; ctx.fill(); ctx.restore(); return; }
@@ -169,11 +170,49 @@
     ctx.restore();
   }
 
+  // ----- Bút laser: nét phát sáng neon (giữ nét) + con trỏ laser (tự tan)
+  function laserStrokePath(p) {
+    ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y);
+    for (var i = 1; i < p.length - 1; i++) { var mx = (p[i].x + p[i + 1].x) / 2, my = (p[i].y + p[i + 1].y) / 2; ctx.quadraticCurveTo(p[i].x, p[i].y, mx, my); }
+    ctx.lineTo(p[p.length - 1].x, p[p.length - 1].y); ctx.stroke();
+  }
+  function drawLaserStroke(p, base, color, alpha) {
+    var lc = (color || "").toLowerCase();
+    var col = (lc && lc !== "#111111" && lc !== "#000000" && lc !== "#111") ? color : "#ff2d6f";
+    var a = alpha == null ? 1 : alpha;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    if (p.length === 1) {
+      ctx.globalAlpha = 0.5 * a; ctx.shadowColor = col; ctx.shadowBlur = 18; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(p[0].x, p[0].y, Math.max(3, base * 1.1), 0, 6.2832); ctx.fill();
+      ctx.shadowBlur = 0; ctx.globalAlpha = a; ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(p[0].x, p[0].y, Math.max(1, base * 0.4), 0, 6.2832); ctx.fill(); return;
+    }
+    ctx.shadowColor = col; ctx.shadowBlur = 16; ctx.strokeStyle = col; ctx.lineWidth = Math.max(6, base * 2.4); ctx.globalAlpha = 0.4 * a; laserStrokePath(p);
+    ctx.shadowBlur = 9; ctx.lineWidth = Math.max(3, base * 1.3); ctx.globalAlpha = 0.95 * a; laserStrokePath(p);
+    ctx.shadowBlur = 0; ctx.strokeStyle = "#fff"; ctx.lineWidth = Math.max(1, base * 0.5); ctx.globalAlpha = 0.95 * a; laserStrokePath(p);
+  }
+  var laserTrails = [], laserAnim = 0, LASER_LIFE = 1200, LASER_FADE = 650;
+  function addLaserTrail(s) { s.born = performance.now(); laserTrails.push(s); if (!laserAnim) laserAnim = requestAnimationFrame(laserTick); }
+  function laserTick() {
+    var now = performance.now();
+    laserTrails = laserTrails.filter(function (t) { return now - t.born < LASER_LIFE; });
+    redraw();
+    laserAnim = laserTrails.length ? requestAnimationFrame(laserTick) : 0;
+  }
+  function drawLaserTrails() {
+    if (!laserTrails.length) return;
+    var now = performance.now();
+    laserTrails.forEach(function (t) {
+      var age = now - t.born, al = age < LASER_LIFE - LASER_FADE ? 1 : Math.max(0, (LASER_LIFE - age) / LASER_FADE);
+      ctx.save(); drawLaserStroke(t.points, t.size || state.size, t.color, al); ctx.restore();
+    });
+  }
   function redraw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawPaper();
     for (var i = 0; i < state.items.length; i++) drawItem(state.items[i]);
     if (state.cur) drawItem(state.cur);
+    drawLaserTrails();
     if (window.VPGeo) window.VPGeo.render(ctx, canvas.clientWidth, canvas.clientHeight);
     // Lớp chọn vùng + tay cầm đổi kích thước
     if (state.selected && state.selected.length) {
@@ -432,14 +471,17 @@
     }
     var s = state.cur; state.cur = null;
     if (!s) return;
+    // Con trỏ laser: không lưu vào trang, chỉ sáng rồi tự tan
+    if (s.type === "stroke" && s.pen === "laserp") { addLaserTrail(s); return; }
+    var isLaser = s.type === "stroke" && s.pen === "laser";
     if (s.type !== "arrow" || Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 6) pushHist();
     if (s.type === "arrow") { if (Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 6) state.items.push(s); redraw(); return; }
-    if (state.beautify && window.VPBeautify && s.pen !== "hl") {
+    if (state.beautify && window.VPBeautify && s.pen !== "hl" && !isLaser) {
       var shp = window.VPBeautify.beautify(s.points);
       if (shp) { shp.color = s.color; shp.size = s.size; state.items.push(shp); redraw(); return; }
     }
     // Nắn nét chữ viết tay: làm mượt, bớt run tay — VẪN là nét chữ của người dùng
-    if (state.tidyInk && window.VPBeautify && s.type === "stroke" && s.pen !== "hl" && s.points.length > 3) {
+    if (state.tidyInk && window.VPBeautify && s.type === "stroke" && s.pen !== "hl" && !isLaser && s.points.length > 3) {
       s.points = window.VPBeautify.refineInk(s.points, state.tidyStrength || 2);
     }
     state.items.push(s); redraw();
