@@ -104,13 +104,37 @@
     return _status;
   }
 
+  // Kích hoạt qua máy chủ (hướng C): xử lý cả key nhiều máy + đếm số máy.
+  async function activateOnline(keyStr, mid) {
+    try {
+      var res = await fetch("/api/activate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ license: keyStr.trim(), machine: mid }),
+      });
+      var d = {}; try { d = await res.json(); } catch (e) {}
+      if (res.ok && d.ok) return { ok: true, used: d.used, maxm: d.maxm, plan: d.plan, expiry: d.expiry };
+      return { ok: false, reason: d.error || "Máy chủ từ chối kích hoạt", server: true, used: d.used, maxm: d.maxm };
+    } catch (e) { return { ok: false, offline: true }; }
+  }
+
   async function activate(keyStr) {
     var mid = await computeMachineId();
-    var r = await verifyKey(keyStr, mid);
-    if (!r.ok) return r;
+    var local = await verifyKey(keyStr, mid);
+    var isMulti = local.ok && local.data && local.data.id;   // key nhiều máy
+    // Thử kích hoạt qua máy chủ trước
+    var on = await activateOnline(keyStr, mid);
+    if (on.ok) {
+      try { localStorage.setItem(STORE, keyStr.trim()); } catch (e) {}
+      _status = { active: true, plan: on.plan || (local.data && local.data.p) || "pro", expiry: on.expiry || (local.data && local.data.e) || 0, note: (local.data && local.data.n) || "", mid: mid, used: on.used, maxm: on.maxm };
+      return { ok: true, data: local.data || {}, used: on.used, maxm: on.maxm };
+    }
+    if (on.server) return { ok: false, reason: on.reason };   // máy chủ từ chối (vượt số máy, thu hồi…)
+    // Máy chủ không phản hồi: key nhiều máy BẮT BUỘC online; key gắn-máy thì kiểm cục bộ
+    if (isMulti) return { ok: false, reason: "Key này cần máy chủ để kích hoạt (hiện không kết nối được)." };
+    if (!local.ok) return local;
     try { localStorage.setItem(STORE, keyStr.trim()); } catch (e) {}
-    _status = { active: true, plan: r.data.p || "pro", expiry: r.data.e || 0, note: r.data.n || "", mid: mid };
-    return { ok: true, data: r.data };
+    _status = { active: true, plan: local.data.p || "pro", expiry: local.data.e || 0, note: local.data.n || "", mid: mid };
+    return { ok: true, data: local.data };
   }
   function deactivate() { try { localStorage.removeItem(STORE); } catch (e) {} _status = { active: false, plan: "free", reason: "đã gỡ kích hoạt" }; }
 

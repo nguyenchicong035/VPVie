@@ -5,3 +5,4 @@ venv/
 .env
 dist/
 .DS_Store
+activations.json

@@ -27,6 +27,23 @@ tự tạo key; chỉ người giữ **khoá riêng** (`private-key.b64`) mới 
    node keygen.js batch may.txt --days 365 > keys.csv
    ```
 
+## Key dùng nhiều máy (kích hoạt qua máy chủ — hướng C)
+
+Key gắn 1 máy (`issue`) chạy ngoại tuyến nhưng mỗi key chỉ 1 máy. Muốn **1 key cho
+nhiều máy** (vd cả trường) và **chống crack mạnh hơn**, dùng key kích-hoạt-qua-máy-chủ:
+
+```bash
+node keygen.js license --max 5 --days 365 --note "Trường A"
+```
+
+- Người dùng dán key → app gọi `POST /api/activate` trên máy chủ VPVie, máy chủ **đếm
+  số máy** (tối đa `--max`); máy thứ N+1 bị từ chối.
+- Máy chủ lưu trạng thái ở `activations.json` (KHÔNG commit). Muốn **gỡ máy cũ**: xoá
+  mã máy đó khỏi `activations.json` rồi khởi động lại.
+- Bật kiểm tra ở máy chủ: `VPVIE_REQUIRE_LICENSE=1`. Khi bật, **API Ai chỉ phục vụ máy
+  đã kích hoạt** → dù client bị crack cũng không dùng được AI của máy chủ.
+- Thu hồi cả key: thêm `id` (hoặc mã máy) vào tệp JSON trỏ bởi `VPVIE_REVOKED_KEYS`.
+
 ## Cấp key không cần dòng lệnh
 Mở `cap-key.html` bằng trình duyệt (trên máy bạn), dán nội dung `private-key.b64`,
 nhập Mã máy → bấm **Cấp key**. Toàn bộ chạy offline trong trình duyệt.

@@ -95,6 +95,28 @@ def slides(body: SlidesIn):
         return JSONResponse(status_code=500, content={"ok": False, "error": f"Lỗi tạo slide: {e}"})
 
 
+class ActivateIn(BaseModel):
+    license: str = ""
+    machine: str = ""
+
+
+@app.post("/api/activate")
+def activate(body: ActivateIn):
+    """Kích hoạt một máy cho một key (hỗ trợ key nhiều máy, đếm số máy)."""
+    r = lic.activate(body.license, body.machine)
+    code = 200 if r["ok"] else 402
+    out = {"ok": r["ok"]}
+    if not r["ok"]:
+        out["error"] = r["reason"]
+    if "used" in r:
+        out["used"] = r["used"]
+        out["maxm"] = r["maxm"]
+    if r.get("data"):
+        out["plan"] = r["data"].get("p", "pro")
+        out["expiry"] = r["data"].get("e", 0)
+    return JSONResponse(status_code=code, content=out)
+
+
 @app.get("/")
 def index():
     return FileResponse(os.path.join(WEB_DIR, "index.html"))

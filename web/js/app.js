@@ -1005,8 +1005,9 @@
     if ($("lic-activate")) $("lic-activate").onclick = async function () {
       var key = $("lic-key") ? $("lic-key").value : "";
       if (!key.trim()) { licMsg("Hãy dán Key kích hoạt.", false); return; }
+      licMsg("Đang kích hoạt…");
       var r = await window.VPLicense.activate(key);
-      if (r.ok) { licMsg("Kích hoạt thành công! Cảm ơn bạn.", true); toast("Đã kích hoạt bản quyền ✓"); $("lic-key").value = ""; }
+      if (r.ok) { licMsg("Kích hoạt thành công!" + (r.maxm > 1 ? " (máy " + r.used + "/" + r.maxm + ")" : " Cảm ơn bạn."), true); toast("Đã kích hoạt bản quyền ✓"); $("lic-key").value = ""; }
       else licMsg(r.reason || "Key không hợp lệ.", false);
       refreshLicUI();
     };

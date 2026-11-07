@@ -94,7 +94,74 @@ def verify(key: str, machine_id: str = "") -> dict:
 
 
 def check_request(key: str, machine_id: str = "") -> dict:
-    """Dùng trong API: nếu không bắt buộc license thì luôn cho qua."""
+    """Dùng trong API: nếu không bắt buộc license thì luôn cho qua.
+
+    Với key nhiều máy (có "id"), yêu cầu máy ĐÃ kích hoạt (có trong kho) → buộc
+    phải gọi /api/activate trước, nhờ đó giới hạn số máy có hiệu lực cả ở API.
+    """
     if not require_license():
         return {"ok": True, "reason": "", "data": {"p": "free"}}
-    return verify(key, machine_id)
+    r = verify(key, machine_id)
+    if not r["ok"]:
+        return r
+    data = r["data"]
+    if data.get("id"):
+        mid = (machine_id or "").strip().upper()
+        rec = _load_store().get(data["id"])
+        if not rec or mid not in rec.get("machines", []):
+            return {"ok": False, "reason": "Máy chưa kích hoạt key này"}
+    return r
+
+
+# ----- Kích hoạt qua máy chủ (hướng C): một key dùng tối đa N máy -----
+def _store_path() -> str:
+    return os.environ.get("VPVIE_ACTIVATIONS", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "activations.json"))
+
+
+def _load_store() -> dict:
+    path = _store_path()
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _save_store(store: dict) -> None:
+    try:
+        with open(_store_path(), "w", encoding="utf-8") as f:
+            json.dump(store, f, ensure_ascii=False, indent=0)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def activate(key: str, machine_id: str) -> dict:
+    """Kích hoạt một máy cho một key. Trả {ok, reason, data, used, maxm}.
+
+    - Key gắn 1 máy (có "m"): chỉ kiểm chữ ký + ràng buộc máy (không cần đếm).
+    - Key nhiều máy (có "id" + "maxm"): đếm số máy đã kích hoạt, chặn khi vượt.
+    """
+    machine_id = (machine_id or "").strip().upper()
+    r = verify(key, machine_id)
+    if not r["ok"]:
+        return r
+    data = r["data"]
+    lid = data.get("id")
+    if not lid:  # key gắn máy — không cần máy chủ
+        return {"ok": True, "reason": "", "data": data, "used": 1, "maxm": 1}
+    if not machine_id:
+        return {"ok": False, "reason": "Thiếu mã máy"}
+    maxm = int(data.get("maxm", 1))
+    store = _load_store()
+    rec = store.get(lid) or {"machines": [], "note": data.get("n", "")}
+    machines = rec.get("machines", [])
+    if machine_id not in machines:
+        if len(machines) >= maxm:
+            return {"ok": False, "reason": f"Key đã dùng đủ {maxm} máy. Liên hệ người cấp phép để tăng hoặc gỡ máy cũ.", "used": len(machines), "maxm": maxm}
+        machines.append(machine_id)
+        rec["machines"] = machines
+        store[lid] = rec
+        _save_store(store)
+    return {"ok": True, "reason": "", "data": data, "used": len(machines), "maxm": maxm}

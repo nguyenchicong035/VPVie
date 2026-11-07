@@ -11,6 +11,10 @@
 //
 // Cấp hàng loạt từ tệp (mỗi dòng: MÃ_MÁY[,ghi chú]):
 //   node keygen.js batch may.txt --plan pro --days 365 > keys.csv
+//
+// Cấp key DÙNG NHIỀU MÁY (kích hoạt qua máy chủ, giới hạn số máy):
+//   node keygen.js license --max 5 [--plan pro] [--days 365] [--note "Trường A"]
+//   (Key không gắn 1 máy; máy chủ đếm số máy đã kích hoạt, tối đa --max.)
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -43,6 +47,15 @@ function issueKey(priv, mid, plan, days, note) {
   return 'VPL1.' + b64u(pbytes) + '.' + b64u(sig);
 }
 
+// Key dùng nhiều máy: không gắn mã máy, có license id + giới hạn số máy (maxm).
+function issueLicense(priv, plan, days, note, maxm) {
+  const payload = { id: crypto.randomUUID().replace(/-/g, '').slice(0, 16), p: plan || 'pro', e: days > 0 ? Math.floor(Date.now() / 1000) + days * 86400 : 0, maxm: maxm > 0 ? maxm : 1 };
+  if (note) payload.n = note;
+  const pbytes = Buffer.from(JSON.stringify(payload), 'utf8');
+  const sig = crypto.sign('sha256', pbytes, { key: priv, dsaEncoding: 'ieee-p1363' });
+  return { key: 'VPL1.' + b64u(pbytes) + '.' + b64u(sig), id: payload.id };
+}
+
 function opt(args, name, def) { const i = args.indexOf('--' + name); return i >= 0 ? args[i + 1] : def; }
 
 function main() {
@@ -52,6 +65,11 @@ function main() {
   if (cmd === 'issue') {
     const key = issueKey(loadPriv(), args[1], plan, days, note);
     console.log(key);
+  } else if (cmd === 'license') {
+    const maxm = parseInt(opt(args, 'max', '1'), 10) || 1;
+    const r = issueLicense(loadPriv(), plan, days, note, maxm);
+    console.error('License ID: ' + r.id + '  (tối đa ' + maxm + ' máy)');
+    console.log(r.key);
   } else if (cmd === 'batch') {
     const priv = loadPriv();
     const lines = fs.readFileSync(args[1], 'utf8').split(/\r?\n/).filter(Boolean);
@@ -62,7 +80,7 @@ function main() {
       catch (e) { console.error('Bỏ qua: ' + e.message); }
     }
   } else {
-    console.log('Dùng: node keygen.js genkeys | issue <MÃ_MÁY> [--plan pro --days 365 --note "..."] | batch <tệp.txt>');
+    console.log('Dùng: node keygen.js genkeys | issue <MÃ_MÁY> [...] | license --max 5 [...] | batch <tệp.txt>');
   }
 }
 main();

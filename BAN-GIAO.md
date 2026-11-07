@@ -171,11 +171,15 @@ người dùng dán vào nút **🔑 Kích hoạt**. App chỉ nhúng **khoá c�
 yêu cầu Key hợp lệ khi bật `VPVIE_REQUIRE_LICENSE=1`. Dù client bị sửa "đã kích hoạt" cũng
 **không lấy được kết quả AI** nếu không có Key thật (không ký giả được). Client gửi kèm
 `{license, machine}` qua `VPLicense.creds()`. Thu hồi key: tệp JSON trỏ bởi `VPVIE_REVOKED_KEYS`.
+
+**Hướng C (nhiều máy):** `keygen.js license --max N` tạo key không gắn máy; app gọi
+`POST /api/activate`, máy chủ đếm số máy ở `activations.json` (tối đa N), chặn máy vượt;
+key nhiều máy buộc kích hoạt online; API AI chỉ phục vụ máy đã kích hoạt.
 Mặc định TẮT để bản miễn phí/phát triển vẫn chạy.
 
 > Lưu ý thật: phần vẽ chạy 100% trong trình duyệt + mã nguồn mở thì **không chống crack tuyệt đối**
 > (ai cũng sửa được `isPro()`); key offline chỉ chống *làm giả key*. Giá trị bán thật nên đặt ở
-> **AI máy chủ** (đã khoá) hoặc kích hoạt online (hướng C — chưa làm).
+> **AI máy chủ** (đã khoá) hoặc kích hoạt online (**hướng C — ĐÃ LÀM**: key nhiều máy, đếm/giới hạn số máy, thu hồi).
 
 ## 6. Lỗi đã gặp & cách xử lý (để không lặp lại)
 - CDN bị chặn trong trình duyệt → vendor hết thư viện cục bộ.
