@@ -156,25 +156,35 @@
     out.push(pts[pts.length - 1]);
     return out;
   }
-  // strength: 1 nhẹ, 2 vừa (mặc định), 3 mạnh
+  // strength: 1 nhẹ · 2 vừa · 3 mạnh · 4 rất mượt
   function refineInk(pts, strength) {
     if (!pts || pts.length < 4) return pts;
     strength = strength || 2;
+    // RDP giữ NHẸ ở mọi mức để KHÔNG méo chữ; độ mượt đến từ số lần làm trơn + mật độ
+    // đường cong (samples), không phải từ rút gọn mạnh.
+    var cfg = {
+      1: { eps: 0.010, pre: 1, win: 1, passes: 1, samples: 10, post: 0 },
+      2: { eps: 0.012, pre: 1, win: 1, passes: 2, samples: 12, post: 1 },
+      3: { eps: 0.013, pre: 2, win: 1, passes: 3, samples: 16, post: 2 },
+      4: { eps: 0.014, pre: 2, win: 2, passes: 4, samples: 20, post: 3 }
+    }[strength] || { eps: 0.012, pre: 1, win: 1, passes: 2, samples: 12, post: 1 };
     var bb = bbox(pts), size = Math.max(bb.w, bb.h);
     if (size < 8) return pts;
     // 1) Resample đều để ổn định
     var step = Math.max(2, size * 0.02);
     var r = resampleEven(pts, step);
     if (r.length < 4) return pts;
-    // 2) Bỏ điểm nhiễu bằng RDP nhẹ (giữ hình dáng chữ)
-    var eps = size * (strength === 1 ? 0.012 : strength === 3 ? 0.03 : 0.02);
-    var simplified = rdp(r, eps);
+    // 2) Làm trơn sơ bộ trên nét dày (khử run tay trực tiếp) trước khi rút gọn
+    for (var a = 0; a < cfg.pre; a++) r = smoothPass(r, cfg.win);
+    // 3) Bỏ điểm nhiễu bằng RDP (giữ hình dáng chữ)
+    var simplified = rdp(r, size * cfg.eps);
     if (simplified.length < 3) simplified = r;
-    // 3) Làm trơn trung bình trượt + nội suy Catmull-Rom -> nét mượt
+    // 4) Làm trơn các điểm điều khiển + nội suy Catmull-Rom -> nét cong mượt
     var sm = simplified;
-    var passes = strength === 1 ? 1 : strength === 3 ? 3 : 2;
-    for (var k = 0; k < passes; k++) sm = smoothPass(sm, 1);
-    var curve = catmullRom(sm, 8);
+    for (var k = 0; k < cfg.passes; k++) sm = smoothPass(sm, cfg.win);
+    var curve = catmullRom(sm, cfg.samples);
+    // 5) Làm trơn lần cuối trên đường cong dày -> rất mượt
+    for (var b2 = 0; b2 < cfg.post; b2++) curve = smoothPass(curve, 2);
     return curve.length >= 2 ? curve : pts;
   }
 

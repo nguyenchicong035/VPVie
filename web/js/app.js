@@ -18,7 +18,7 @@
     cur: null,
     pen: "ball",      // ball | brush | pencil | hl (dạ quang)
     tidyInk: true,    // tự nắn mượt nét chữ viết tay sau khi viết
-    tidyStrength: 2,  // 1 nhẹ · 2 vừa · 3 mạnh
+    tidyStrength: 3,  // 1 nhẹ · 2 vừa · 3 mạnh · 4 rất mượt
     // Cài đặt trang giấy + hình vẽ (toàn cục, không theo trang)
     paper: { style: "lined", bg: "#FFFFFF", lineColor: "#9CC2F0", spacing: 34, thickness: 1, orient: "portrait", titlebox: true, margin: true, pagebreak: true },
     opt: { showdots: true, autolabel: false, snap: false, lblsize: 16, lblcolor: "#111111", dotsize: 4, subject: "toan", cursor: "pen", cursize: "s", touch: "auto", autosave: true, penlead: true, scratchrase: false },
