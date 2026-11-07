@@ -5,7 +5,7 @@
   var PT = "#1F3D55", SH = "#13697A", DRV = "#C2410C";
 
   // Số điểm cần chọn cho mỗi công cụ dựng hình
-  var NEED = { segment: 2, line: 2, circle: 2, mid: 2, perpbis: 2, bisector: 3, centroid: 3, ortho: 3, circum: 3, incenter: 3 };
+  var NEED = { segment: 2, ray: 2, line: 2, circle: 2, mid: 2, perpbis: 2, bisector: 3, centroid: 3, ortho: 3, circum: 3, incenter: 3 };
 
   var G = {
     points: [], shapes: [], tool: null, sel: [], dragging: null, seq: 0,
@@ -23,6 +23,7 @@
     construct: function (ids) {
       var t = this.tool, a = ids[0], b = ids[1], c = ids[2];
       if (t === "segment") this.shapes.push({ type: "segment", a: a, b: b });
+      else if (t === "ray") this.shapes.push({ type: "ray", a: a, b: b });
       else if (t === "line") this.shapes.push({ type: "line", a: a, b: b });
       else if (t === "circle") this.shapes.push({ type: "circle", c: a, p: b });
       else if (t === "mid") this.addDerived({ t: "mid", p: [a, b] }, "M");
@@ -68,6 +69,7 @@
       this.shapes.forEach(function (s) {
         if (s.type === "segment") { var a = self.get(s.a), b = self.get(s.b); if (a && b) line(ctx, a.x, a.y, b.x, b.y); }
         else if (s.type === "line") { var a2 = self.get(s.a), b2 = self.get(s.b); if (a2 && b2) extLine(ctx, a2, b2, w, h); }
+        else if (s.type === "ray") { var ar = self.get(s.a), br = self.get(s.b); if (ar && br) { var dx = br.x - ar.x, dy = br.y - ar.y, L = Math.hypot(dx, dy) || 1, k = (w + h) * 2 / L; line(ctx, ar.x, ar.y, ar.x + dx * k, ar.y + dy * k); } }
         else if (s.type === "circle") { var c = self.get(s.c), p = self.get(s.p); if (c && p) { ctx.beginPath(); ctx.arc(c.x, c.y, Math.hypot(p.x - c.x, p.y - c.y), 0, Math.PI * 2); ctx.stroke(); } }
       });
       ctx.font = "13px 'Segoe UI'";

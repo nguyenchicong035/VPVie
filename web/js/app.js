@@ -920,7 +920,93 @@
     });
     shape2dThumbsDone = true;
   }
-  $("btn-shapes").onclick = function () { showDialog("dlg-shapes"); renderShape2DThumbs(); };
+  // ===== Bảng gộp: Đường + Hình phẳng + Hình không gian + tuỳ chọn =====
+  function drawLineThumb(cv, kind) {
+    var g = cv.getContext("2d"); g.clearRect(0, 0, cv.width, cv.height);
+    g.strokeStyle = "#1d2a33"; g.fillStyle = "#1d2a33"; g.lineWidth = 1.6; g.lineCap = "round";
+    var y = cv.height / 2, x1 = 5, x2 = cv.width - 5;
+    g.beginPath(); g.moveTo(x1, y); g.lineTo(x2, y); g.stroke();
+    if (kind === "vector" || kind === "ray") { g.beginPath(); g.moveTo(x2, y); g.lineTo(x2 - 6, y - 4); g.lineTo(x2 - 6, y + 4); g.closePath(); g.fill(); }
+    if (kind === "line") { g.beginPath(); g.moveTo(x1, y); g.lineTo(x1 + 4, y - 3); g.moveTo(x1, y); g.lineTo(x1 + 4, y + 3); g.stroke(); }  // 2 đầu kéo dài
+  }
+  var SHAPES_2D = [
+    ["triangle", "Tam giác", "3"], ["right-tri", "Tam giác vuông"], ["iso-tri", "Tam giác cân"], ["triangle-eq", "Tam giác đều"], ["alt-tri", "Tam giác có đường cao"], ["square", "Hình vuông", "Q"],
+    ["rect", "Hình chữ nhật", "4"], ["para", "Hình bình hành"], ["rhombus", "Hình thoi"], ["trapezoid", "Hình thang"], ["__poly__", "Đa giác đều"], ["circle", "Đường tròn", "C"], ["arc", "Cung tròn"], ["semicircle", "Nửa đường tròn"], ["sector", "Hình quạt"], ["ellipse", "Elip"], ["hyperbola", "Hypebol"], ["parabola", "Parabol"], ["annulus", "Hình vành khăn"]
+  ];
+  var SHAPES_3D = [
+    ["chop-para", "Hình chóp đáy hình bình hành"], ["chop-para-sa", "Chóp đáy bình hành, SA⊥đáy"], ["chop4", "Hình chóp đáy tứ giác"], ["chop-thang", "Hình chóp đáy hình thang"], ["chop3", "Hình chóp tam giác"], ["chop3-sa", "Chóp tam giác, SA⊥đáy"], ["hop", "Hình hộp"], ["lapphuong", "Hình lập phương"], ["langtru", "Lăng trụ tam giác"], ["non", "Hình nón"], ["tru", "Hình trụ"], ["cau", "Mặt cầu"], ["batdien", "Bát diện đều"]
+  ];
+  var LINES = [["segment", "Đoạn thẳng", "L"], ["vector", "Vectơ", "V"], ["line", "Đường thẳng", "Shift+L"], ["ray", "Tia"]];
+  function smItem(cls) { var b = document.createElement("button"); b.className = "sm-item" + (cls ? " " + cls : ""); return b; }
+  function smThumb() { var c = document.createElement("canvas"); c.width = 60; c.height = 48; return c; }
+  function closeShapesMenu() { var m = $("shapes-menu"); if (m) m.classList.remove("show"); }
+  function insertSolid(kind) { pushHist(); state.items.push(window.VPSolid.make(kind, canvas.clientWidth / 2, canvas.clientHeight / 2, 100, state.color, state.size || 2)); selectLast(); }
+  function insertPolygonN(n) { n = Math.max(3, Math.min(20, n || 5)); var cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2; pushHist(); var o = { type: "poly", pts: regPoly(cx, cy, 90, n, -Math.PI / 2), color: state.color, size: state.size }; state.items.push(o); selectLast(); }
+  var shapesMenuBuilt = false;
+  function buildShapesMenu() {
+    if (shapesMenuBuilt) return; var host = $("shapes-menu"); if (!host) return;
+    function col() { var d = document.createElement("div"); d.className = "sm-col"; return d; }
+    function head(t) { var d = document.createElement("div"); d.className = "sm-h"; d.textContent = t; return d; }
+    function shapeBtn(kind, name, key, is3d) {
+      var b = smItem("sm-shape"); var cv = smThumb(); b.appendChild(cv);
+      var sp = document.createElement("span"); sp.textContent = name; b.appendChild(sp);
+      if (key) { var k = document.createElement("span"); k.className = "sm-key"; k.textContent = key; b.appendChild(k); }
+      try { if (is3d) drawSolidThumb(cv, kind); else drawItemsThumb(cv, makeShapeItems(kind, 0, 0, 30)); } catch (e) {}
+      b.onclick = function () { if (is3d) insertSolid(kind); else { addShapeTemplate(kind); selectLast(); } closeShapesMenu(); };
+      return b;
+    }
+    var c1 = col(), c2 = col(), c3 = col();
+    // Cột 1: tuỳ chọn + Đường + phần đầu Hình phẳng
+    c1.appendChild(head("Hình vẽ"));
+    [["showdots", "Hiện chấm tròn ở các điểm của hình"], ["snap", "Bắt điểm lưới"]].forEach(function (o) {
+      var b = smItem("sm-opt"); var ck = document.createElement("span"); ck.className = "sm-ck"; ck.textContent = state.opt[o[0]] ? "✓" : "";
+      b.appendChild(ck); var sp = document.createElement("span"); sp.textContent = o[1]; b.appendChild(sp);
+      if (state.opt[o[0]]) b.classList.add("on");
+      b.onclick = function () { state.opt[o[0]] = !state.opt[o[0]]; ck.textContent = state.opt[o[0]] ? "✓" : ""; b.classList.toggle("on", state.opt[o[0]]); saveSettings(); redraw(); };
+      c1.appendChild(b);
+    });
+    c1.appendChild(head("Đường"));
+    LINES.forEach(function (l) {
+      var b = smItem("sm-line"); var cv = smThumb(); cv.width = 60; cv.height = 24; b.appendChild(cv);
+      var sp = document.createElement("span"); sp.textContent = l[1]; b.appendChild(sp);
+      if (l[2]) { var k = document.createElement("span"); k.className = "sm-key"; k.textContent = l[2]; b.appendChild(k); }
+      try { drawLineThumb(cv, l[0]); } catch (e) {}
+      b.onclick = function () {
+        clearActive();
+        if (l[0] === "vector") { state.tool = "arrow"; state.arrowStyle = "arrow"; if (window.VPGeo) window.VPGeo.setTool(null); toast("Vectơ: kéo để vẽ."); }
+        else { state.tool = "geo"; if (window.VPGeo) window.VPGeo.setTool(l[0]); toast(l[1] + ": bấm 2 điểm."); }
+        closeShapesMenu();
+      };
+      c1.appendChild(b);
+    });
+    c1.appendChild(head("Hình phẳng"));
+    var split = 6;  // số hình 2D ở cột 1 (phần còn lại sang cột 2)
+    SHAPES_2D.forEach(function (sh, i) {
+      var target = i < split ? c1 : c2;
+      if (sh[0] === "__poly__") {
+        var b = smItem("sm-shape"); var cv = smThumb(); b.appendChild(cv);
+        var sp = document.createElement("span"); sp.textContent = sh[1]; b.appendChild(sp);
+        var inp = document.createElement("input"); inp.className = "sm-n"; inp.type = "number"; inp.value = 5; inp.min = 3; inp.max = 20;
+        inp.onclick = function (e) { e.stopPropagation(); }; b.appendChild(inp);
+        try { drawItemsThumb(cv, [{ type: "poly", pts: regPoly(0, 0, 26, 5, -Math.PI / 2) }]); } catch (e) {}
+        b.onclick = function () { insertPolygonN(parseInt(inp.value, 10)); closeShapesMenu(); };
+        target.appendChild(b);
+      } else target.appendChild(shapeBtn(sh[0], sh[1], sh[2], false));
+    });
+    // Cột 3: Hình không gian
+    c3.appendChild(head("Hình không gian"));
+    SHAPES_3D.forEach(function (sh) { c3.appendChild(shapeBtn(sh[0], sh[1], null, true)); });
+    host.appendChild(c1); host.appendChild(c2); host.appendChild(c3);
+    shapesMenuBuilt = true;
+  }
+  if ($("btn-shapes")) $("btn-shapes").onclick = function (e) {
+    e.stopPropagation(); buildShapesMenu();
+    var m = $("shapes-menu"), r = this.getBoundingClientRect();
+    document.querySelectorAll(".nr-menu.show").forEach(function (x) { if (x !== m) x.classList.remove("show"); });
+    if (m.classList.contains("show")) { m.classList.remove("show"); return; }
+    m.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 650)) + "px"; m.style.top = (r.bottom + 4) + "px";
+    m.classList.add("show");
+  };
   // Vẽ hình mẫu nhỏ cho từng nút hình 3D (dùng chính VPSolid)
   var solidThumbsDone = false;
   function drawSolidThumb(cv, kind) {
