@@ -63,11 +63,11 @@
     if (worker) return worker;
     if (loading) return loading;
     loading = (async function () {
-      await loadScript("/vendor/tesseract/tesseract.min.js");
+      await loadScript("vendor/tesseract/tesseract.min.js");
       var w = await global.Tesseract.createWorker(["vie", "eng"], 1, {
-        workerPath: "/vendor/tesseract/worker.min.js",
-        corePath: "/vendor/tesseract/",
-        langPath: "/vendor/tesseract/lang",
+        workerPath: "vendor/tesseract/worker.min.js",
+        corePath: "vendor/tesseract/",
+        langPath: "vendor/tesseract/lang",
         gzip: false,
         logger: function (m) { if (onStatus && m.status) onStatus(m.status + (m.progress ? " " + Math.round(m.progress * 100) + "%" : "")); },
       });
@@ -136,7 +136,7 @@
   }
 
   async function recognizeServer(pngDataUrl, mode) {
-    var res = await fetch("/api/recognize", {
+    var res = await fetch("api/recognize", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(Object.assign({ image: pngDataUrl, mode: mode || "auto" }, (window.VPLicense ? window.VPLicense.creds() : {}))),
     });

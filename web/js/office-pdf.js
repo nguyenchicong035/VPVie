@@ -3,7 +3,7 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var pdfjsLib = window.pdfjsLib;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "/vendor/pdfjs/pdf.worker.min.js";
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdfjs/pdf.worker.min.js";
   var viewer = $("viewer"), doc = null, scale = 1.3, penOn = false;
 
   $("open").onclick = function () { $("pdf-file").click(); };

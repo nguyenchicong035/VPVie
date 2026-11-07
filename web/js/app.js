@@ -959,7 +959,7 @@
   function toast(msg) { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function () { toastEl.classList.remove("show"); }, 2600); }
 
   // Trạng thái AI
-  fetch("/api/health").then(function (r) { return r.json(); }).then(function (d) {
+  fetch("api/health").then(function (r) { return r.json(); }).then(function (d) {
     if (d.ai) {
       // Có AI máy chủ mạnh (Ollama/pix2tex/Claude) -> ưu tiên engine "server" cho nhận dạng toán
       if ($("ai-engine")) $("ai-engine").value = "server";
@@ -1144,7 +1144,7 @@
   if ($("imp-pdf")) $("imp-pdf").onchange = function () {
     var f = this.files[0]; if (!f) return; this.value = ""; hideDialog("dlg-settings");
     if (!window.pdfjsLib) { toast("Chưa tải được pdf.js."); return; }
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "/vendor/pdfjs/pdf.worker.min.js";
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdfjs/pdf.worker.min.js";
     var rd = new FileReader();
     rd.onload = async function () {
       try {

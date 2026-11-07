@@ -2,9 +2,9 @@
 // Chiến lược: cache-first cho tài nguyên cùng nguồn (GET); bỏ qua /api (động).
 const CACHE = 'vpvie-v1';
 const CORE = [
-  '/bang.html', '/style.css', '/manifest.webmanifest',
-  '/js/app.js', '/js/beautify.js', '/js/license.js', '/js/ink-recognize.js',
-  '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'
+  'bang.html', 'style.css', 'manifest.webmanifest',
+  'js/app.js', 'js/beautify.js', 'js/license.js', 'js/ink-recognize.js',
+  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'
 ];
 self.addEventListener('install', (e) => {
   self.skipWaiting();
@@ -18,7 +18,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;         // bỏ qua nguồn ngoài
-  if (url.pathname.startsWith('/api/')) return;        // API động: để mạng xử lý
+  if (url.pathname.indexOf('/api/')>=0) return;        // API động: để mạng xử lý
   e.respondWith(
     caches.match(req).then((hit) => hit || fetch(req).then((res) => {
       if (res && res.status === 200 && res.type === 'basic') {

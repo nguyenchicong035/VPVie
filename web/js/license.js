@@ -107,7 +107,7 @@
   // Kích hoạt qua máy chủ (hướng C): xử lý cả key nhiều máy + đếm số máy.
   async function activateOnline(keyStr, mid) {
     try {
-      var res = await fetch("/api/activate", {
+      var res = await fetch("api/activate", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ license: keyStr.trim(), machine: mid }),
       });

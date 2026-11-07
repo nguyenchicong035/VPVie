@@ -85,7 +85,7 @@
       if (!text.trim()) { alert("Chưa có nội dung."); return; }
       saveNote.textContent = "AI đang xử lý…";
       try {
-        var res = await fetch("/api/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ text: text, task: b.dataset.task }, (window.VPLicense ? window.VPLicense.creds() : {}))) });
+        var res = await fetch("api/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ text: text, task: b.dataset.task }, (window.VPLicense ? window.VPLicense.creds() : {}))) });
         var d = await res.json();
         if (!res.ok || !d.ok) throw new Error(d.error || "Lỗi");
         doc.focus();

@@ -58,7 +58,7 @@
     var n = parseInt($("ai-n").value, 10) || 6;
     this.disabled = true; this.textContent = "Đang tạo…";
     try {
-      var res = await fetch("/api/slides", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ topic: topic, n: n }, (window.VPLicense ? window.VPLicense.creds() : {}))) });
+      var res = await fetch("api/slides", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ topic: topic, n: n }, (window.VPLicense ? window.VPLicense.creds() : {}))) });
       var d = await res.json();
       if (!res.ok || !d.ok) throw new Error(d.error || "Lỗi");
       if (d.slides && d.slides.length) { slides = d.slides.map(function (s) { return { title: s.title || "", bullets: s.bullets || [] }; }); cur = 0; renderAll(); save(); $("dlg-ai").classList.remove("show"); }
