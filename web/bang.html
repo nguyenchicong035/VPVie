@@ -172,13 +172,28 @@
       <div class="dlg-head">Đồ thị hàm số <button data-close="dlg-plot" class="x">✕</button></div>
       <div class="plot-cols">
         <div class="plot-left">
-          <div class="plot-h">HÀM SỐ</div>
-          <div id="plot-funcs"></div>
-          <button id="plot-add" class="plot-add">＋ Thêm hàm số</button>
-          <label class="setchk" style="margin-top:10px"><input type="checkbox" id="plot-autofit" checked/> Tự căn khung nhìn</label>
-          <div class="hint">Gõ hàm theo <b>x</b> (vd: <code>x^2-2</code>, <code>sin(x)</code>, <code>1/x</code>). Bất PT (&lt; &gt; &le; &ge;) hoặc hệ (ngăn bằng ;) sẽ tô miền nghiệm.</div>
+          <div class="plot-panel">
+            <div class="plot-h">HÀM SỐ</div>
+            <div id="plot-funcs"></div>
+            <button id="plot-add" class="plot-add">＋ Thêm hàm số</button>
+            <button id="plot-autofit-btn" class="plot-link">↗ Tự căn khung nhìn</button>
+            <button id="plot-help-btn" class="plot-link">▸ Cách gõ hàm số</button>
+            <div id="plot-help" class="plot-help" hidden>Gõ theo <b>x</b>: lũy thừa <code>x^2</code>, căn <code>sqrt(x)</code>, phân số <code>1/x</code>, lượng giác <code>sin(x) cos(x) tan(x)</code>, <code>pi</code>, <code>e</code>. Bất PT (&lt; &gt; &le; &ge;) hoặc hệ (ngăn bằng <code>;</code>) sẽ tô miền nghiệm.</div>
+          </div>
+          <div class="plot-tools">
+            <button class="plot-tbtn" data-pt="point">• Điểm</button>
+            <button class="plot-tbtn" data-pt="vector">→ Vectơ</button>
+            <button class="plot-tbtn" data-pt="region">▦ Miền nghiệm</button>
+            <button class="plot-tbtn" data-pt="area">▧ Diện tích</button>
+            <button class="plot-tbtn" data-pt="revolve">↻ Tròn xoay</button>
+            <button class="plot-tbtn" data-pt="view">⤢ Khung nhìn</button>
+            <button class="plot-tbtn" data-pt="style">Aa Kiểu hiển thị</button>
+          </div>
         </div>
-        <div class="plot-right"><div id="plot-preview" class="plot-preview"></div></div>
+        <div class="plot-right">
+          <div id="plot-preview" class="plot-preview"></div>
+          <div class="plot-cap">Nhấp vào hình để đánh dấu điểm; gần đường cong thì điểm nằm trên đồ thị.</div>
+        </div>
       </div>
       <div class="dlg-foot"><button data-close="dlg-plot" class="btn ghost">Hủy</button><button id="plot-ok" class="btn">Xong</button></div>
     </div>

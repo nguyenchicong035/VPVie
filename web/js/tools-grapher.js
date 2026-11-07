@@ -54,7 +54,7 @@
     var ymin = opts.ymin != null ? opts.ymin : -7.5, ymax = opts.ymax != null ? opts.ymax : 7.5;
 
     // Danh sách hàm cần vẽ: ưu tiên opts.funcs (nhiều hàm, mỗi hàm 1 màu)
-    var funcList = (opts.funcs && opts.funcs.length) ? opts.funcs.map(function (f) { return { expr: f.expr, color: f.color || CURVE, c: compile((f.expr || "").replace(/^\s*y\s*=\s*/i, "")) }; }).filter(function (f) { return f.c; }) : [];
+    var funcList = (opts.funcs && opts.funcs.length) ? opts.funcs.map(function (f) { return { expr: f.expr, color: f.color || CURVE, dash: f.dash ? [7, 5] : [], xmin: f.xmin, xmax: f.xmax, c: compile((f.expr || "").replace(/^\s*y\s*=\s*/i, "")) }; }).filter(function (f) { return f.c; }) : [];
     // Tự co giãn y theo hàm (nếu là hàm thường)
     var mainC = null;
     if (!ineqs.length) {
@@ -89,11 +89,19 @@
 
     // --- Vẽ các hàm (nhiều hàm mỗi màu) + đánh dấu cho hàm đầu
     if (funcList.length) {
-      funcList.forEach(function (f, i) { plotCurve(g, f.c, X, Y, xmin, xmax, [], f.color, H); if (i === 0 && opts.marks !== false) markup(g, f.c, f.expr, X, Y, xmin, xmax, ymin, ymax, W, H); });
+      funcList.forEach(function (f, i) { var fx0 = f.xmin != null ? Math.max(xmin, f.xmin) : xmin, fx1 = f.xmax != null ? Math.min(xmax, f.xmax) : xmax; plotCurve(g, f.c, X, Y, fx0, fx1, f.dash, f.color, H); if (i === 0 && opts.marks !== false) markup(g, f.c, f.expr, X, Y, xmin, xmax, ymin, ymax, W, H); });
     } else if (mainC) {
       plotCurve(g, mainC, X, Y, xmin, xmax, [], CURVE, H);
       if (opts.marks !== false) markup(g, mainC, expr, X, Y, xmin, xmax, ymin, ymax, W, H);
     }
+    // --- Điểm do người dùng đánh dấu
+    (opts.points || []).forEach(function (p) {
+      var px = X(p.x), py = Y(p.y);
+      g.fillStyle = "#1A7F37"; g.beginPath(); g.arc(px, py, 4, 0, 6.28); g.fill();
+      g.fillStyle = "#0E2436"; g.font = "12px 'Segoe UI'"; g.fillText("(" + (Math.round(p.x * 100) / 100) + "; " + (Math.round(p.y * 100) / 100) + ")", px + 6, py - 6);
+    });
+    // Lưu phép biến đổi để đổi toạ độ pixel -> toạ độ toán (đánh dấu điểm)
+    LAST = { xmin: xmin, xmax: xmax, ymin: ymin, ymax: ymax, W: W, H: H, funcs: funcList };
     return cv;
   }
 
@@ -197,5 +205,15 @@
   function dashLine(g, x1, y1, x2, y2, col) { g.save(); g.strokeStyle = col; g.lineWidth = 1; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.restore(); }
   function fmt(v) { var r = Math.round(v * 100) / 100; return String(r); }
 
-  global.VPGrapher = { draw: draw };
+  var LAST = null;
+  function pxToData(px, py) {
+    if (!LAST) return null;
+    var x = LAST.xmin + px / LAST.W * (LAST.xmax - LAST.xmin);
+    var y = LAST.ymax - py / LAST.H * (LAST.ymax - LAST.ymin);
+    // nếu bấm gần một đường cong -> đưa điểm lên đường cong
+    var best = null, bd = (LAST.ymax - LAST.ymin) * 0.06;
+    (LAST.funcs || []).forEach(function (f) { try { var fy = f.c.evaluate({ x: x }); if (typeof fy === "number" && isFinite(fy) && Math.abs(fy - y) < bd) { bd = Math.abs(fy - y); best = fy; } } catch (e) {} });
+    return { x: Math.round(x * 100) / 100, y: Math.round((best != null ? best : y) * 100) / 100 };
+  }
+  global.VPGrapher = { draw: draw, pxToData: pxToData };
 })(window);

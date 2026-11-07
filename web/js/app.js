@@ -437,7 +437,7 @@
     else if (kind === "plot") {
       if (data.funcs && data.funcs.length && window.VPGrapher) {
         body.innerHTML = "";
-        try { window.VPGrapher.draw(body, data.funcs[0].expr || "x^2", { w: data.w || 380, h: data.h || 300, funcs: data.funcs, autoY: data.autoY !== false }); }
+        try { var po = { w: data.w || 380, h: data.h || 300, funcs: data.funcs, autoY: data.autoY !== false, points: data.points || [] }; if (data.view) { po.autoY = false; po.xmin = data.view.xmin; po.xmax = data.view.xmax; po.ymin = data.view.ymin; po.ymax = data.view.ymax; } window.VPGrapher.draw(body, data.funcs[0].expr || "x^2", po); }
         catch (e) { body.textContent = "Không vẽ được đồ thị."; }
       } else window.VPCalc.buildGraph(body, data.expr, data);
     }
@@ -1010,7 +1010,8 @@
   // Hộp thoại đồ thị
   // Đồ thị: kéo chọn vùng trước, rồi hiện bảng điền hàm số
   $("btn-plot").onclick = function () { state.tool = "plotregion"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Kéo chuột để chọn vùng chứa đồ thị."); };
-  var plotRegion = null, plotFuncs = [{ expr: "x^2 - 2", color: "#C21807" }];
+  var plotRegion = null, plotAutoFit = true, plotView = null, plotActiveFn = 0;
+  var plotFuncs = [{ expr: "x^2 - 2", color: "#C21807", dash: false }];
   var PLOT_COLORS = ["#C21807", "#1F6FEB", "#1A7F37", "#7A3FB3", "#E3A008", "#0E7490"];
   function buildFuncRows() {
     var host = $("plot-funcs"); if (!host) return; host.innerHTML = "";
@@ -1020,33 +1021,70 @@
       col.oninput = function () { f.color = col.value; schedulePreview(); };
       var ys = document.createElement("span"); ys.className = "pf-ys"; ys.textContent = "y =";
       var ex = document.createElement("input"); ex.className = "pf-expr"; ex.value = f.expr; ex.placeholder = "x^2 - 2";
+      ex.onfocus = function () { plotActiveFn = i; };
       ex.oninput = function () { f.expr = ex.value; schedulePreview(); };
       ex.onkeydown = function (e) { if (e.key === "Enter") $("plot-ok").click(); };
-      var del = document.createElement("button"); del.className = "pf-del"; del.textContent = "✕"; del.title = "Xoá hàm";
+      var sq = document.createElement("button"); sq.className = "pf-btn pf-sqrt"; sq.innerHTML = "√x"; sq.title = "Chèn căn bậc hai";
+      sq.onclick = function () { var p = ex.selectionStart || ex.value.length; ex.value = ex.value.slice(0, p) + "sqrt()" + ex.value.slice(p); f.expr = ex.value; ex.focus(); ex.selectionStart = ex.selectionEnd = p + 5; schedulePreview(); };
+      var lim = document.createElement("button"); lim.className = "pf-btn" + (f.xmin != null || f.xmax != null ? " on" : ""); lim.textContent = "Giới hạn"; lim.title = "Giới hạn miền x";
+      lim.onclick = function () { var s = prompt("Giới hạn x (vd: -3 ; 3). Để trống = toàn trục:", (f.xmin != null ? f.xmin : "") + " ; " + (f.xmax != null ? f.xmax : "")); if (s === null) return; var m = s.split(";"); var a = parseFloat(m[0]), b = parseFloat(m[1]); f.xmin = isNaN(a) ? null : a; f.xmax = isNaN(b) ? null : b; lim.classList.toggle("on", f.xmin != null || f.xmax != null); schedulePreview(); };
+      var ls = document.createElement("button"); ls.className = "pf-btn" + (f.dash ? " on" : ""); ls.innerHTML = "╱"; ls.title = "Kiểu nét (liền/đứt)";
+      ls.onclick = function () { f.dash = !f.dash; ls.classList.toggle("on", f.dash); schedulePreview(); };
+      var del = document.createElement("button"); del.className = "pf-btn"; del.textContent = "✕"; del.title = "Xoá hàm";
       del.onclick = function () { if (plotFuncs.length > 1) { plotFuncs.splice(i, 1); buildFuncRows(); schedulePreview(); } };
-      row.appendChild(col); row.appendChild(ys); row.appendChild(ex); row.appendChild(del);
+      [col, ys, ex, sq, lim, ls, del].forEach(function (el) { row.appendChild(el); });
       host.appendChild(row);
     });
   }
   function schedulePreview() { clearTimeout(window._pvT); window._pvT = setTimeout(renderPlotPreview, 220); }
+  function plotOpts(w, h) {
+    var o = { w: w, h: h, funcs: plotFuncs.filter(function (f) { return (f.expr || "").trim(); }), autoY: plotAutoFit, points: plotPoints };
+    if (plotView) { o.autoY = false; o.xmin = plotView.xmin; o.xmax = plotView.xmax; o.ymin = plotView.ymin; o.ymax = plotView.ymax; }
+    return o;
+  }
   function renderPlotPreview() {
     var pv = $("plot-preview"); if (!pv || !window.VPGrapher) return;
     var fs = plotFuncs.filter(function (f) { return (f.expr || "").trim(); });
-    try { window.VPGrapher.draw(pv, (fs[0] && fs[0].expr) || "x^2", { w: pv.clientWidth || 360, h: 300, funcs: fs, autoY: $("plot-autofit") ? $("plot-autofit").checked : true }); }
+    try { window.VPGrapher.draw(pv, (fs[0] && fs[0].expr) || "x^2", plotOpts(pv.clientWidth || 360, 300)); }
     catch (e) { pv.textContent = "Không vẽ được — kiểm tra lại hàm."; }
   }
+  var plotPoints = [];
   function openPlotDialog(region) {
-    plotRegion = region; showDialog("dlg-plot");
+    plotRegion = region; plotPoints = []; plotView = null; showDialog("dlg-plot");
     buildFuncRows(); renderPlotPreview();
     var first = document.querySelector("#plot-funcs .pf-expr"); if (first) { first.focus(); first.select(); }
   }
-  if ($("plot-add")) $("plot-add").onclick = function () { plotFuncs.push({ expr: "", color: PLOT_COLORS[plotFuncs.length % PLOT_COLORS.length] }); buildFuncRows(); var rows = document.querySelectorAll("#plot-funcs .pf-expr"); if (rows.length) rows[rows.length - 1].focus(); };
-  if ($("plot-autofit")) $("plot-autofit").onchange = renderPlotPreview;
+  if ($("plot-add")) $("plot-add").onclick = function () { plotFuncs.push({ expr: "", color: PLOT_COLORS[plotFuncs.length % PLOT_COLORS.length], dash: false }); buildFuncRows(); var rows = document.querySelectorAll("#plot-funcs .pf-expr"); if (rows.length) rows[rows.length - 1].focus(); };
+  if ($("plot-autofit-btn")) $("plot-autofit-btn").onclick = function () { plotAutoFit = true; plotView = null; this.classList.add("on"); renderPlotPreview(); toast("Đã tự căn khung nhìn."); };
+  if ($("plot-help-btn")) $("plot-help-btn").onclick = function () { var h = $("plot-help"); h.hidden = !h.hidden; this.textContent = (h.hidden ? "▸" : "▾") + " Cách gõ hàm số"; };
+  // Hàng nút công cụ đồ thị
+  document.querySelectorAll("#dlg-plot .plot-tbtn").forEach(function (b) {
+    b.onclick = function () {
+      var k = b.dataset.pt;
+      if (k === "view") {
+        var s = prompt("Khung nhìn: x_min ; x_max ; y_min ; y_max", (plotView ? [plotView.xmin, plotView.xmax, plotView.ymin, plotView.ymax].join(" ; ") : "-10 ; 10 ; -8 ; 8"));
+        if (s === null) return; var m = s.split(";").map(function (t) { return parseFloat(t); });
+        if (m.length >= 4 && m.every(function (v) { return !isNaN(v); })) { plotView = { xmin: m[0], xmax: m[1], ymin: m[2], ymax: m[3] }; plotAutoFit = false; if ($("plot-autofit-btn")) $("plot-autofit-btn").classList.remove("on"); renderPlotPreview(); } else toast("Nhập 4 số, ngăn bằng dấu ;");
+      } else if (k === "region") toast("Miền nghiệm: gõ bất phương trình, vd  y < x^2 - 2  hoặc hệ  y>=x ; y<=-x+4");
+      else if (k === "point") { b.classList.toggle("on"); plotMarkMode = b.classList.contains("on"); toast(plotMarkMode ? "Bấm vào hình để đánh dấu điểm." : "Tắt đánh dấu điểm."); }
+      else toast("Công cụ \"" + b.textContent.trim() + "\" đang được hoàn thiện.");
+    };
+  });
+  // Đánh dấu điểm khi bấm vào ô xem trước
+  var plotMarkMode = false;
+  if ($("plot-preview")) $("plot-preview").addEventListener("click", function (e) {
+    if (!plotMarkMode || !window.VPGrapher || !window.VPGrapher.pxToData) return;
+    var cv = $("plot-preview").querySelector("canvas"); if (!cv) return;
+    var r = cv.getBoundingClientRect(); var d = window.VPGrapher.pxToData(e.clientX - r.left, e.clientY - r.top);
+    if (d) { plotPoints.push(d); renderPlotPreview(); }
+  });
   $("plot-ok").onclick = function () {
     var fs = plotFuncs.filter(function (f) { return (f.expr || "").trim(); });
     if (!fs.length) { toast("Hãy nhập ít nhất một hàm số."); return; }
     var r = plotRegion || { x: 90, y: 90, w: 380, h: 300 };
-    addOverlayData("plot", { funcs: fs.map(function (f) { return { expr: f.expr, color: f.color }; }), expr: fs[0].expr, w: r.w, h: r.h, autoY: $("plot-autofit") ? $("plot-autofit").checked : true }, r.x, r.y);
+    var data = { funcs: fs.map(function (f) { return { expr: f.expr, color: f.color, dash: f.dash, xmin: f.xmin, xmax: f.xmax }; }), expr: fs[0].expr, w: r.w, h: r.h, autoY: plotAutoFit, points: plotPoints.slice() };
+    if (plotView) { data.view = plotView; }
+    addOverlayData("plot", data, r.x, r.y);
     hideDialog("dlg-plot"); plotRegion = null; state.tool = "pen"; clearActive();
   };
 
