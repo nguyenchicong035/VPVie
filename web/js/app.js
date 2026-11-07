@@ -2086,7 +2086,7 @@
     if (!window.VPLicense) return;
     var st = window.VPLicense.status(), badge = $("lic-badge"), note = $("lic-state");
     if (badge) badge.hidden = !st.active;
-    if (st.active && badge) badge.textContent = "✔ " + (st.plan === "free" ? "Đã kích hoạt" : "Bản quyền " + st.plan.toUpperCase());
+    if (st.active && badge) { var lt = badge.querySelector(".lic-txt"); if (lt) lt.textContent = (st.plan === "free" ? "Đã kích hoạt" : "Bản quyền " + st.plan.toUpperCase()); }
     if (note) {
       if (st.active) {
         var exp = st.expiry ? (" · hết hạn " + new Date(st.expiry * 1000).toLocaleDateString("vi-VN")) : " · vĩnh viễn";
