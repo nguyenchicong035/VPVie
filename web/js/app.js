@@ -726,7 +726,11 @@
 
   // Trạng thái AI
   fetch("/api/health").then(function (r) { return r.json(); }).then(function (d) {
-    if (!d.ai) { $("ai-note").style.display = "inline"; }
+    if (d.ai) {
+      // Có AI máy chủ mạnh (Ollama/pix2tex/Claude) -> ưu tiên engine "server" cho nhận dạng toán
+      if ($("ai-engine")) $("ai-engine").value = "server";
+      var nm = $("ai-note"); if (nm && d.provider) { nm.textContent = "AI: " + (d.model || d.provider); nm.style.display = "inline"; nm.classList.add("ok"); }
+    } else { $("ai-note").style.display = "inline"; }
   }).catch(function () {});
 
   // ----- Trang & sổ bài giảng (lưu/mở)

@@ -16,6 +16,40 @@ def _provider():
     return os.environ.get("VPVIE_AI_PROVIDER", "ollama").lower()
 
 
+# ----- pix2tex (LaTeX-OCR) – mô hình nguồn mở chuyên nhận công thức -> LaTeX
+_P2T_MODEL = None
+_P2T_ERR = None
+
+
+def _pix2tex_model():
+    """Nạp mô hình LatexOCR một lần (tải trọng số lần đầu). Trả None nếu không khả dụng."""
+    global _P2T_MODEL, _P2T_ERR
+    if _P2T_MODEL is not None or _P2T_ERR is not None:
+        return _P2T_MODEL
+    try:
+        from pix2tex.cli import LatexOCR  # type: ignore
+        _P2T_MODEL = LatexOCR()
+    except Exception as e:  # thiếu gói, thiếu torch, hoặc không tải được trọng số
+        _P2T_ERR = str(e)
+        _P2T_MODEL = None
+    return _P2T_MODEL
+
+
+def _pix2tex(image_png_b64: str, mode: str) -> dict:
+    import base64
+    import io
+    model = _pix2tex_model()
+    if model is None:
+        raise RuntimeError(
+            "Chưa bật được pix2tex (LaTeX-OCR). Cài: pip install \"pix2tex[api]\" và đảm bảo tải được trọng số mô hình. "
+            + ("Chi tiết: " + _P2T_ERR if _P2T_ERR else "")
+        )
+    from PIL import Image  # type: ignore
+    img = Image.open(io.BytesIO(base64.b64decode(image_png_b64))).convert("RGB")
+    latex = (model(img) or "").strip()
+    return {"kind": "math", "text": "", "latex": latex}
+
+
 def _ollama_url():
     return os.environ.get("OLLAMA_URL", "http://localhost:11434").rstrip("/")
 
@@ -47,12 +81,19 @@ def available() -> bool:
         return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
     if p == "ollama":
         return True  # cần Ollama chạy cục bộ; lỗi kết nối sẽ báo khi gọi
+    if p == "pix2tex":
+        return _pix2tex_model() is not None
     return False
 
 
 def provider_info() -> dict:
     p = _provider()
-    return {"provider": p, "model": _ollama_model() if p == "ollama" else "claude-opus-5-5"}
+    model = {
+        "ollama": _ollama_model(),
+        "anthropic": "claude-opus-5-5",
+        "pix2tex": "pix2tex (LaTeX-OCR)",
+    }.get(p, p)
+    return {"provider": p, "model": model}
 
 
 def _hint(mode: str) -> str:
@@ -116,6 +157,9 @@ def _anthropic(image_png_b64: str, mode: str) -> dict:
 
 
 def recognize(image_png_b64: str, mode: str = "auto") -> dict:
-    if _provider() == "anthropic":
+    p = _provider()
+    if p == "pix2tex":
+        return _pix2tex(image_png_b64, mode)
+    if p == "anthropic":
         return _anthropic(image_png_b64, mode)
     return _ollama(image_png_b64, mode)

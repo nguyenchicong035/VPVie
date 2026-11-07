@@ -342,3 +342,7 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .ai-opts label.chk{flex-direction:row;align-items:center;gap:6px;color:var(--text);font-size:13px}
 .ai-opts select{font-size:13px;padding:5px}
 .ai-status{font-size:11px;color:var(--muted)}
+
+/* Nhãn AI trên thanh tiêu đề */
+.ai-note{display:none;font-size:11px;padding:2px 8px;border-radius:12px;background:#fde8ea;color:#7a1020;border:1px solid #f0c4cc;margin-left:8px}
+.ai-note.ok{background:#e7f6ea;color:#1a7f37;border-color:#bfe4c8}
