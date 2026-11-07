@@ -803,7 +803,68 @@
   if ($("btn-ruler")) $("btn-ruler").onclick = function () { var on = window.VPRuler.toggle(board); this.classList.toggle("active", on); };
   // Hiện/ẩn danh sách trang
   if ($("btn-sidebar")) $("btn-sidebar").onclick = function () { var s = $("nr-side"); s.classList.toggle("hidden"); this.classList.toggle("active", !s.classList.contains("hidden")); };
-  if ($("btn-menu")) $("btn-menu").onclick = function () { var s = $("nr-side"); s.classList.toggle("hidden"); };
+  // ===== Menu ứng dụng (nút ☰) =====
+  function openAppMenu() {
+    var m = $("app-menu"), bd = $("app-menu-bd"); if (!m) return;
+    if ($("am-page")) $("am-page").value = (cur + 1);
+    if ($("am-total")) $("am-total").textContent = pages.length;
+    m.hidden = false; bd.hidden = false;
+  }
+  function closeAppMenu() { if ($("app-menu")) $("app-menu").hidden = true; if ($("app-menu-bd")) $("app-menu-bd").hidden = true; }
+  if ($("btn-menu")) $("btn-menu").onclick = function (e) { e.stopPropagation(); if ($("app-menu") && $("app-menu").hidden) openAppMenu(); else closeAppMenu(); };
+  if ($("app-menu-bd")) $("app-menu-bd").onclick = closeAppMenu;
+  function newBook() { if (!confirm("Tạo sổ mới? Nội dung chưa lưu sẽ mất.")) return; pages = [blankPage()]; cur = 0; restore(); makeThumbs(); updatePageLabel(); scheduleSave(); }
+  function toggleFull() { try { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); } catch (e) {} }
+  function applyTheme(t) {
+    document.body.classList.remove("theme-dark");
+    var dark = t === "dark" || (t === "auto" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (dark) document.body.classList.add("theme-dark");
+    try { localStorage.setItem("vpvie.theme", t); } catch (e) {}
+    document.querySelectorAll("#app-menu [data-theme]").forEach(function (b) { b.classList.toggle("on", b.dataset.theme === t); });
+  }
+  (function () { var t = "light"; try { t = localStorage.getItem("vpvie.theme") || "light"; } catch (e) {} applyTheme(t); })();
+  var AM = {
+    library: function () { openBookFile(); },
+    "new": newBook,
+    newwin: function () { try { window.open(location.href, "_blank"); } catch (e) {} },
+    fullscreen: toggleFull,
+    present: function () { var s = $("nr-side"); if (s) s.classList.add("hidden"); toggleFull(); },
+    open: function () { openBookFile(); },
+    save: function () { saveLocal(); toast("Đã lưu sổ (trên máy này)."); },
+    saveas: function () { downloadBook(); },
+    "import": function () { if ($("imp-img")) $("imp-img").click(); },
+    png: function () { $("btn-png").click(); },
+    pdf: function () { $("btn-pdf").click(); },
+    addpage: function () { addPage(); },
+    delpage: function () { delPage(); },
+    toolbar: function () { document.querySelectorAll(".nr-row-tools, .nr-row-tools2").forEach(function (r) { r.classList.toggle("hidden"); }); },
+    license: function () { if ($("btn-license")) $("btn-license").click(); },
+    update: function () { toast("Bạn đang dùng phiên bản mới nhất của VPVie."); },
+    about: function () {
+      alert("VPVie – Bảng dạy học\n\nPhím tắt:\n  Ctrl+Z / Ctrl+Y : Hoàn tác / Làm lại\n  Ctrl+C/X/V/D : Chép/Cắt/Dán/Nhân bản\n  Ctrl+A : Chọn tất cả · Delete : Xoá\n  L : Đoạn thẳng · V : Vectơ · C : Đường tròn\n  Q : Hình vuông · 3 : Tam giác\n\nPhần mềm văn phòng + dạy học tiếng Việt, mã nguồn mở.");
+    },
+    close: closeAppMenu
+  };
+  document.querySelectorAll("#app-menu [data-am]").forEach(function (b) {
+    b.onclick = function () { var fn = AM[b.dataset.am]; closeAppMenu(); if (fn) setTimeout(fn, 10); };
+  });
+  if ($("am-goto")) $("am-goto").onclick = function () { var n = parseInt($("am-page").value, 10); if (n >= 1 && n <= pages.length) { gotoPage(n - 1); } closeAppMenu(); };
+  document.querySelectorAll("#app-menu [data-theme]").forEach(function (b) { b.onclick = function () { applyTheme(b.dataset.theme); }; });
+  document.querySelectorAll("#app-menu [data-lang]").forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll("#app-menu [data-lang]").forEach(function (x) { x.classList.toggle("on", x === b); });
+      if (b.dataset.lang === "en") toast("Giao diện tiếng Anh đang được hoàn thiện.");
+    };
+  });
+  // Phím tắt F11 / Ctrl+N / Ctrl+O / Ctrl+S
+  document.addEventListener("keydown", function (e) {
+    var t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (e.key === "F11") { e.preventDefault(); toggleFull(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") { e.preventDefault(); newBook(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") { e.preventDefault(); openBookFile(); }
+    else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "s") { e.preventDefault(); saveLocal(); toast("Đã lưu sổ."); }
+    else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "s") { e.preventDefault(); downloadBook(); }
+  });
   if ($("btn-library")) $("btn-library").onclick = function () { openBookFile(); };
   // Chèn bảng
   if ($("btn-table")) $("btn-table").onclick = function () {

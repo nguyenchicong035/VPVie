@@ -610,6 +610,38 @@
     </div>
   </div>
 
+  <!-- Menu ứng dụng (nút ☰) -->
+  <div id="app-menu-bd" class="app-menu-bd" hidden></div>
+  <div id="app-menu" class="app-menu" hidden>
+    <button class="am-item" data-am="library">Thư viện</button>
+    <button class="am-item" data-am="new">Sổ mới<kbd>Ctrl+N</kbd></button>
+    <button class="am-item" data-am="newwin">Cửa sổ mới</button>
+    <button class="am-item" data-am="fullscreen">Toàn màn hình<kbd>F11</kbd></button>
+    <button class="am-item" data-am="present">Trình chiếu</button>
+    <hr/>
+    <button class="am-item" data-am="open">Mở…<kbd>Ctrl+O</kbd></button>
+    <button class="am-item" data-am="save">Lưu<kbd>Ctrl+S</kbd></button>
+    <button class="am-item" data-am="saveas">Lưu thành…<kbd>Ctrl+Shift+S</kbd></button>
+    <button class="am-item" data-am="import">Chèn ảnh, nhập file</button>
+    <button class="am-item" data-am="png">Xuất ảnh PNG</button>
+    <button class="am-item" data-am="pdf">Xuất PDF</button>
+    <hr/>
+    <div class="am-row"><span>Đến trang</span><input id="am-page" type="number" min="1" value="1"/><span>/ <b id="am-total">1</b></span><button id="am-goto" class="am-go">Áp dụng</button></div>
+    <button class="am-item" data-am="addpage">Thêm trang</button>
+    <button class="am-item" data-am="delpage">Xóa trang</button>
+    <button class="am-item" data-am="toolbar">Ẩn/hiện thanh công cụ</button>
+    <hr/>
+    <button class="am-item" data-am="license">Kích hoạt bản quyền</button>
+    <button class="am-item" data-am="update">Kiểm tra cập nhật</button>
+    <button class="am-item" data-am="about">Phím tắt & giới thiệu</button>
+    <div class="am-h">Giao diện</div>
+    <div class="am-seg"><button data-theme="light" class="on">Sáng</button><button data-theme="dark">Tối</button><button data-theme="auto">Theo máy</button></div>
+    <div class="am-h">Ngôn ngữ / Language</div>
+    <div class="am-seg"><button data-lang="vi" class="on">Tiếng Việt</button><button data-lang="en">English</button></div>
+    <hr/>
+    <button class="am-item" data-am="close">Đóng</button>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="vendor/pdfjs/pdf.min.js"></script>

@@ -484,3 +484,27 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .var-grid td.gapcol{background:#faf0f2}
 .var-grid input,.var-grid select{width:100%;min-width:72px;padding:5px 6px;border:1px solid var(--line,#e2e6ea);border-radius:7px;font:inherit;font-size:13px}
 .var-grid .mcell{min-width:84px}
+/* Menu ứng dụng (☰) */
+.app-menu-bd{position:fixed;inset:0;z-index:300}
+.app-menu-bd[hidden]{display:none}
+.app-menu{position:fixed;left:8px;top:84px;z-index:301;width:300px;max-height:84vh;overflow:auto;background:#fff;border:1px solid var(--nrline,#e2e6ea);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.18);padding:7px}
+.app-menu[hidden]{display:none}
+.app-menu .am-item{display:flex;align-items:center;width:100%;border:none;background:#fff;text-align:left;padding:9px 12px;border-radius:7px;font-size:14px;color:var(--ink,#1d2a33);cursor:pointer}
+.app-menu .am-item:hover{background:#f3f4f6}
+.app-menu .am-item kbd{margin-left:auto;font:11px system-ui;color:#9aa0a8}
+.app-menu hr{border:none;border-top:1px solid var(--nrline,#e2e6ea);margin:5px 4px}
+.app-menu .am-h{font-size:11px;font-weight:700;color:#8a8f98;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px 3px}
+.app-menu .am-row{display:flex;align-items:center;gap:7px;padding:7px 12px;font-size:14px}
+.app-menu .am-row input{width:54px;padding:5px 7px;border:1px solid var(--nrline,#e2e6ea);border-radius:7px;font:inherit}
+.app-menu .am-go{margin-left:auto;background:var(--maroon,#7a1020);color:#fff;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:600}
+.app-menu .am-seg{display:flex;gap:6px;padding:4px 12px 8px}
+.app-menu .am-seg button{flex:1;border:1px solid var(--nrline,#e2e6ea);background:#fff;border-radius:7px;padding:7px 4px;cursor:pointer;font-size:13px}
+.app-menu .am-seg button.on{background:#fbeef0;border-color:var(--maroon,#7a1020);color:var(--maroon,#7a1020);font-weight:600}
+/* Giao diện tối (cơ bản) */
+body.theme-dark{background:#1a1d21}
+body.theme-dark .nr-title,body.theme-dark .nr-row,body.theme-dark .nr-sheets,body.theme-dark .nr-side{background:#23272e;color:#e6e8eb}
+body.theme-dark .nr-ic,body.theme-dark .nr-mini{color:#e6e8eb}
+body.theme-dark .nr-ic:hover{background:#30353d}
+body.theme-dark .app-menu,body.theme-dark .dlg-card,body.theme-dark .nr-menu{background:#23272e;color:#e6e8eb;border-color:#3a3f47}
+body.theme-dark .app-menu .am-item{background:#23272e;color:#e6e8eb}
+body.theme-dark .app-menu .am-item:hover{background:#30353d}
