@@ -740,3 +740,17 @@ body.theme-dark .stk-more:hover{background:#30343d}
 #dlg-class #cls-list{font-family:'Segoe UI',system-ui,sans-serif;font-size:14px}
 body.theme-dark .cls-chip,body.theme-dark .class-actions button{background:#23262e;border-color:#353a45;color:#e6e8ee}
 body.theme-dark .cls-chip.on{background:#3a2a2e;color:#f0c7cf}
+
+/* ===== Công cụ giảng dạy: rèm che & đèn rọi ===== */
+.teach-layer{position:fixed;z-index:120}
+.teach-layer[hidden]{display:none!important}
+.teach-layer.mode-spot{cursor:none}
+.teach-layer.mode-curtain{background:transparent;pointer-events:none}
+.curtain{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(#6b7280,#4b5563);box-shadow:0 6px 20px rgba(0,0,0,.3);pointer-events:auto;background-image:repeating-linear-gradient(#5b6472 0 14px,#525b68 14px 28px)}
+.curtain-grip{position:absolute;bottom:0;left:0;right:0;height:26px;background:#374151;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:12px;cursor:ns-resize;border-top:2px solid #94a3b8;user-select:none;touch-action:none}
+.teach-bar{position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:130;display:flex;align-items:center;gap:12px;background:#1f2430;color:#eef1f6;padding:8px 14px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-family:"Segoe UI",sans-serif;font-size:14px}
+.teach-bar[hidden]{display:none!important}
+.teach-bar #teach-name{font-weight:700}
+.teach-bar .teach-hint{color:#aab3c2;font-size:12.5px}
+.teach-bar #teach-off{border:none;background:#3a4151;color:#fff;border-radius:16px;padding:5px 12px;cursor:pointer;font-size:13px}
+.teach-bar #teach-off:hover{background:#4b5468}

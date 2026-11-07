@@ -1077,6 +1077,8 @@
     newwin: function () { try { window.open(location.href, "_blank"); } catch (e) {} },
     fullscreen: toggleFull,
     present: function () { var s = $("nr-side"); if (s) s.classList.add("hidden"); toggleFull(); },
+    curtain: function () { startTeach("curtain"); },
+    spotlight: function () { startTeach("spotlight"); },
     open: function () { openBookFile(); },
     save: function () { saveLocal(); toast("Đã lưu sổ (trên máy này)."); },
     saveas: function () { downloadBook(); },
@@ -2422,6 +2424,48 @@
     };
     rd.readAsArrayBuffer(f);
   };
+
+  // ----- Công cụ giảng dạy: rèm che & đèn rọi -----
+  var teachMode = null, spotR = 120;
+  function positionTeachLayer() {
+    var layer = $("teach-layer"), b = $("board").getBoundingClientRect();
+    layer.style.top = b.top + "px"; layer.style.left = b.left + "px"; layer.style.width = b.width + "px"; layer.style.height = b.height + "px";
+  }
+  function startTeach(mode) {
+    teachMode = mode;
+    var layer = $("teach-layer"), bar = $("teach-bar"), cur = $("curtain");
+    layer.hidden = false; bar.hidden = false; positionTeachLayer();
+    layer.classList.toggle("mode-spot", mode === "spotlight");
+    layer.classList.toggle("mode-curtain", mode === "curtain");
+    if (mode === "curtain") {
+      cur.style.display = "block";
+      cur.style.height = Math.round(($("board").clientHeight) * 0.55) + "px";
+      $("teach-name").textContent = "Rèm che";
+      $("teach-hint").textContent = "Kéo thanh để lộ dần nội dung";
+    } else {
+      cur.style.display = "none";
+      $("teach-name").textContent = "Đèn rọi";
+      $("teach-hint").textContent = "Di chuột để rọi · lăn chuột đổi cỡ";
+      moveSpot($("board").clientWidth / 2, $("board").clientHeight / 2);
+    }
+  }
+  function stopTeach() { teachMode = null; if ($("teach-layer")) $("teach-layer").hidden = true; if ($("teach-bar")) $("teach-bar").hidden = true; }
+  function moveSpot(x, y) { var l = $("teach-layer"); if (l) l.style.background = "radial-gradient(circle " + spotR + "px at " + x + "px " + y + "px, rgba(0,0,0,0) 0, rgba(0,0,0,0) " + spotR + "px, rgba(15,18,28,.78) " + (spotR + 1) + "px)"; }
+  if ($("teach-off")) $("teach-off").onclick = stopTeach;
+  (function () {
+    var layer = $("teach-layer"); if (!layer) return;
+    layer.addEventListener("pointermove", function (e) { if (teachMode === "spotlight") { var r = layer.getBoundingClientRect(); moveSpot(e.clientX - r.left, e.clientY - r.top); } });
+    layer.addEventListener("wheel", function (e) { if (teachMode === "spotlight") { e.preventDefault(); spotR = Math.max(50, Math.min(400, spotR - Math.sign(e.deltaY) * 16)); var r = layer.getBoundingClientRect(); moveSpot(e.clientX - r.left, e.clientY - r.top); } }, { passive: false });
+    // Kéo rèm che
+    var grip = $("curtain-grip"), cur = $("curtain"), dragging = false;
+    if (grip) {
+      grip.addEventListener("pointerdown", function (e) { dragging = true; grip.setPointerCapture(e.pointerId); e.preventDefault(); });
+      grip.addEventListener("pointermove", function (e) { if (!dragging) return; var r = layer.getBoundingClientRect(); var hpx = Math.max(24, Math.min(r.height, e.clientY - r.top)); cur.style.height = hpx + "px"; });
+      grip.addEventListener("pointerup", function () { dragging = false; });
+    }
+    // Esc để tắt
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && teachMode) stopTeach(); });
+  })();
 
   // ----- Quay màn hình (screen recording) kèm micro — có thanh thiết lập & chọn vùng
   var mediaRec = null, recChunks = [], recMode = "region", recRAF = 0, recClean = null;

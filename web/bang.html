@@ -135,6 +135,16 @@
     </main>
   </div>
 
+  <!-- Công cụ giảng dạy: rèm che & đèn rọi -->
+  <div id="teach-layer" class="teach-layer" hidden>
+    <div id="curtain" class="curtain"><div class="curtain-grip" id="curtain-grip"><span>▲ Kéo để lộ / che nội dung ▼</span></div></div>
+  </div>
+  <div id="teach-bar" class="teach-bar" hidden>
+    <span id="teach-name">Rèm che</span>
+    <span id="teach-hint" class="teach-hint"></span>
+    <button id="teach-off">✕ Tắt</button>
+  </div>
+
   <!-- Thanh thiết lập quay màn hình -->
   <div id="rec-bar" class="rec-bar" hidden>
     <div class="rec-seg">
@@ -757,6 +767,9 @@
     <button class="am-item" data-am="newwin">Cửa sổ mới</button>
     <button class="am-item" data-am="fullscreen">Toàn màn hình<kbd>F11</kbd></button>
     <button class="am-item" data-am="present">Trình chiếu</button>
+    <div class="am-h">Công cụ giảng dạy</div>
+    <button class="am-item" data-am="curtain">🪟 Rèm che (lộ dần nội dung)</button>
+    <button class="am-item" data-am="spotlight">🔦 Đèn rọi (làm nổi vùng)</button>
     <hr/>
     <button class="am-item" data-am="open">Mở…<kbd>Ctrl+O</kbd></button>
     <button class="am-item" data-am="save">Lưu<kbd>Ctrl+S</kbd></button>
