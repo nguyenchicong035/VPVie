@@ -122,7 +122,24 @@
         <button data-act="stroke" title="Màu viền">✏ Viền</button>
         <button data-act="del" title="Xoá">🗑 Xoá</button>
       </div>
+      <!-- Khung chọn vùng quay (chế độ Vùng trang viết) -->
+      <div id="rec-region" class="rec-region" hidden>
+        <div class="rec-hint">Kéo để chọn vùng quay; kéo khung để dời, kéo góc để đổi cỡ</div>
+        <span class="rec-h nw"></span><span class="rec-h ne"></span><span class="rec-h sw"></span><span class="rec-h se"></span>
+        <span class="rec-size">0 × 0</span>
+      </div>
     </main>
+  </div>
+
+  <!-- Thanh thiết lập quay màn hình -->
+  <div id="rec-bar" class="rec-bar" hidden>
+    <div class="rec-seg">
+      <button data-mode="region" class="on">Vùng trang viết</button>
+      <button data-mode="window">Cả cửa sổ</button>
+    </div>
+    <label class="rec-mic"><input type="checkbox" id="rec-mic-tg" checked /><span class="rec-sw"></span><span class="rec-mic-ic">🎤</span> Thu tiếng (micro)</label>
+    <button id="rec-cancel" class="rec-cancel">Hủy</button>
+    <button id="rec-start" class="rec-go"><span class="rec-dot"></span> Bắt đầu quay</button>
   </div>
 
   <!-- Thanh công cụ định dạng chữ (hiện khi gõ vào khung chữ) -->

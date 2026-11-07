@@ -2251,21 +2251,108 @@
     rd.readAsArrayBuffer(f);
   };
 
-  // ----- Quay màn hình (screen recording) kèm micro
-  var mediaRec = null, recChunks = [];
-  async function toggleRecord() {
+  // ----- Quay màn hình (screen recording) kèm micro — có thanh thiết lập & chọn vùng
+  var mediaRec = null, recChunks = [], recMode = "region", recRAF = 0, recClean = null;
+  function toggleRecord() {
     var btn = $("btn-record");
-    if (mediaRec && mediaRec.state !== "inactive") { mediaRec.stop(); return; }
+    if (mediaRec && mediaRec.state !== "inactive") { mediaRec.stop(); return; }   // đang quay -> dừng
+    if (!$("rec-bar") || !$("rec-bar").hidden) { closeRecBar(); return; }          // đã mở -> đóng
+    openRecBar();
+  }
+  function openRecBar() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { toast("Trình duyệt không hỗ trợ quay màn hình."); return; }
+    $("rec-bar").hidden = false; $("btn-record").classList.add("active");
+    setRecMode(recMode);
+  }
+  function closeRecBar() { if ($("rec-bar")) $("rec-bar").hidden = true; if ($("rec-region")) $("rec-region").hidden = true; if (!mediaRec || mediaRec.state === "inactive") $("btn-record").classList.remove("active"); }
+  function setRecMode(m) {
+    recMode = m;
+    document.querySelectorAll("#rec-bar .rec-seg button").forEach(function (b) { b.classList.toggle("on", b.dataset.mode === m); });
+    var rg = $("rec-region");
+    if (m === "region") { var first = rg.hidden; rg.hidden = false; if (first) placeDefaultRegion(); else updateRegionSize(); }
+    else rg.hidden = true;
+  }
+  function placeDefaultRegion() {
+    var board = document.getElementById("board"), rg = $("rec-region");
+    var w = board.clientWidth, h = board.clientHeight;
+    var rw = Math.round(w * 0.86), rh = Math.round(h * 0.78);
+    rg.style.left = Math.round((w - rw) / 2) + "px"; rg.style.top = Math.round((h - rh) / 2) + "px";
+    rg.style.width = rw + "px"; rg.style.height = rh + "px";
+    updateRegionSize();
+  }
+  function updateRegionSize() { var rg = $("rec-region"); var sz = rg.querySelector(".rec-size"); if (sz) sz.textContent = Math.round(rg.offsetWidth) + " × " + Math.round(rg.offsetHeight); }
+  // Kéo/đổi cỡ khung vùng quay
+  (function setupRegionDrag() {
+    var rg = $("rec-region"); if (!rg) return;
+    var board = document.getElementById("board");
+    var drag = null;
+    function down(e, type) {
+      e.preventDefault(); e.stopPropagation();
+      var r = rg.getBoundingClientRect(), b = board.getBoundingClientRect();
+      drag = { type: type, sx: e.clientX, sy: e.clientY, left: r.left - b.left, top: r.top - b.top, w: r.width, h: r.height, bw: b.width, bh: b.height };
+      rg.setPointerCapture && rg.setPointerCapture(e.pointerId);
+    }
+    rg.addEventListener("pointerdown", function (e) { if (e.target.classList.contains("rec-h")) return; down(e, "move"); });
+    rg.querySelectorAll(".rec-h").forEach(function (h) { h.addEventListener("pointerdown", function (e) { down(e, h.classList[1]); }); });
+    rg.addEventListener("pointermove", function (e) {
+      if (!drag) return;
+      var dx = e.clientX - drag.sx, dy = e.clientY - drag.sy, L = drag.left, T = drag.top, W = drag.w, H = drag.h;
+      if (drag.type === "move") { L = drag.left + dx; T = drag.top + dy; }
+      else {
+        if (/w/.test(drag.type)) { L = drag.left + dx; W = drag.w - dx; }
+        if (/e/.test(drag.type)) { W = drag.w + dx; }
+        if (/n/.test(drag.type)) { T = drag.top + dy; H = drag.h - dy; }
+        if (/s/.test(drag.type)) { H = drag.h + dy; }
+      }
+      W = Math.max(80, W); H = Math.max(60, H);
+      L = Math.max(0, Math.min(drag.bw - W, L)); T = Math.max(0, Math.min(drag.bh - H, T));
+      rg.style.left = L + "px"; rg.style.top = T + "px"; rg.style.width = W + "px"; rg.style.height = H + "px";
+      updateRegionSize();
+    });
+    rg.addEventListener("pointerup", function () { drag = null; });
+  })();
+  if ($("rec-bar")) document.querySelectorAll("#rec-bar .rec-seg button").forEach(function (b) { b.onclick = function () { setRecMode(b.dataset.mode); }; });
+  if ($("rec-cancel")) $("rec-cancel").onclick = function () { closeRecBar(); };
+  if ($("rec-start")) $("rec-start").onclick = function () { var mic = $("rec-mic-tg") ? $("rec-mic-tg").checked : true; startRecording(recMode, mic); };
+
+  async function startRecording(mode, useMic) {
+    var btn = $("btn-record");
+    // Toạ độ vùng (chế độ Vùng trang viết) tính theo viewport để cắt từ video
+    var crop = null;
+    if (mode === "region") { var rg = $("rec-region"), r = rg.getBoundingClientRect(); crop = { x: r.left, y: r.top, w: r.width, h: r.height }; }
+    closeRecBar(); document.body.classList.add("rec-live");
     try {
-      var stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: true });
-      try { var mic = await navigator.mediaDevices.getUserMedia({ audio: true }); mic.getAudioTracks().forEach(function (t) { stream.addTrack(t); }); } catch (e) {}
-      recChunks = []; mediaRec = new MediaRecorder(stream, { mimeType: "video/webm" });
+      var disp = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: true, preferCurrentTab: true });
+      var micStream = null;
+      if (useMic) { try { micStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) {} }
+      var recStream, cleanup = [];
+      if (mode === "window") {
+        recStream = disp;
+        if (micStream) micStream.getAudioTracks().forEach(function (t) { recStream.addTrack(t); });
+        cleanup.push(function () { disp.getTracks().forEach(function (t) { t.stop(); }); if (micStream) micStream.getTracks().forEach(function (t) { t.stop(); }); });
+      } else {
+        // Cắt vùng: vẽ từng khung hình của video màn hình vào canvas theo tỉ lệ viewport
+        var vid = document.createElement("video"); vid.srcObject = disp; vid.muted = true; await vid.play().catch(function () {});
+        var vw = vid.videoWidth || window.innerWidth, vh = vid.videoHeight || window.innerHeight;
+        var sx = vw / window.innerWidth, sy = vh / window.innerHeight;
+        var cw = Math.max(2, Math.round(crop.w * sx)), ch = Math.max(2, Math.round(crop.h * sy));
+        var rc = document.createElement("canvas"); rc.width = cw; rc.height = ch; var rctx = rc.getContext("2d");
+        var draw = function () { try { rctx.drawImage(vid, crop.x * sx, crop.y * sy, crop.w * sx, crop.h * sy, 0, 0, cw, ch); } catch (e) {} recRAF = requestAnimationFrame(draw); };
+        draw();
+        recStream = rc.captureStream(30);
+        disp.getAudioTracks().forEach(function (t) { recStream.addTrack(t); });
+        if (micStream) micStream.getAudioTracks().forEach(function (t) { recStream.addTrack(t); });
+        cleanup.push(function () { cancelAnimationFrame(recRAF); disp.getTracks().forEach(function (t) { t.stop(); }); if (micStream) micStream.getTracks().forEach(function (t) { t.stop(); }); });
+      }
+      // Người dùng bấm "Dừng chia sẻ" của trình duyệt -> dừng luôn
+      disp.getVideoTracks()[0].addEventListener("ended", function () { if (mediaRec && mediaRec.state !== "inactive") mediaRec.stop(); });
+      recClean = function () { cleanup.forEach(function (f) { f(); }); recClean = null; };
+      recChunks = []; mediaRec = new MediaRecorder(recStream, { mimeType: "video/webm" });
       mediaRec.ondataavailable = function (ev) { if (ev.data.size) recChunks.push(ev.data); };
       mediaRec.onstop = function () {
-        stream.getTracks().forEach(function (t) { t.stop(); });
+        if (recClean) recClean();
+        document.body.classList.remove("rec-live"); btn.classList.remove("active");
         var blob = new Blob(recChunks, { type: "video/webm" }), name = "bai-giang-" + Date.now() + ".webm";
-        btn.classList.remove("active");
         if (window.VPDesktop && window.VPDesktop.isApp && folders.videos) {
           var fr = new FileReader();
           fr.onload = function () { var b64 = fr.result.split(",")[1]; window.VPDesktop.saveFile(folders.videos, name, b64, true).then(function (r) { toast(r.ok ? "Đã lưu video vào: " + r.path : "Lỗi lưu video."); }); };
@@ -2274,8 +2361,9 @@
         var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
         toast("Đã lưu video bài giảng (.webm).");
       };
-      mediaRec.start(); btn.classList.add("active"); toast("Đang quay màn hình… bấm lại để dừng.");
-    } catch (e) { toast("Đã hủy quay màn hình."); }
+      mediaRec.start(); btn.classList.add("active");
+      toast(mode === "region" ? "Đang quay vùng đã chọn… bấm ⏺ để dừng." : "Đang quay cả cửa sổ… bấm ⏺ để dừng.");
+    } catch (e) { document.body.classList.remove("rec-live"); btn.classList.remove("active"); toast("Đã hủy quay màn hình."); }
   }
 
   loadSettings();
