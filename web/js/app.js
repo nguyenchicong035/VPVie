@@ -543,6 +543,10 @@
     else if (kind === "var") window.VPVar.build(body, data);
     else if (kind === "timer") window.VPClass.buildTimer(body, data);
     else if (kind === "picker") window.VPClass.buildPicker(body, data);
+    else if (kind === "wheel") window.VPClass.buildWheel(body, data);
+    else if (kind === "groups") window.VPClass.buildGroups(body, data);
+    else if (kind === "attend") window.VPClass.buildAttend(body, data);
+    else if (kind === "score") window.VPClass.buildScore(body, data);
     else if (kind === "ptable") window.VPScience.buildPTable(body);
     else if (kind === "chem") window.VPScience.buildChem(body);
     else if (kind === "circuit" || kind === "force" || kind === "pedigree" || kind === "dna") { data._save = scheduleSave; window.VPDiagram.build(body, kind, data); }
@@ -771,7 +775,11 @@
   function insertNote(x, y) { addOverlayData("note", { text: "", color: "#FFF1A6" }, x, y); }
   function insertVar(data, x, y) { addOverlayData("var", data, x, y); }
   function insertTimer(x, y) { addOverlayData("timer", { total: 300 }, x, y); }
-  function insertPicker(x, y) { addOverlayData("picker", { names: "" }, x, y); }
+  function insertPicker(x, y) { addOverlayData("picker", {}, x, y); }
+  function insertWheel(x, y) { addOverlayData("wheel", {}, x, y); }
+  function insertGroups(x, y) { addOverlayData("groups", { groups: 4 }, x, y); }
+  function insertAttend(x, y) { addOverlayData("attend", {}, x, y); }
+  function insertScore(x, y) { addOverlayData("score", {}, x, y); }
   var quizNo = 0;
   function insertQuiz(data, kind, x, y) {
     quizNo += 1; data.no = quizNo; data.sub = kind;
@@ -1262,7 +1270,11 @@
   // Quay màn hình
   if ($("btn-record")) $("btn-record").onclick = toggleRecord;
   if ($("btn-timer")) $("btn-timer").onclick = function () { insertTimer(120, 90); };
-  if ($("btn-picker")) $("btn-picker").onclick = function () { insertPicker(160, 90); };
+  if ($("btn-picker")) $("btn-picker").onclick = function (e) { var r = this.getBoundingClientRect(); showMenuAt($("class-menu"), r.left, r.bottom + 4); e.stopPropagation(); };
+  var classIns = { picker: insertPicker, wheel: insertWheel, groups: insertGroups, attend: insertAttend, score: insertScore, timer: insertTimer };
+  document.querySelectorAll("#class-menu [data-class]").forEach(function (b) {
+    b.onclick = function () { $("class-menu").classList.remove("show"); var fn = classIns[b.dataset.class]; if (fn) fn(160, 100); };
+  });
   // ===== Bảng biến thiên: kéo chọn vùng -> bảng điền =====
   var varRegion = null, varGrid = null;
   $("btn-var").onclick = function () { state.tool = "varregion"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Kéo chuột để chọn vùng đặt bảng biến thiên."); };

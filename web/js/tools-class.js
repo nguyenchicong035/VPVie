@@ -45,5 +45,138 @@
     [cap, big, btn, ta].forEach(function (x) { body.appendChild(x); });
   }
 
-  global.VPClass = { buildTimer: buildTimer, buildPicker: buildPicker };
+  // ----- Danh sách lớp dùng chung (lưu cục bộ) -----
+  function roster() { try { return localStorage.getItem("vpvie.class") || ""; } catch (e) { return ""; } }
+  function saveRoster(v) { try { localStorage.setItem("vpvie.class", v); } catch (e) {} }
+  function namesOf(data) {
+    var raw = (data.names != null ? data.names : roster()) || "";
+    return raw.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  // ----- Vòng quay may mắn -----
+  function buildWheel(body, data) {
+    body.innerHTML = "";
+    var cap = el("div", "ov-cap"); cap.textContent = "🎡 Vòng quay may mắn";
+    var wrap = el("div", "cl-wheel-wrap");
+    var cv = el("canvas", "cl-wheel"); cv.width = 260; cv.height = 260;
+    var ptr = el("div", "cl-wheel-ptr"); ptr.textContent = "▼";
+    var res = el("div", "cl-name"); res.textContent = "—";
+    var spin = el("button", "cl-pick"); spin.textContent = "Quay 🎡";
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = data.names != null ? data.names : roster();
+    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); draw(0); };
+    wrap.appendChild(cv); wrap.appendChild(ptr);
+    [cap, wrap, res, spin, ta].forEach(function (x) { body.appendChild(x); });
+    var COL = ["#C21807", "#1F6FEB", "#1A7F37", "#E3A008", "#7A3FB3", "#0E7490", "#D6336C", "#5C7CFA"];
+    var ang = 0;
+    function draw(a) {
+      var ctx = cv.getContext("2d"), n = Math.max(namesOf(data).length, 1), names = namesOf(data);
+      var cx = 130, cy = 130, r = 120; ctx.clearRect(0, 0, 260, 260);
+      for (var i = 0; i < n; i++) {
+        var a0 = a + i / n * 6.2832, a1 = a + (i + 1) / n * 6.2832;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, a0, a1); ctx.closePath();
+        ctx.fillStyle = COL[i % COL.length]; ctx.fill();
+        if (names[i]) { ctx.save(); ctx.translate(cx, cy); ctx.rotate((a0 + a1) / 2); ctx.fillStyle = "#fff"; ctx.font = "13px 'Segoe UI'"; ctx.textAlign = "right"; ctx.fillText(names[i].slice(0, 12), r - 10, 5); ctx.restore(); }
+      }
+      ctx.beginPath(); ctx.arc(cx, cy, 16, 0, 6.2832); ctx.fillStyle = "#fff"; ctx.fill(); ctx.strokeStyle = "#7a1020"; ctx.lineWidth = 2; ctx.stroke();
+    }
+    var spinning = false;
+    spin.onclick = function () {
+      var names = namesOf(data); if (names.length < 2) { res.textContent = "(cần ≥2 tên)"; return; }
+      if (spinning) return; spinning = true;
+      var target = Math.floor(Math.random() * names.length);
+      var turns = 6.2832 * (4 + Math.random() * 2);
+      var seg = 6.2832 / names.length;
+      var finalAng = turns + (6.2832 - (target + 0.5) * seg) - 1.5708; // mũi tên ở trên (−90°)
+      var t0 = performance.now(), dur = 3200, start = ang;
+      (function anim(t) {
+        var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        ang = start + finalAng * e; draw(ang);
+        if (k < 1) requestAnimationFrame(anim);
+        else { spinning = false; res.textContent = names[target]; res.classList.remove("pop"); void res.offsetWidth; res.classList.add("pop"); }
+      })(t0);
+    };
+    draw(0);
+  }
+
+  // ----- Chia nhóm ngẫu nhiên -----
+  function buildGroups(body, data) {
+    body.innerHTML = "";
+    var cap = el("div", "ov-cap"); cap.textContent = "👥 Chia nhóm ngẫu nhiên";
+    var row = el("div", "cl-row");
+    var lbl = el("span"); lbl.textContent = "Số nhóm:";
+    var num = el("input"); num.type = "number"; num.min = 2; num.value = data.groups || 4; num.style.width = "64px";
+    var btn = el("button", "cl-start"); btn.textContent = "Chia nhóm";
+    row.appendChild(lbl); row.appendChild(num); row.appendChild(btn);
+    var out = el("div", "cl-groups");
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = data.names != null ? data.names : roster();
+    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); };
+    [cap, row, out, ta].forEach(function (x) { body.appendChild(x); });
+    function go() {
+      var names = shuffle(namesOf(data).slice()), g = Math.max(2, parseInt(num.value, 10) || 2);
+      data.groups = g; out.innerHTML = "";
+      if (!names.length) { out.textContent = "(chưa có tên)"; return; }
+      var cols = []; for (var i = 0; i < g; i++) cols.push([]);
+      names.forEach(function (nm, i) { cols[i % g].push(nm); });
+      cols.forEach(function (list, gi) {
+        var c = el("div", "cl-group"); var h = el("div", "cl-group-h"); h.textContent = "Nhóm " + (gi + 1); c.appendChild(h);
+        list.forEach(function (nm) { var d = el("div"); d.textContent = nm; c.appendChild(d); }); out.appendChild(c);
+      });
+    }
+    btn.onclick = go;
+  }
+
+  // ----- Điểm danh -----
+  function buildAttend(body, data) {
+    body.innerHTML = "";
+    data.absent = data.absent || {};
+    var cap = el("div", "ov-cap"); cap.textContent = "✅ Điểm danh";
+    var sum = el("div", "cl-sum");
+    var list = el("div", "cl-attend");
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = data.names != null ? data.names : roster();
+    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); render(); };
+    [cap, sum, list, ta].forEach(function (x) { body.appendChild(x); });
+    function render() {
+      var names = namesOf(data); list.innerHTML = ""; var present = 0;
+      names.forEach(function (nm) {
+        var absent = !!data.absent[nm]; if (!absent) present++;
+        var r = el("div", "cl-attend-row" + (absent ? " absent" : ""));
+        var n = el("span", "cl-attend-n"); n.textContent = nm;
+        var b = el("button"); b.textContent = absent ? "Vắng" : "Có mặt"; b.className = absent ? "cl-abs" : "cl-pre";
+        b.onclick = function () { data.absent[nm] = !data.absent[nm]; render(); };
+        r.appendChild(n); r.appendChild(b); list.appendChild(r);
+      });
+      sum.textContent = "Sĩ số " + names.length + " · Có mặt " + present + " · Vắng " + (names.length - present);
+    }
+    render();
+  }
+
+  // ----- Thi đua (cộng điểm) -----
+  function buildScore(body, data) {
+    body.innerHTML = "";
+    data.scores = data.scores || {};
+    var cap = el("div", "ov-cap"); cap.textContent = "🏆 Bảng thi đua";
+    var list = el("div", "cl-score");
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên/nhóm…"; ta.value = data.names != null ? data.names : roster();
+    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); render(); };
+    [cap, list, ta].forEach(function (x) { body.appendChild(x); });
+    function render() {
+      var names = namesOf(data); list.innerHTML = "";
+      names.map(function (nm) { return { nm: nm, s: data.scores[nm] || 0 }; })
+        .sort(function (a, b) { return b.s - a.s; })
+        .forEach(function (it, idx) {
+          var r = el("div", "cl-score-row");
+          var rk = el("span", "cl-rank"); rk.textContent = (idx + 1);
+          var n = el("span", "cl-score-n"); n.textContent = it.nm;
+          var sc = el("span", "cl-score-v"); sc.textContent = it.s;
+          var minus = el("button"); minus.textContent = "−"; minus.onclick = function () { data.scores[it.nm] = (data.scores[it.nm] || 0) - 1; render(); };
+          var plus = el("button", "cl-plus"); plus.textContent = "+"; plus.onclick = function () { data.scores[it.nm] = (data.scores[it.nm] || 0) + 1; render(); };
+          r.appendChild(rk); r.appendChild(n); r.appendChild(minus); r.appendChild(sc); r.appendChild(plus); list.appendChild(r);
+        });
+      if (!names.length) list.textContent = "(chưa có tên)";
+    }
+    render();
+  }
+
+  global.VPClass = { buildTimer: buildTimer, buildPicker: buildPicker, buildWheel: buildWheel, buildGroups: buildGroups, buildAttend: buildAttend, buildScore: buildScore, roster: roster };
 })(window);

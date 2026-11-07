@@ -670,3 +670,31 @@ body.theme-dark .rec-seg button.on{background:#3a404c;color:#f0c7cf}
 body.theme-dark .appbar-btn{background:#2b2f37;border-color:#8a2436;color:#f0c7cf}
 body.theme-dark .appbar-btn:hover{background:#8a2436;color:#fff}
 body.theme-dark .lic-badge{background:#1f3326;color:#8fe0a8;border-color:#2f5a3d}
+
+/* ===== Công cụ lớp học mới: vòng quay, chia nhóm, điểm danh, thi đua ===== */
+.cl-wheel-wrap{position:relative;width:260px;height:260px;margin:0 auto}
+.cl-wheel{display:block}
+.cl-wheel-ptr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);color:#7a1020;font-size:20px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.cl-row{display:flex;align-items:center;gap:8px;margin:6px 0}
+.cl-row input{border:1px solid var(--line);border-radius:7px;padding:5px 7px}
+.cl-start{border:none;background:var(--teal,#0e7490);color:#fff;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer}
+.cl-groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:6px 0}
+.cl-group{border:1px solid var(--line);border-radius:9px;padding:6px 8px;font-size:13px}
+.cl-group-h{font-weight:700;color:#7a1020;margin-bottom:3px;border-bottom:1px solid #eee;padding-bottom:2px}
+.cl-sum{font-size:13px;color:#51606c;margin:4px 0 8px;font-weight:600}
+.cl-attend{display:flex;flex-direction:column;gap:5px;max-height:260px;overflow:auto}
+.cl-attend-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--line);border-radius:8px}
+.cl-attend-row.absent{background:#fdeef0;border-color:#f3c7cf}
+.cl-attend-n{flex:1;font-size:14px}
+.cl-attend button{border:none;border-radius:7px;padding:4px 12px;font-size:12.5px;font-weight:600;cursor:pointer;min-width:66px}
+.cl-attend .cl-pre{background:#e7f6ec;color:#1a7f37}
+.cl-attend .cl-abs{background:#fde0e4;color:#c21807}
+.cl-score{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.cl-score-row{display:flex;align-items:center;gap:7px;padding:4px 8px;border:1px solid var(--line);border-radius:8px}
+.cl-rank{width:20px;text-align:center;font-weight:800;color:#7a1020}
+.cl-score-n{flex:1;font-size:14px}
+.cl-score-v{min-width:30px;text-align:center;font-weight:800;color:var(--navy,#1f2733);font-variant-numeric:tabular-nums}
+.cl-score button{width:26px;height:26px;border:1px solid var(--line);background:#fff;border-radius:7px;font-size:15px;font-weight:700;cursor:pointer;line-height:1}
+.cl-score .cl-plus{background:#e7f6ec;border-color:#bfe6cb;color:#1a7f37}
+body.theme-dark .cl-group,body.theme-dark .cl-attend-row,body.theme-dark .cl-score-row,body.theme-dark .cl-row input{background:#23262e;border-color:#353a45}
+body.theme-dark .cl-attend-row.absent{background:#3a2428}
