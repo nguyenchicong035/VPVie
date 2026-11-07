@@ -17,6 +17,8 @@
     drawing: false,
     cur: null,
     pen: "ball",      // ball | brush | pencil | hl (dạ quang)
+    tidyInk: true,    // tự nắn mượt nét chữ viết tay sau khi viết
+    tidyStrength: 2,  // 1 nhẹ · 2 vừa · 3 mạnh
     // Cài đặt trang giấy + hình vẽ (toàn cục, không theo trang)
     paper: { style: "lined", bg: "#FFFFFF", lineColor: "#9CC2F0", spacing: 34, thickness: 1, orient: "portrait", titlebox: true, margin: true, pagebreak: true },
     opt: { showdots: true, autolabel: false, snap: false, lblsize: 16, lblcolor: "#111111", dotsize: 4, subject: "toan", cursor: "pen", cursize: "s", touch: "auto", autosave: true, penlead: true, scratchrase: false },
@@ -327,6 +329,10 @@
     if (state.beautify && window.VPBeautify && s.pen !== "hl") {
       var shp = window.VPBeautify.beautify(s.points);
       if (shp) { shp.color = s.color; shp.size = s.size; state.items.push(shp); redraw(); return; }
+    }
+    // Nắn nét chữ viết tay: làm mượt, bớt run tay — VẪN là nét chữ của người dùng
+    if (state.tidyInk && window.VPBeautify && s.type === "stroke" && s.pen !== "hl" && s.points.length > 3) {
+      s.points = window.VPBeautify.refineInk(s.points, state.tidyStrength || 2);
     }
     state.items.push(s); redraw();
   }
@@ -683,6 +689,8 @@
     document.querySelectorAll("#pen-menu [data-pm]").forEach(function (b) { b.classList.toggle("chk", state.tool === "pen" && state.pen === b.dataset.pm); });
     document.querySelectorAll("#pen-menu [data-pz]").forEach(function (b) { b.classList.toggle("chk", state.size === parseInt(b.dataset.pz, 10)); });
     var bz = document.querySelector('#pen-menu [data-pb]'); if (bz) bz.classList.toggle("chk", !!state.beautify);
+    var pt = document.querySelector('#pen-menu [data-pt]'); if (pt) pt.classList.toggle("chk", !!state.tidyInk);
+    document.querySelectorAll("#pen-menu [data-tidy]").forEach(function (b) { b.classList.toggle("chk", state.tidyInk && (state.tidyStrength || 2) === parseInt(b.dataset.tidy, 10)); });
     document.querySelectorAll("#eraser-menu [data-em]").forEach(function (b) { b.classList.toggle("chk", state.tool === "eraser" && (state.eraserMode || "stroke") === b.dataset.em); });
   }
   [["btn-pen-dd", "pen-menu"], ["btn-eraser-dd", "eraser-menu"]].forEach(function (pr) {
@@ -701,9 +709,22 @@
         state.size = parseInt(b.dataset.pz, 10);
         document.querySelectorAll("[data-sizedot]").forEach(function (x) { x.classList.toggle("sel", parseInt(x.dataset.sizedot, 10) === state.size); });
       } else if (b.dataset.pb != null) { $("beautify").click(); }
+      else if (b.dataset.pt != null) { state.tidyInk = !state.tidyInk; toast(state.tidyInk ? "Tự nắn mượt nét chữ: BẬT" : "Tự nắn mượt nét chữ: TẮT"); }
+      else if (b.dataset.tidy != null) { state.tidyInk = true; state.tidyStrength = parseInt(b.dataset.tidy, 10); toast("Nắn nét mức " + b.dataset.tidy + " (" + b.textContent.trim().replace(/^\d+ · /, "") + ")"); }
+      else if (b.dataset.tidyAll != null) { tidyWholePage(); }
       syncMenuChecks();
     };
   });
+  // Nắn mượt lại mọi nét viết tay trên trang (giữ nguyên là nét chữ)
+  function tidyWholePage() {
+    if (!window.VPBeautify) return;
+    var strokes = state.items.filter(function (it) { return it.type === "stroke" && it.pen !== "hl" && it.points && it.points.length > 3; });
+    if (!strokes.length) { toast("Trang chưa có nét viết tay để nắn."); return; }
+    pushHist();
+    strokes.forEach(function (it) { it.points = window.VPBeautify.refineInk(it.points, state.tidyStrength || 2); });
+    redraw(); scheduleSave();
+    toast("Đã nắn mượt " + strokes.length + " nét (Ctrl+Z để hoàn tác).");
+  }
   document.querySelectorAll("#eraser-menu button").forEach(function (b) {
     b.onclick = function (e) {
       e.stopPropagation(); $("eraser-menu").classList.remove("show");

@@ -181,6 +181,22 @@ Mặc định TẮT để bản miễn phí/phát triển vẫn chạy.
 > (ai cũng sửa được `isPro()`); key offline chỉ chống *làm giả key*. Giá trị bán thật nên đặt ở
 > **AI máy chủ** (đã khoá) hoặc kích hoạt online (**hướng C — ĐÃ LÀM**: key nhiều máy, đếm/giới hạn số máy, thu hồi).
 
+## 5d. Nắn mượt nét chữ viết tay (MỚI — theo yêu cầu)
+
+Khác với nhận dạng ra chữ: tính năng này **giữ nguyên nét viết tay của người dùng**
+nhưng **làm mượt, bớt run tay, bớt nguệch ngoạc** sau khi viết xong.
+
+- `web/js/beautify.js` → `VPBeautify.refineInk(points, strength)`: resample đều →
+  RDP nhẹ bỏ điểm nhiễu → trung bình trượt → nội suy Catmull-Rom. strength 1/2/3.
+- `app.js`: `state.tidyInk` (mặc định BẬT) tự nắn mỗi nét sau pointerup (không áp cho
+  bút dạ quang; chạy sau khi shape-beautify trả null). `tidyWholePage()` nắn lại mọi
+  nét trên trang (có pushHist để Ctrl+Z).
+- Giao diện: menu ▾ của Bút, mục "Nắn nét chữ viết tay": bật/tắt, mức Nhẹ/Vừa/Mạnh,
+  "Nắn lại toàn trang". Tách bạch với "✨ Nắn thành hình (thẳng/tròn)".
+
+> Phân biệt: "Theo nét" (VPInk) = ra CHỮ đánh máy; "Nắn nét" (refineInk) = GIỮ nét tay,
+> chỉ làm mượt. Người dùng muốn cái sau.
+
 ## 6. Lỗi đã gặp & cách xử lý (để không lặp lại)
 - CDN bị chặn trong trình duyệt → vendor hết thư viện cục bộ.
 - mathjs stub 4KB → dùng `lib/browser/math.js`.

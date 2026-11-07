@@ -106,5 +106,77 @@
     return null;
   }
 
-  global.VPBeautify = { beautify, bbox, pathLength, rdp };
+  // ---------- NẮN NÉT CHỮ VIẾT TAY ----------
+  // Làm mượt nét viết tay (giảm run tay, bớt nguệch ngoạc) NHƯNG GIỮ NGUYÊN là nét
+  // chữ của người dùng — không đổi thành hình, không thành chữ đánh máy.
+  function resampleEven(pts, step) {
+    if (pts.length < 2) return pts.slice();
+    var out = [pts[0]], prev = pts[0], acc = 0;
+    for (var i = 1; i < pts.length; i++) {
+      var d = dist(prev, pts[i]);
+      if (d < 1e-6) { continue; }
+      while (acc + d >= step) {
+        var t = (step - acc) / d;
+        var np = { x: prev.x + t * (pts[i].x - prev.x), y: prev.y + t * (pts[i].y - prev.y), pr: pts[i].pr };
+        out.push(np); prev = np; d = dist(prev, pts[i]); acc = 0;
+      }
+      acc += d; prev = pts[i];
+    }
+    var last = pts[pts.length - 1];
+    if (dist(out[out.length - 1], last) > step * 0.3) out.push(last);
+    return out;
+  }
+  // Làm trơn kiểu trung bình trượt, giữ nguyên 2 đầu nét
+  function smoothPass(pts, w) {
+    if (pts.length < 3) return pts;
+    var out = [pts[0]];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var sx = 0, sy = 0, n = 0;
+      for (var j = -w; j <= w; j++) { var k = i + j; if (k < 0 || k >= pts.length) continue; sx += pts[k].x; sy += pts[k].y; n++; }
+      out.push({ x: sx / n, y: sy / n, pr: pts[i].pr });
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
+  }
+  // Nội suy Catmull-Rom cho đường cong trơn qua các điểm
+  function catmullRom(pts, samples) {
+    if (pts.length < 3) return pts.slice();
+    var out = [];
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || pts[i + 1];
+      for (var s = 0; s < samples; s++) {
+        var t = s / samples, t2 = t * t, t3 = t2 * t;
+        out.push({
+          x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+          y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3),
+          pr: p1.pr
+        });
+      }
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
+  }
+  // strength: 1 nhẹ, 2 vừa (mặc định), 3 mạnh
+  function refineInk(pts, strength) {
+    if (!pts || pts.length < 4) return pts;
+    strength = strength || 2;
+    var bb = bbox(pts), size = Math.max(bb.w, bb.h);
+    if (size < 8) return pts;
+    // 1) Resample đều để ổn định
+    var step = Math.max(2, size * 0.02);
+    var r = resampleEven(pts, step);
+    if (r.length < 4) return pts;
+    // 2) Bỏ điểm nhiễu bằng RDP nhẹ (giữ hình dáng chữ)
+    var eps = size * (strength === 1 ? 0.012 : strength === 3 ? 0.03 : 0.02);
+    var simplified = rdp(r, eps);
+    if (simplified.length < 3) simplified = r;
+    // 3) Làm trơn trung bình trượt + nội suy Catmull-Rom -> nét mượt
+    var sm = simplified;
+    var passes = strength === 1 ? 1 : strength === 3 ? 3 : 2;
+    for (var k = 0; k < passes; k++) sm = smoothPass(sm, 1);
+    var curve = catmullRom(sm, 8);
+    return curve.length >= 2 ? curve : pts;
+  }
+
+  global.VPBeautify = { beautify, bbox, pathLength, rdp, refineInk, resampleEven, smoothPass, catmullRom };
 })(window);
