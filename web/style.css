@@ -35,8 +35,16 @@ select{border:1px solid var(--line);border-radius:8px;padding:6px;font-size:13px
 .board{position:relative;flex:1 1 auto;overflow:hidden;background:#fff}
 #paper{position:absolute;inset:0;touch-action:none;cursor:crosshair}
 .overlay{position:absolute;inset:0;pointer-events:none}
-.ov{position:absolute;pointer-events:auto;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:10px;padding:8px 12px;box-shadow:0 4px 14px rgba(0,0,0,.08);cursor:move;min-width:40px}
-.ov.dragging{box-shadow:0 8px 22px rgba(0,0,0,.18)}
+/* Mặc định: vật thể chèn vào có NỀN TRONG SUỐT (như viết thẳng lên trang) */
+.ov{position:absolute;pointer-events:auto;background:transparent;border:1px solid transparent;border-radius:8px;padding:4px 6px;cursor:move;min-width:24px}
+.ov:hover{border-color:rgba(122,16,32,.25)}
+.ov.sel{border:1px solid var(--accent);border-style:dashed}
+.ov.dragging{border-color:var(--accent)}
+/* Công cụ tương tác vẫn giữ nền trắng để dễ dùng (không tính công thức/chữ/đồ thị) */
+.ov-calc,.ov-quiz,.ov-timer,.ov-picker,.ov-table,.ov-ptable,.ov-chem,.ov-circuit,.ov-force,.ov-pedigree,.ov-dna,.ov-web{background:rgba(255,255,255,.97);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.08);padding:8px 12px}
+/* Tay cầm đổi kích thước (góc dưới-phải) */
+.ov-resize{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--accent);cursor:nwse-resize;display:none;z-index:3}
+.ov:hover .ov-resize,.ov.sel .ov-resize{display:block}
 .ov-del{position:absolute;top:-10px;right:-10px;width:22px;height:22px;border-radius:50%;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:12px;line-height:22px;padding:0}
 .ov-text .ov-body{font-size:17px;white-space:pre-wrap;max-width:420px}
 .ov-cap{font-size:12px;color:var(--teal);margin-bottom:4px;font-weight:600}

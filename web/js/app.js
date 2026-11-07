@@ -409,6 +409,12 @@
       body.appendChild(grip); body.appendChild(ed); body.appendChild(bar);
     }
   }
+  function applyOvScale(el, ov) {
+    var body = el.querySelector(".ov-body"); if (!body) return;
+    var s = ov.scale || 1;
+    body.style.transformOrigin = "top left";
+    body.style.transform = s === 1 ? "" : "scale(" + s + ")";
+  }
   function makeOverlayEl(ov) {
     var el = document.createElement("div");
     el.className = "ov ov-" + ov.kind; el.style.left = ov.x + "px"; el.style.top = ov.y + "px"; el.dataset.id = ov.id;
@@ -416,8 +422,11 @@
     var del = document.createElement("button"); del.className = "ov-del"; del.textContent = "✕"; del.title = "Xóa";
     del.onclick = function () { removeOverlay(ov.id); };
     el.appendChild(del);
+    var rz = document.createElement("div"); rz.className = "ov-resize"; rz.title = "Kéo để đổi kích thước";
+    el.appendChild(rz);
     overlayBody(ov.kind, body, ov.data);
-    makeDraggable(el, ov);
+    applyOvScale(el, ov);
+    makeDraggable(el, ov, rz);
     return el;
   }
   function renderOverlays() { overlay.innerHTML = ""; state.overlays.forEach(function (ov) { overlay.appendChild(makeOverlayEl(ov)); }); }
@@ -427,13 +436,31 @@
     state.overlays.push(ov); overlay.appendChild(makeOverlayEl(ov)); scheduleSave(); return ov;
   }
   function removeOverlay(id) { state.overlays = state.overlays.filter(function (o) { return o.id !== id; }); renderOverlays(); scheduleSave(); }
-  function makeDraggable(el, ov) {
-    var sx, sy, ox, oy, moving = false;
+  function selectOverlay(el) {
+    overlay.querySelectorAll(".ov.sel").forEach(function (o) { if (o !== el) o.classList.remove("sel"); });
+    if (el) el.classList.add("sel");
+  }
+  function makeDraggable(el, ov, rz) {
+    var sx, sy, ox, oy, moving = false, resizing = false, startScale = 1, startW = 0;
+    // Kéo tay cầm góc -> đổi kích thước (scale)
+    if (rz) rz.addEventListener("pointerdown", function (e) {
+      e.stopPropagation(); resizing = true; sx = e.clientX; sy = e.clientY;
+      startScale = ov.scale || 1; startW = el.querySelector(".ov-body").offsetWidth || 100;
+      rz.setPointerCapture(e.pointerId); selectOverlay(el);
+    });
+    if (rz) rz.addEventListener("pointermove", function (e) {
+      if (!resizing) return;
+      var dw = (e.clientX - sx);
+      var ns = Math.max(0.3, Math.min(6, startScale * (startW + dw) / startW));
+      ov.scale = ns; applyOvScale(el, ov);
+    });
+    if (rz) rz.addEventListener("pointerup", function () { resizing = false; scheduleSave(); });
+    // Kéo thân -> di chuyển
     el.addEventListener("pointerdown", function (e) {
-      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors")) return;
+      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors, .ov-resize")) { if (!e.target.closest(".ov-resize")) selectOverlay(el); return; }
       moving = true; sx = e.clientX; sy = e.clientY;
       ox = parseFloat(el.style.left); oy = parseFloat(el.style.top);
-      el.setPointerCapture(e.pointerId); el.classList.add("dragging");
+      el.setPointerCapture(e.pointerId); el.classList.add("dragging"); selectOverlay(el);
     });
     el.addEventListener("pointermove", function (e) {
       if (!moving) return;
