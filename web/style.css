@@ -754,3 +754,19 @@ body.theme-dark .cls-chip.on{background:#3a2a2e;color:#f0c7cf}
 .teach-bar .teach-hint{color:#aab3c2;font-size:12.5px}
 .teach-bar #teach-off{border:none;background:#3a4151;color:#fff;border-radius:16px;padding:5px 12px;cursor:pointer;font-size:13px}
 .teach-bar #teach-off:hover{background:#4b5468}
+
+/* ===== Gọi tên: các trò chơi (đua vịt / UFO / xé túi) ===== */
+.pk-tabs{display:flex;gap:4px;margin:4px 0 8px;flex-wrap:wrap}
+.pk-tabs button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:4px 10px;font-size:12.5px;cursor:pointer;color:#3a4150}
+.pk-tabs button:hover{background:#f4f5f8}
+.pk-tabs button.on{background:#7a1020;color:#fff;border-color:#7a1020}
+.pk-arena{margin-bottom:8px}
+.pk-cv{display:block;width:100%;max-width:460px;border:1px solid var(--line);border-radius:10px}
+.pk-bags{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pk-bag{aspect-ratio:1.2/1;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:transform .1s;position:relative}
+.pk-bag:hover{transform:translateY(-2px)}
+.pk-bag .pk-bag-q{font-size:26px;font-weight:800;color:rgba(255,255,255,.85)}
+.pk-bag.open{background:#fff!important;border:2px solid #1a7f37}
+.pk-bag .pk-bag-nm{font-size:14px;font-weight:700;color:#1a7f37;padding:2px;text-align:center}
+body.theme-dark .pk-tabs button{background:#23262e;border-color:#353a45;color:#e6e8ee}
+body.theme-dark .pk-tabs button.on{background:#8a2436;border-color:#8a2436}

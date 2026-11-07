@@ -29,20 +29,129 @@
 
   function buildPicker(body, data) {
     body.innerHTML = "";
+    data.style = data.style || "simple";
     var cap = el("div", "ov-cap"); cap.textContent = "🎲 Gọi tên ngẫu nhiên";
-    var big = el("div", "cl-name"); big.textContent = "—";
-    var btn = el("button", "cl-pick"); btn.textContent = "🎲 Gọi tên";
-    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên học sinh…"; ta.value = roster();
+    var tabs = el("div", "pk-tabs");
+    var STYLES = [["simple", "🎲 Đơn giản"], ["duck", "🦆 Đua vịt"], ["ufo", "🛸 UFO"], ["bag", "🎁 Xé túi mù"]];
+    var arena = el("div", "pk-arena");
+    var result = el("div", "cl-name"); result.textContent = "—";
+    var btn = el("button", "cl-pick");
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = roster();
     ta.oninput = function () { setRoster(ta.value); };
     var used = [];
+    function names() { return (ta.value || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean); }
+    function pickName() { var ns = names(); if (!ns.length) return null; var pool = ns.filter(function (n) { return used.indexOf(n) < 0; }); if (!pool.length) { used = []; pool = ns; } var p = pool[Math.floor(Math.random() * pool.length)]; used.push(p); return p; }
+    function announce(nm) { result.textContent = nm; result.classList.remove("pop"); void result.offsetWidth; result.classList.add("pop"); }
+    function setStyle(s) { data.style = s; tabs.querySelectorAll("button").forEach(function (b) { b.classList.toggle("on", b.dataset.s === s); }); render(); }
+    STYLES.forEach(function (s) { var b = el("button"); b.dataset.s = s[0]; b.textContent = s[1]; b.onclick = function () { setStyle(s[0]); }; if (s[0] === data.style) b.classList.add("on"); tabs.appendChild(b); });
+    function render() {
+      arena.innerHTML = ""; result.textContent = "—"; btn.disabled = false;
+      if (data.style === "simple") { arena.style.display = "none"; btn.textContent = "🎲 Gọi tên"; btn.onclick = function () { var p = pickName(); announce(p || "(chưa có tên)"); }; }
+      else { arena.style.display = "block"; if (data.style === "duck") gameDuck(arena, names, pickName, announce, btn); else if (data.style === "ufo") gameUFO(arena, names, pickName, announce, btn); else gameBag(arena, names, pickName, announce, btn); }
+    }
+    [cap, tabs, arena, result, btn, ta].forEach(function (x) { body.appendChild(x); });
+    render();
+  }
+
+  // Vẽ con vịt đơn giản
+  function drawDuck(ctx, x, y, s, col) {
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.7, 0, 0, 6.2832); ctx.fill();            // thân
+    ctx.beginPath(); ctx.arc(s * 0.7, -s * 0.5, s * 0.5, 0, 6.2832); ctx.fill();                               // đầu
+    ctx.fillStyle = "#e8912b"; ctx.beginPath(); ctx.moveTo(s * 1.1, -s * 0.55); ctx.lineTo(s * 1.6, -s * 0.4); ctx.lineTo(s * 1.1, -s * 0.25); ctx.closePath(); ctx.fill(); // mỏ
+    ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(s * 0.85, -s * 0.6, s * 0.09, 0, 6.2832); ctx.fill();     // mắt
+    ctx.restore();
+  }
+  // ----- Đua vịt (đua ngẫu nhiên, con về đích đầu thắng) -----
+  function gameDuck(arena, getNames, pickName, announce, btn) {
+    var cv = el("canvas", "pk-cv"); cv.width = 460; cv.height = 240; arena.appendChild(cv);
+    var ctx = cv.getContext("2d"), W = cv.width, H = cv.height, finish = W - 40;
+    var COL = ["#F4C430", "#7FB2F0", "#8FD08F", "#E78FA6", "#B79BE0", "#F0A868"];
+    var ducks = [], raf = 0, racing = false;
+    function layout() {
+      var ns = getNames(); if (ns.length > 6) { shuffle(ns); ns = ns.slice(0, 6); }
+      ducks = ns.map(function (nm, i) { return { nm: nm, x: 30, y: 30 + i * (H - 44) / Math.max(ns.length, 1), col: COL[i % COL.length] }; });
+      draw();
+    }
+    function draw() {
+      ctx.fillStyle = "#cdeaf7"; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(120,180,220,.45)"; ctx.lineWidth = 1;
+      for (var w = 1; w < 5; w++) { ctx.beginPath(); for (var xx = 0; xx <= W; xx += 16) ctx.lineTo(xx, w * (H / 5) + Math.sin(xx / 13) * 2.5); ctx.stroke(); }
+      for (var y = 0; y < H; y += 13) { ctx.fillStyle = (Math.floor(y / 13) % 2) ? "#fff" : "#222"; ctx.fillRect(finish, y, 9, 13); }
+      ducks.forEach(function (d) { drawDuck(ctx, d.x, d.y, 14, d.col); ctx.fillStyle = "#1f2733"; ctx.font = "bold 12px 'Segoe UI'"; ctx.fillText(d.nm, d.x - 14, d.y + 24); });
+    }
+    function frame() {
+      var winner = null;
+      ducks.forEach(function (d) { d.x += 1.1 + Math.random() * 2.6; if (d.x >= finish - 16 && !winner) winner = d; });
+      draw();
+      if (winner) { racing = false; cancelAnimationFrame(raf); announce("🏆 " + winner.nm); btn.disabled = false; btn.textContent = "🦆 Đua lại"; return; }
+      raf = requestAnimationFrame(frame);
+    }
+    btn.textContent = "🦆 Bắt đầu đua";
     btn.onclick = function () {
-      var names = (ta.value || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
-      if (!names.length) { big.textContent = "(chưa có tên)"; return; }
-      var pool = names.filter(function (n) { return used.indexOf(n) < 0; }); if (!pool.length) { used = []; pool = names; }
-      var pick = pool[Math.floor(Math.random() * pool.length)]; used.push(pick);
-      big.textContent = pick; big.classList.remove("pop"); void big.offsetWidth; big.classList.add("pop");
+      if (racing) return; var ns = getNames(); if (!ns.length) { announce("(chưa có tên)"); return; }
+      layout(); racing = true; btn.disabled = true; btn.textContent = "Đang đua…"; frame();
     };
-    [cap, big, btn, ta].forEach(function (x) { body.appendChild(x); });
+    layout();
+  }
+  // ----- UFO bắt tên -----
+  function gameUFO(arena, getNames, pickName, announce, btn) {
+    var cv = el("canvas", "pk-cv"); cv.width = 460; cv.height = 240; arena.appendChild(cv);
+    var ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+    var labels = [], ufox = W / 2, target = null, phase = 0, raf = 0, beamY = 0;
+    function layout() {
+      var ns = getNames(); if (ns.length > 12) { shuffle(ns); ns = ns.slice(0, 12); }
+      labels = ns.map(function (nm, i) { return { nm: nm, x: 40 + (i % 6) * 68 + (Math.random() * 20 - 10), y: 150 + Math.floor(i / 6) * 40, taken: false }; });
+      draw();
+    }
+    function drawUFO(x, y) {
+      ctx.fillStyle = "#9aa7b4"; ctx.beginPath(); ctx.ellipse(x, y, 34, 11, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#cfe6f5"; ctx.beginPath(); ctx.ellipse(x, y - 7, 16, 10, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = "#7ce0b0"; [-18, 0, 18].forEach(function (dx) { ctx.beginPath(); ctx.arc(x + dx, y + 3, 3, 0, 6.2832); ctx.fill(); });
+    }
+    function draw() {
+      ctx.fillStyle = "#1a2b3a"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#24455a"; ctx.fillRect(0, H - 40, W, 40);
+      if (target && phase > 0) { var g = ctx.createLinearGradient(0, 30, 0, target.y); g.addColorStop(0, "rgba(124,224,176,.5)"); g.addColorStop(1, "rgba(124,224,176,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(ufox - 8, 34); ctx.lineTo(ufox + 8, 34); ctx.lineTo(target.x + 34, target.y + 8); ctx.lineTo(target.x - 6, target.y + 8); ctx.closePath(); ctx.fill(); }
+      labels.forEach(function (l) { if (l.taken) return; ctx.fillStyle = "#fff"; ctx.font = "13px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText(l.nm, l.x + 14, l.y); });
+      ctx.textAlign = "left";
+      drawUFO(ufox, 24);
+    }
+    function frame() {
+      if (phase === 1) { if (Math.abs(ufox - (target.x + 14)) > 3) ufox += Math.sign((target.x + 14) - ufox) * 5; else { phase = 2; } }
+      else if (phase === 2) { target.y -= 4; if (target.y <= 40) { target.taken = true; phase = 0; announce("🛸 " + target.nm); btn.disabled = false; btn.textContent = "🛸 Bắt tiếp"; draw(); return; } }
+      draw(); raf = requestAnimationFrame(frame);
+    }
+    btn.textContent = "🛸 Thả UFO";
+    btn.onclick = function () {
+      var nm = pickName(); if (!nm) { announce("(chưa có tên)"); return; }
+      var cand = labels.filter(function (l) { return !l.taken && l.nm === nm; }); if (!cand.length) { layout(); cand = labels.filter(function (l) { return l.nm === nm; }); }
+      target = cand[0]; phase = 1; btn.disabled = true; btn.textContent = "Đang bắt…"; cancelAnimationFrame(raf); frame();
+    };
+    layout();
+  }
+  // ----- Xé túi mù -----
+  function gameBag(arena, getNames, pickName, announce, btn) {
+    var grid = el("div", "pk-bags"); arena.appendChild(grid);
+    var COL = ["#F0894E", "#49C3E0", "#8E5BB5", "#E65C8A", "#49C3E0", "#F0894E", "#5BBE7C", "#E0B33A"];
+    function layout() {
+      grid.innerHTML = ""; var ns = getNames(); var n = Math.min(Math.max(ns.length, 1), 8);
+      for (var i = 0; i < n; i++) {
+        (function (idx) {
+          var bag = el("button", "pk-bag"); bag.style.background = COL[idx % COL.length];
+          bag.innerHTML = '<span class="pk-bag-q">?</span>';
+          bag.onclick = function () {
+            if (bag.classList.contains("open")) return;
+            var nm = pickName(); if (!nm) { announce("(chưa có tên)"); return; }
+            bag.classList.add("open"); bag.innerHTML = '<span class="pk-bag-nm"></span>'; bag.querySelector(".pk-bag-nm").textContent = nm;
+            announce("🎁 " + nm);
+          };
+          grid.appendChild(bag);
+        })(i);
+      }
+    }
+    btn.textContent = "🎁 Túi mới"; btn.onclick = function () { layout(); };
+    layout();
   }
 
   // ----- Nhiều lớp, mỗi lớp một danh sách (lưu cục bộ) -----
