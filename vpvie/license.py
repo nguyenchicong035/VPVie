@@ -23,7 +23,7 @@ from cryptography.exceptions import InvalidSignature
 # Khoá công khai (SPKI, base64url) — PHẢI trùng với PUBKEY_SPKI_B64URL trong web/js/license.js
 PUBKEY_SPKI_B64URL = os.environ.get(
     "VPVIE_PUBKEY",
-    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvPnlzf4xuCNIXnDCRQnHUTtt-hST-03f7IKt4ZP9an524GUaxFzYbQqaUNYIP5Oz-HpwQr1_H0BnlZTs9J76EQ",
+    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAESxiHdNT7DPa3mjwhc4DKeS7-LvWt2mtmiiBXCp07Ocfw6i_ldz4quXg1jGLM7vq1dQmQDGMAmyBgUihOxZD38w",
 )
 
 
@@ -46,10 +46,6 @@ def require_license() -> bool:
     return os.environ.get("VPVIE_REQUIRE_LICENSE", "").strip() in ("1", "true", "yes", "on")
 
 
-def _revoked() -> set:
-    path = os.environ.get("VPVIE_REVOKED_KEYS", "").strip()
-    if not path or not os.path.exists(path):
-        return set()
     try:
         with open(path, "r", encoding="utf-8") as f:
             return set(json.load(f))
@@ -87,8 +83,8 @@ def verify(key: str, machine_id: str = "") -> dict:
         return {"ok": False, "reason": "Key cấp cho máy khác"}
     if data.get("e") and data["e"] > 0 and time.time() > data["e"]:
         return {"ok": False, "reason": "Key đã hết hạn"}
-    rev = _revoked()
-    if data.get("m") in rev or key in rev:
+    rev = set(_load_revoked_list())
+    if data.get("m") in rev or data.get("id") in rev or key in rev:
         return {"ok": False, "reason": "Key đã bị thu hồi"}
     return {"ok": True, "reason": "", "data": data}
 
@@ -165,3 +161,69 @@ def activate(key: str, machine_id: str) -> dict:
         store[lid] = rec
         _save_store(store)
     return {"ok": True, "reason": "", "data": data, "used": len(machines), "maxm": maxm}
+
+
+# ----- Quản trị (dùng cho trang quản lý key) -----
+def _revoked_path() -> str:
+    return os.environ.get("VPVIE_REVOKED_KEYS", "").strip() or os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "revoked.json")
+
+
+def _load_revoked_list() -> list:
+    path = _revoked_path()
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return list(json.load(f))
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _save_revoked_list(items) -> None:
+    try:
+        with open(_revoked_path(), "w", encoding="utf-8") as f:
+            json.dump(sorted(set(items)), f, ensure_ascii=False, indent=0)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def admin_enabled() -> bool:
+    return bool(os.environ.get("VPVIE_ADMIN_TOKEN", "").strip())
+
+
+def admin_check(token: str) -> bool:
+    want = os.environ.get("VPVIE_ADMIN_TOKEN", "").strip()
+    return bool(want) and token == want
+
+
+def list_activations() -> dict:
+    """Trả toàn bộ dữ liệu kích hoạt + danh sách thu hồi (cho trang quản lý)."""
+    return {"activations": _load_store(), "revoked": _load_revoked_list()}
+
+
+def remove_machine(lid: str, machine: str) -> dict:
+    store = _load_store()
+    rec = store.get(lid)
+    if not rec:
+        return {"ok": False, "reason": "Không thấy license id"}
+    machine = (machine or "").strip().upper()
+    if machine in rec.get("machines", []):
+        rec["machines"] = [m for m in rec["machines"] if m != machine]
+        store[lid] = rec
+        _save_store(store)
+        return {"ok": True, "used": len(rec["machines"])}
+    return {"ok": False, "reason": "Máy không có trong key này"}
+
+
+def set_revoked(key_or_id: str, revoked: bool) -> dict:
+    key_or_id = (key_or_id or "").strip()
+    if not key_or_id:
+        return {"ok": False, "reason": "Thiếu id/key"}
+    items = _load_revoked_list()
+    if revoked and key_or_id not in items:
+        items.append(key_or_id)
+    elif not revoked:
+        items = [x for x in items if x != key_or_id]
+    _save_revoked_list(items)
+    return {"ok": True, "revoked": _load_revoked_list()}

@@ -8,7 +8,7 @@
   "use strict";
 
   // === Khoá công khai của VPVie (SPKI, base64url). Thay bằng khoá của bạn khi tự phát hành. ===
-  var PUBKEY_SPKI_B64URL = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvPnlzf4xuCNIXnDCRQnHUTtt-hST-03f7IKt4ZP9an524GUaxFzYbQqaUNYIP5Oz-HpwQr1_H0BnlZTs9J76EQ";
+  var PUBKEY_SPKI_B64URL = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAESxiHdNT7DPa3mjwhc4DKeS7-LvWt2mtmiiBXCp07Ocfw6i_ldz4quXg1jGLM7vq1dQmQDGMAmyBgUihOxZD38w";
 
   var STORE = "vpvie.license";       // key đã kích hoạt (localStorage)
   var SALT = "VPVie-machine-v1";      // trộn vào vân tay

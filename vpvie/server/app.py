@@ -117,6 +117,67 @@ def activate(body: ActivateIn):
     return JSONResponse(status_code=code, content=out)
 
 
+from fastapi import Header
+
+
+def _admin_guard(token):
+    if not lic.admin_enabled():
+        return JSONResponse(status_code=403, content={"ok": False, "error": "Chưa bật quản trị. Đặt biến môi trường VPVIE_ADMIN_TOKEN rồi khởi động lại."})
+    if not lic.admin_check(token or ""):
+        return JSONResponse(status_code=401, content={"ok": False, "error": "Token quản trị sai."})
+    return None
+
+
+@app.get("/api/admin/activations")
+def admin_activations(x_admin_token: str = Header(default="")):
+    g = _admin_guard(x_admin_token)
+    if g:
+        return g
+    return {"ok": True, **lic.list_activations()}
+
+
+class AdminMachineIn(BaseModel):
+    lid: str
+    machine: str
+
+
+@app.post("/api/admin/machine-remove")
+def admin_machine_remove(body: AdminMachineIn, x_admin_token: str = Header(default="")):
+    g = _admin_guard(x_admin_token)
+    if g:
+        return g
+    r = lic.remove_machine(body.lid, body.machine)
+    return JSONResponse(status_code=200 if r["ok"] else 400, content=r)
+
+
+class AdminRevokeIn(BaseModel):
+    key_or_id: str
+    revoked: bool = True
+
+
+@app.post("/api/admin/revoke")
+def admin_revoke(body: AdminRevokeIn, x_admin_token: str = Header(default="")):
+    g = _admin_guard(x_admin_token)
+    if g:
+        return g
+    r = lic.set_revoked(body.key_or_id, body.revoked)
+    return JSONResponse(status_code=200 if r["ok"] else 400, content=r)
+
+
+TOOLS_DIR = os.path.join(os.path.dirname(WEB_DIR), "tools", "vpvie-keygen")
+
+
+@app.get("/quan-ly-key.html")
+def admin_page():
+    """Trang quản lý bản quyền (người phát hành) — phục vụ cùng máy chủ để gọi API."""
+    return FileResponse(os.path.join(TOOLS_DIR, "quan-ly-key.html"))
+
+
+@app.get("/cap-key.html")
+def issue_page():
+    return FileResponse(os.path.join(TOOLS_DIR, "cap-key.html"))
+
+
 @app.get("/")
 def index():
     return FileResponse(os.path.join(WEB_DIR, "index.html"))
