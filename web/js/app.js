@@ -885,7 +885,32 @@
 
   // Mẫu hình học
   $("btn-shapes").onclick = function () { showDialog("dlg-shapes"); };
-  $("btn-solid").onclick = function () { showDialog("dlg-solid"); };
+  // Vẽ hình mẫu nhỏ cho từng nút hình 3D (dùng chính VPSolid)
+  var solidThumbsDone = false;
+  function drawSolidThumb(cv, kind) {
+    var g = cv.getContext("2d"); g.clearRect(0, 0, cv.width, cv.height);
+    var o = window.VPSolid.make(kind, 0, 0, 34, "#1d2a33", 1.4);
+    // gom toạ độ để căn giữa & vừa khung
+    var xs = [], ys = [];
+    (o.segs || []).forEach(function (s) { xs.push(s.x1, s.x2); ys.push(s.y1, s.y2); });
+    (o.ellipses || []).forEach(function (e) { xs.push(e.cx - e.rx, e.cx + e.rx); ys.push(e.cy - e.ry, e.cy + e.ry); });
+    if (!xs.length) return;
+    var mnx = Math.min.apply(0, xs), mxx = Math.max.apply(0, xs), mny = Math.min.apply(0, ys), mxy = Math.max.apply(0, ys);
+    var pad = 8, sc = Math.min((cv.width - pad * 2) / (mxx - mnx || 1), (cv.height - pad * 2) / (mxy - mny || 1));
+    g.save(); g.translate(cv.width / 2, cv.height / 2); g.scale(sc, sc); g.translate(-(mnx + mxx) / 2, -(mny + mxy) / 2);
+    g.strokeStyle = "#1d2a33"; g.lineWidth = 1.4 / sc; g.lineJoin = g.lineCap = "round";
+    (o.segs || []).forEach(function (s) { g.setLineDash(s.dashed ? [4 / sc, 3 / sc] : []); g.beginPath(); g.moveTo(s.x1, s.y1); g.lineTo(s.x2, s.y2); g.stroke(); });
+    (o.ellipses || []).forEach(function (e) { g.setLineDash(e.dashed ? [4 / sc, 3 / sc] : []); g.beginPath(); g.ellipse(e.cx, e.cy, e.rx, e.ry, 0, e.a0 || 0, (e.a1 != null ? e.a1 : Math.PI * 2)); g.stroke(); });
+    g.restore();
+  }
+  function renderSolidThumbs() {
+    if (solidThumbsDone || !window.VPSolid) return;
+    document.querySelectorAll("#dlg-solid [data-solid]").forEach(function (b) {
+      var cv = b.querySelector("canvas.shape-thumb"); if (cv) try { drawSolidThumb(cv, b.dataset.solid); } catch (e) {}
+    });
+    solidThumbsDone = true;
+  }
+  $("btn-solid").onclick = function () { showDialog("dlg-solid"); renderSolidThumbs(); };
   document.querySelectorAll("[data-solid]").forEach(function (b) {
     b.onclick = function () {
       pushHist(); state.items.push(window.VPSolid.make(b.dataset.solid, canvas.clientWidth / 2, canvas.clientHeight / 2, 100, state.color, state.size || 2));

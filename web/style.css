@@ -414,3 +414,9 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .set-folders{margin-top:14px;border-top:1px solid var(--nrline,#e2e6ea);padding-top:12px}
 .set-folders .in{width:100%;padding:8px 10px;border:1px solid var(--line,#e2e6ea);border-radius:8px;font:inherit;font-size:12.5px;background:#f6f7f9;margin-bottom:6px}
 .fold-btns{display:flex;gap:8px}
+/* Lưới hình 3D có hình mẫu bên cạnh */
+.solid-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:62vh;overflow:auto;padding:2px}
+.shape.s3{display:flex;align-items:center;gap:10px;text-align:left;padding:7px 10px;border:1px solid var(--nrline,#e2e6ea);border-radius:10px;background:#fff;cursor:pointer;font-size:13.5px;color:var(--ink,#1d2a33)}
+.shape.s3:hover{background:#fbeef0;border-color:var(--maroon,#7a1020)}
+.shape.s3 canvas.shape-thumb{width:60px;height:48px;flex:0 0 60px;background:#fff;border-radius:6px}
+.shape.s3 span{line-height:1.25}
