@@ -32,8 +32,8 @@
     var cap = el("div", "ov-cap"); cap.textContent = "🎲 Gọi tên ngẫu nhiên";
     var big = el("div", "cl-name"); big.textContent = "—";
     var btn = el("button", "cl-pick"); btn.textContent = "🎲 Gọi tên";
-    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên học sinh…"; ta.value = data.names || "";
-    ta.oninput = function () { data.names = ta.value; };
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên học sinh…"; ta.value = roster();
+    ta.oninput = function () { setRoster(ta.value); };
     var used = [];
     btn.onclick = function () {
       var names = (ta.value || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
@@ -45,12 +45,28 @@
     [cap, big, btn, ta].forEach(function (x) { body.appendChild(x); });
   }
 
-  // ----- Danh sách lớp dùng chung (lưu cục bộ) -----
-  function roster() { try { return localStorage.getItem("vpvie.class") || ""; } catch (e) { return ""; } }
-  function saveRoster(v) { try { localStorage.setItem("vpvie.class", v); } catch (e) {} }
-  function namesOf(data) {
-    var raw = (data.names != null ? data.names : roster()) || "";
-    return raw.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+  // ----- Nhiều lớp, mỗi lớp một danh sách (lưu cục bộ) -----
+  function loadClasses() {
+    try { var c = JSON.parse(localStorage.getItem("vpvie.classes") || "null"); if (c && c.list) return c; } catch (e) {}
+    var old = ""; try { old = localStorage.getItem("vpvie.class") || ""; } catch (e) {}
+    var nm = "Lớp của tôi", o = { current: nm, list: {} }; o.list[nm] = old; return o;
+  }
+  var CL = loadClasses();
+  function saveClasses() { try { localStorage.setItem("vpvie.classes", JSON.stringify(CL)); } catch (e) {} }
+  var changeCb = null;
+  function onChange(fn) { changeCb = fn; }
+  function emit() { saveClasses(); if (changeCb) changeCb(); }
+  function roster() { return CL.list[CL.current] || ""; }
+  function setRoster(v) { CL.list[CL.current] = v; saveClasses(); }
+  function classNames() { return Object.keys(CL.list); }
+  function currentClass() { return CL.current; }
+  function getClass(nm) { return CL.list[nm] || ""; }
+  function selectClass(nm) { if (CL.list[nm] != null) { CL.current = nm; emit(); } }
+  function addClass(nm, content) { nm = (nm || "").trim(); if (!nm) return false; CL.list[nm] = content || ""; CL.current = nm; emit(); return true; }
+  function renameClass(oldn, newn) { newn = (newn || "").trim(); if (CL.list[oldn] == null || !newn) return false; if (newn !== oldn && CL.list[newn] != null) return false; CL.list[newn] = CL.list[oldn]; if (newn !== oldn) delete CL.list[oldn]; if (CL.current === oldn) CL.current = newn; emit(); return true; }
+  function deleteClass(nm) { if (CL.list[nm] == null) return; delete CL.list[nm]; var ks = Object.keys(CL.list); if (!ks.length) { CL.list["Lớp của tôi"] = ""; ks = ["Lớp của tôi"]; } if (CL.current === nm) CL.current = ks[0]; emit(); }
+  function namesOf() {
+    return (roster() || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
   }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
@@ -63,8 +79,8 @@
     var ptr = el("div", "cl-wheel-ptr"); ptr.textContent = "▼";
     var res = el("div", "cl-name"); res.textContent = "—";
     var spin = el("button", "cl-pick"); spin.textContent = "Quay 🎡";
-    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = data.names != null ? data.names : roster();
-    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); draw(0); };
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = roster();
+    ta.oninput = function () { setRoster(ta.value); draw(0); };
     wrap.appendChild(cv); wrap.appendChild(ptr);
     [cap, wrap, res, spin, ta].forEach(function (x) { body.appendChild(x); });
     var COL = ["#C21807", "#1F6FEB", "#1A7F37", "#E3A008", "#7A3FB3", "#0E7490", "#D6336C", "#5C7CFA"];
@@ -109,8 +125,8 @@
     var btn = el("button", "cl-start"); btn.textContent = "Chia nhóm";
     row.appendChild(lbl); row.appendChild(num); row.appendChild(btn);
     var out = el("div", "cl-groups");
-    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = data.names != null ? data.names : roster();
-    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); };
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = roster();
+    ta.oninput = function () { setRoster(ta.value); };
     [cap, row, out, ta].forEach(function (x) { body.appendChild(x); });
     function go() {
       var names = shuffle(namesOf(data).slice()), g = Math.max(2, parseInt(num.value, 10) || 2);
@@ -133,8 +149,8 @@
     var cap = el("div", "ov-cap"); cap.textContent = "✅ Điểm danh";
     var sum = el("div", "cl-sum");
     var list = el("div", "cl-attend");
-    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = data.names != null ? data.names : roster();
-    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); render(); };
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên…"; ta.value = roster();
+    ta.oninput = function () { setRoster(ta.value); render(); };
     [cap, sum, list, ta].forEach(function (x) { body.appendChild(x); });
     function render() {
       var names = namesOf(data); list.innerHTML = ""; var present = 0;
@@ -157,8 +173,8 @@
     data.scores = data.scores || {};
     var cap = el("div", "ov-cap"); cap.textContent = "🏆 Bảng thi đua";
     var list = el("div", "cl-score");
-    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên/nhóm…"; ta.value = data.names != null ? data.names : roster();
-    ta.oninput = function () { data.names = ta.value; saveRoster(ta.value); render(); };
+    var ta = el("textarea", "cl-names"); ta.placeholder = "Mỗi dòng một tên/nhóm…"; ta.value = roster();
+    ta.oninput = function () { setRoster(ta.value); render(); };
     [cap, list, ta].forEach(function (x) { body.appendChild(x); });
     function render() {
       var names = namesOf(data); list.innerHTML = "";
@@ -178,5 +194,9 @@
     render();
   }
 
-  global.VPClass = { buildTimer: buildTimer, buildPicker: buildPicker, buildWheel: buildWheel, buildGroups: buildGroups, buildAttend: buildAttend, buildScore: buildScore, roster: roster };
+  global.VPClass = {
+    buildTimer: buildTimer, buildPicker: buildPicker, buildWheel: buildWheel, buildGroups: buildGroups, buildAttend: buildAttend, buildScore: buildScore,
+    roster: roster, setRoster: setRoster, classNames: classNames, currentClass: currentClass, getClass: getClass,
+    selectClass: selectClass, addClass: addClass, renameClass: renameClass, deleteClass: deleteClass, onChange: onChange
+  };
 })(window);

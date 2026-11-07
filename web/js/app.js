@@ -1303,6 +1303,66 @@
   document.querySelectorAll("#class-menu [data-class]").forEach(function (b) {
     b.onclick = function () { $("class-menu").classList.remove("show"); var fn = classIns[b.dataset.class]; if (fn) fn(160, 100); };
   });
+  // ----- Quản lý nhiều lớp (chọn lớp đang dạy; lưu/mở theo file) -----
+  function renderClassSwitch() {
+    var box = $("class-switch"); if (!box || !window.VPClass) return;
+    box.innerHTML = "";
+    var cur = window.VPClass.currentClass();
+    window.VPClass.classNames().forEach(function (nm) {
+      var b = document.createElement("button"); b.className = "cls-chip" + (nm === cur ? " on" : "");
+      var n = window.VPClass.getClass(nm).split("\n").map(function (s) { return s.trim(); }).filter(Boolean).length;
+      b.innerHTML = '<span class="cls-nm"></span><span class="cls-n">' + n + '</span>';
+      b.querySelector(".cls-nm").textContent = nm;
+      b.onclick = function () { window.VPClass.selectClass(nm); };
+      box.appendChild(b);
+    });
+  }
+  if (window.VPClass) window.VPClass.onChange(function () { renderClassSwitch(); renderOverlays(); setClassTitle(); });
+  function setClassTitle() { var btn = $("btn-picker"); if (btn && window.VPClass) btn.title = "Lớp học: " + window.VPClass.currentClass(); }
+  // mở menu lớp -> dựng lại danh sách lớp
+  (function () { var orig = $("btn-picker"); if (orig) { var prev = orig.onclick; orig.onclick = function (e) { renderClassSwitch(); if (prev) prev.call(this, e); }; } })();
+  if ($("cls-new")) $("cls-new").onclick = function () { $("class-menu").classList.remove("show"); clsEditing = null; $("cls-name").value = ""; $("cls-list").value = ""; showDialog("dlg-class"); $("cls-name").focus(); };
+  if ($("cls-edit")) $("cls-edit").onclick = function () { $("class-menu").classList.remove("show"); clsEditing = window.VPClass.currentClass(); $("cls-name").value = clsEditing; $("cls-list").value = window.VPClass.getClass(clsEditing); showDialog("dlg-class"); };
+  var clsEditing = null;
+  if ($("cls-save-dlg")) $("cls-save-dlg").onclick = function () {
+    var nm = $("cls-name").value.trim(), content = $("cls-list").value;
+    if (!nm) { toast("Hãy nhập tên lớp."); return; }
+    if (clsEditing && clsEditing !== nm) window.VPClass.renameClass(clsEditing, nm);
+    window.VPClass.addClass(nm, content); // addClass đặt làm lớp hiện tại + lưu
+    clsEditing = null; hideDialog("dlg-class"); toast("Đã lưu lớp “" + nm + "”.");
+  };
+  if ($("cls-del")) $("cls-del").onclick = function () {
+    var nm = window.VPClass.currentClass();
+    if (!confirm("Xóa lớp “" + nm + "”? (danh sách học sinh của lớp này sẽ mất)")) return;
+    window.VPClass.deleteClass(nm); $("class-menu").classList.remove("show");
+  };
+  if ($("cls-save")) $("cls-save").onclick = function () {
+    $("class-menu").classList.remove("show");
+    var nm = window.VPClass.currentClass(), content = window.VPClass.getClass(nm);
+    var fname = nm.replace(/[\\/:*?"<>|]/g, "_") + ".txt";
+    if (window.VPDesktop && window.VPDesktop.isApp && folders.books) {
+      window.VPDesktop.saveFile(folders.books, fname, content, false).then(function (r) { toast(r.ok ? "Đã lưu lớp: " + r.path : "Lỗi lưu."); });
+      return;
+    }
+    var blob = new Blob([content], { type: "text/plain;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname; a.click();
+    toast("Đã lưu lớp ra file " + fname);
+  };
+  if ($("cls-open")) $("cls-open").onclick = function () {
+    $("class-menu").classList.remove("show");
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = ".txt,text/plain";
+    inp.onchange = function () {
+      var f = inp.files[0]; if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        var nm = f.name.replace(/\.txt$/i, "").trim() || "Lớp mới";
+        window.VPClass.addClass(nm, String(rd.result || ""));
+        toast("Đã mở lớp “" + nm + "”.");
+      };
+      rd.readAsText(f);
+    };
+    inp.click();
+  };
+  setClassTitle();
   // ===== Bảng biến thiên: kéo chọn vùng -> bảng điền =====
   var varRegion = null, varGrid = null;
   $("btn-var").onclick = function () { state.tool = "varregion"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Kéo chuột để chọn vùng đặt bảng biến thiên."); };

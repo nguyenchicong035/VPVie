@@ -581,6 +581,16 @@
   </div>
   <div id="shapes-menu" class="nr-menu shapes-menu"></div>
   <div id="geo-menu" class="nr-menu shapes-menu"></div>
+  <div id="dlg-class" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">Danh sách lớp <button data-close="dlg-class" class="x">✕</button></div>
+      <label class="cls-lbl">Tên lớp <input id="cls-name" class="in" placeholder="VD: Lớp 10A1" /></label>
+      <textarea id="cls-list" class="in" rows="11" placeholder="Mỗi dòng một tên học sinh…&#10;Nguyễn Văn An&#10;Trần Thị Bình"></textarea>
+      <div class="hint">Mỗi tên một dòng. Có thể Lưu ra file .txt để dùng trên máy khác.</div>
+      <div class="dlg-foot"><button data-close="dlg-class" class="btn ghost">Hủy</button><button id="cls-save-dlg" class="btn">Lưu lớp</button></div>
+    </div>
+  </div>
+
   <div id="sticker-menu" class="nr-menu sticker-menu">
     <div class="nr-menu-h">Nhãn dán khen thưởng</div>
     <div class="stk-grid" id="stk-emoji"></div>
@@ -592,6 +602,16 @@
     <button id="stk-sci" class="stk-more">🔬 Công cụ môn Tự nhiên…</button>
   </div>
   <div id="class-menu" class="nr-menu">
+    <div class="nr-menu-h">Lớp đang dạy</div>
+    <div id="class-switch" class="class-switch"></div>
+    <div class="class-actions">
+      <button id="cls-new">＋ Lớp mới</button>
+      <button id="cls-edit">✏ Sửa danh sách</button>
+      <button id="cls-open">📂 Mở lớp từ file</button>
+      <button id="cls-save">💾 Lưu lớp ra file</button>
+      <button id="cls-del" class="danger">🗑 Xóa lớp này</button>
+    </div>
+    <hr/>
     <div class="nr-menu-h">Công cụ lớp học</div>
     <button data-class="picker">🎲 Gọi tên ngẫu nhiên</button>
     <button data-class="wheel">🎡 Vòng quay may mắn</button>

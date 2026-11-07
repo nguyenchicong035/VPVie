@@ -718,3 +718,22 @@ body.theme-dark .cl-attend-row.absent{background:#3a2428}
 body.theme-dark .stk-grid.stk-praise .stk,body.theme-dark .stk-grid.stk-stamps .stk{border-color:#3a404c;color:#f0c7cf}
 body.theme-dark .stk-more{color:#e6e8ee}
 body.theme-dark .stk-more:hover{background:#30343d}
+
+/* ===== Chọn lớp đang dạy ===== */
+.class-switch{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow:auto;margin:4px 0 6px}
+.cls-chip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:13.5px;text-align:left}
+.cls-chip .cls-nm{flex:1}
+.cls-chip .cls-n{background:#e6e8ee;color:#555f6e;border-radius:9px;font-size:11px;font-weight:700;padding:1px 7px}
+.cls-chip:hover{background:#f6f7f9}
+.cls-chip.on{background:#f3e9ec;border-color:#e3c9d0;color:#7a1020;font-weight:700}
+.cls-chip.on .cls-n{background:#e3c9d0;color:#7a1020}
+.class-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+.class-actions button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 8px;font-size:12.5px;cursor:pointer;text-align:left}
+.class-actions button:hover{background:#f4f5f8}
+.class-actions button.danger{grid-column:1 / -1;color:#c21807;border-color:#f0c4cc}
+.class-actions button.danger:hover{background:#fde8ea}
+.cls-lbl{display:block;font-size:13px;color:#51606c;margin-bottom:6px}
+.cls-lbl .in{margin-top:4px}
+#dlg-class #cls-list{font-family:'Segoe UI',system-ui,sans-serif;font-size:14px}
+body.theme-dark .cls-chip,body.theme-dark .class-actions button{background:#23262e;border-color:#353a45;color:#e6e8ee}
+body.theme-dark .cls-chip.on{background:#3a2a2e;color:#f0c7cf}
