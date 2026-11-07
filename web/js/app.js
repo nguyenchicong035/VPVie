@@ -396,16 +396,30 @@
     return found ? { x: minx, y: miny, w: maxx - minx, h: maxy - miny } : null;
   }
   function clearStrokes() { state.items = state.items.filter(function (it) { return it.type !== "stroke"; }); }
-  // Cắt đúng vùng có nét viết tay (phóng to) để nhận dạng chính xác hơn
-  function cropForOCR() {
-    var bb = inkBBox();
-    if (!bb || bb.w < 6 || bb.h < 6) return canvas;
-    var dpr = window.devicePixelRatio || 1, pad = 18, scale = 2;
+  // Cắt một vùng (phóng to) để nhận dạng chính xác hơn
+  function cropRegion(bb, pad, scale) {
+    if (!bb || bb.w < 6 || bb.h < 6) return null;
+    var dpr = window.devicePixelRatio || 1; pad = pad || 18; scale = scale || 2;
     var x = Math.max(0, bb.x - pad), y = Math.max(0, bb.y - pad), w = bb.w + 2 * pad, h = bb.h + 2 * pad;
     var oc = document.createElement("canvas"); oc.width = Math.round(w * scale); oc.height = Math.round(h * scale);
     var o = oc.getContext("2d"); o.fillStyle = "#fff"; o.fillRect(0, 0, oc.width, oc.height);
     o.drawImage(canvas, x * dpr, y * dpr, w * dpr, h * dpr, 0, 0, oc.width, oc.height);
     return oc;
+  }
+  function cropForOCR() { return cropRegion(inkBBox(), 18, 2) || canvas; }
+  // Gom nét viết tay thành từng DÒNG theo khoảng trống dọc (để nhận dạng từng dòng)
+  function strokeLines() {
+    var boxes = state.items.filter(function (it) { return it.type === "stroke"; }).map(function (it) { return itemBox(it); });
+    if (boxes.length < 2) return [];
+    boxes.sort(function (a, b) { return a.miny - b.miny; });
+    var hs = boxes.map(function (b) { return b.maxy - b.miny; }).sort(function (a, b) { return a - b; });
+    var medH = hs[Math.floor(hs.length / 2)] || 20, lines = [], cur = null;
+    boxes.forEach(function (b) {
+      var yc = (b.miny + b.maxy) / 2;
+      if (!cur || yc > cur.maxy + medH * 0.5) { cur = { minx: b.minx, miny: b.miny, maxx: b.maxx, maxy: b.maxy }; lines.push(cur); }
+      else { cur.minx = Math.min(cur.minx, b.minx); cur.miny = Math.min(cur.miny, b.miny); cur.maxx = Math.max(cur.maxx, b.maxx); cur.maxy = Math.max(cur.maxy, b.maxy); }
+    });
+    return lines.map(function (l) { return { x: l.minx, y: l.miny, w: l.maxx - l.minx, h: l.maxy - l.miny }; });
   }
   function insertPlot(expr, x, y) { if (expr) addOverlayData("plot", { expr: expr }, x, y); }
   function insertCalc(x, y) { addOverlayData("calc", {}, x, y); }
@@ -635,16 +649,30 @@
       var engine = $("ai-engine").value, mode = $("ai-mode").value, data, src = cropForOCR();
       if (engine === "tesseract") {
         statusEl.textContent = "Đang tải mô hình…";
-        data = await window.VPRecognize.recognizeTesseract(src, function (st) { statusEl.textContent = st; }, { math: mode === "math", psm: mode === "text" ? "6" : "6" });
+        var lines = (mode === "text") ? strokeLines() : [];   // chỉ tách dòng cho chữ tiếng Việt; toán giữ cả khối 2D
+        if (lines.length >= 2) {
+          // Nhận dạng chữ viết tay TỪNG DÒNG rồi ghép -> nhiều dòng chính xác hơn
+          var parts = [], conf = 0, nc = 0;
+          for (var li = 0; li < lines.length; li++) {
+            statusEl.textContent = "Dòng " + (li + 1) + "/" + lines.length + "…";
+            var lc = cropRegion(lines[li], 16, 2); if (!lc) continue;
+            var r = await window.VPRecognize.recognizeTesseract(lc, null, { math: false, mode: "text", psm: "7" }); // PSM 7 = một dòng
+            if (r.text) parts.push(r.text);
+            if (r.confidence != null) { conf += r.confidence; nc++; }
+          }
+          data = { kind: "text", text: parts.join("\n"), latex: "", confidence: nc ? Math.round(conf / nc) : null };
+        } else {
+          data = await window.VPRecognize.recognizeTesseract(src, function (st) { statusEl.textContent = st; }, { math: mode === "math", mode: mode, psm: mode === "text" ? "6" : "6" });
+        }
       } else {
         data = await window.VPRecognize.recognizeServer(src.toDataURL("image/png"), $("ai-mode").value);
       }
       statusEl.textContent = "";
       var bb = inkBBox();
       if ((data.kind === "math" || data.kind === "mixed") && data.latex) {
+        showDialog("dlg-math"); buildFormulaUI();
         $("math-input").value = data.latex;
-        window.VPMathPlot.renderMath($("math-preview"), data.latex, true);
-        showDialog("dlg-math");             // mở ra để sửa LaTeX rồi chèn
+        window.VPFormula.render($("math-preview"), data.latex);   // mở bộ công thức để sửa LaTeX rồi chèn
       }
       if (data.text) {
         var fs = bb ? Math.min(Math.max(Math.round(bb.h), 18), 46) : 22;
@@ -881,5 +909,5 @@
   updatePageLabel();
   makeThumbs();
   // expose cho kiểm thử
-  window.__vp = { state: state, insertMath: insertMath, insertPlot: insertPlot, redraw: redraw, resize: resize, gotoPage: gotoPage, addPage: addPage, pages: function () { return pages; }, cur: function () { return cur; } };
+  window.__vp = { state: state, insertMath: insertMath, insertPlot: insertPlot, redraw: redraw, resize: resize, gotoPage: gotoPage, addPage: addPage, pages: function () { return pages; }, cur: function () { return cur; }, strokeLines: strokeLines };
 })();

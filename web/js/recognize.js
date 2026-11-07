@@ -76,6 +76,29 @@
     return loading;
   }
 
+  // ----- Hậu xử lý sang LaTeX cho công thức Toán (số mũ, chỉ số, phân số, ký hiệu, hàm)
+  var UNI = { "√": "\\sqrt{}", "∫": "\\int ", "∬": "\\iint ", "∮": "\\oint ", "∑": "\\sum ", "∏": "\\prod ", "π": "\\pi ", "∞": "\\infty ", "≤": "\\le ", "≥": "\\ge ", "≠": "\\neq ", "≈": "\\approx ", "×": "\\times ", "÷": "\\div ", "±": "\\pm ", "∓": "\\mp ", "→": "\\to ", "∂": "\\partial ", "∇": "\\nabla ", "∈": "\\in ", "∉": "\\notin ", "⊂": "\\subset ", "∪": "\\cup ", "∩": "\\cap ", "∅": "\\varnothing ", "·": "\\cdot ", "∘": "\\circ ", "α": "\\alpha ", "β": "\\beta ", "γ": "\\gamma ", "θ": "\\theta ", "λ": "\\lambda ", "μ": "\\mu ", "φ": "\\varphi ", "ω": "\\omega ", "Δ": "\\Delta ", "Ω": "\\Omega ", "°": "^{\\circ}" };
+  var SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "ⁿ": "n", "⁺": "+", "⁻": "-" };
+  var SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6", "₇": "7", "₈": "8", "₉": "9", "ₙ": "n" };
+  function mathToLatex(t) {
+    if (!t) return "";
+    var s = t.replace(/\r/g, "").replace(/\n+/g, " ").replace(/\s{2,}/g, " ").trim();
+    s = s.replace(/√\s*([0-9A-Za-zÀ-ỹ]+)/g, "\\sqrt{$1}");   // căn ôm token theo sau
+    s = s.replace(/[√∫∬∮∑∏π∞≤≥≠≈×÷±∓→∂∇∈∉⊂∪∩∅·∘αβγθλμφωΔΩ°]/g, function (c) { return UNI[c] || c; });
+    s = s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹ⁿ⁺⁻]+/g, function (m) { return "^{" + m.split("").map(function (c) { return SUP[c] || c; }).join("") + "}"; });
+    s = s.replace(/[₀₁₂₃₄₅₆₇₈₉ₙ]+/g, function (m) { return "_{" + m.split("").map(function (c) { return SUB[c] || c; }).join("") + "}"; });
+    // mũ dạng x^2 hoặc x2 (chữ cái liền số -> số mũ nếu trông như lũy thừa) — thận trọng: chỉ gắn ^ khi đã có dấu ^
+    s = s.replace(/\^\s*([0-9A-Za-z]+)/g, "^{$1}");
+    s = s.replace(/_\s*([0-9A-Za-z]+)/g, "_{$1}");
+    // phân số a/b -> \frac{a}{b}
+    s = s.replace(/([0-9A-Za-z\)\]\}]+)\s*\/\s*([0-9A-Za-z\(\[\{]+)/g, "\\frac{$1}{$2}");
+    // vi phân dx, dy
+    s = s.replace(/\bd([xyzt])\b/g, "\\,d$1");
+    // tên hàm
+    s = s.replace(/\b(sin|cos|tan|cot|sec|csc|log|ln|lim|max|min|exp|arcsin|arccos|arctan)\b/g, "\\$1 ");
+    return s.replace(/\s+/g, " ").trim();
+  }
+
   // Dọn kết quả: bỏ ký tự rác, gộp khoảng trắng, sửa vài nhầm lẫn phổ biến của chữ viết tay
   function cleanText(t) {
     return (t || "").replace(/\r/g, "")
@@ -100,7 +123,16 @@
     var out = await w.recognize(pre);
     var text = cleanText(out.data.text);
     var conf = out.data.confidence || 0;
+    var mathy = opts.math || (opts.mode === "auto" && looksMath(text));
+    if (mathy) return { kind: "math", latex: mathToLatex(text) || text, text: "", confidence: Math.round(conf) };
     return { kind: "text", text: text, latex: "", confidence: Math.round(conf) };
+  }
+  // Đoán nội dung là công thức toán? (nhiều toán tử/ký hiệu, ít chữ cái tiếng Việt)
+  function looksMath(t) {
+    if (!t) return false;
+    var ops = (t.match(/[=+\-*/^_<>≤≥≠∫∑√π∞()]|\\frac|\\sqrt|\\int/g) || []).length;
+    var letters = (t.match(/[A-Za-zÀ-ỹ]/g) || []).length;
+    return ops >= 2 && ops >= letters * 0.35;
   }
 
   async function recognizeServer(pngDataUrl, mode) {
@@ -113,5 +145,5 @@
     return d;
   }
 
-  global.VPRecognize = { recognizeTesseract: recognizeTesseract, recognizeServer: recognizeServer, preprocess: preprocess };
+  global.VPRecognize = { recognizeTesseract: recognizeTesseract, recognizeServer: recognizeServer, preprocess: preprocess, mathToLatex: mathToLatex, looksMath: looksMath };
 })(window);
