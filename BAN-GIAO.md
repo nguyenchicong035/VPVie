@@ -186,8 +186,10 @@ Mặc định TẮT để bản miễn phí/phát triển vẫn chạy.
 Khác với nhận dạng ra chữ: tính năng này **giữ nguyên nét viết tay của người dùng**
 nhưng **làm mượt, bớt run tay, bớt nguệch ngoạc** sau khi viết xong.
 
-- `web/js/beautify.js` → `VPBeautify.refineInk(points, strength)`: resample đều →
-  RDP nhẹ bỏ điểm nhiễu → trung bình trượt → nội suy Catmull-Rom. strength 1/2/3.
+- `web/js/beautify.js` → `VPBeautify.refineInk(points, strength)`: resample → làm trơn khử
+  run tay → RDP lấy đỉnh → **tách tại góc nhọn** (`cornerSplit`) → **phân loại mỗi đoạn là
+  THẲNG hay CONG**: đoạn thẳng vẽ lại thành đường thẳng sạch (snap ngang/dọc), đoạn cong
+  nội suy Catmull-Rom. Chữ = tổ hợp nét thẳng + nét cong gọn như chữ viết. strength 1-4.
 - `app.js`: `state.tidyInk` (mặc định BẬT) tự nắn mỗi nét sau pointerup (không áp cho
   bút dạ quang; chạy sau khi shape-beautify trả null). `tidyWholePage()` nắn lại mọi
   nét trên trang (có pushHist để Ctrl+Z).

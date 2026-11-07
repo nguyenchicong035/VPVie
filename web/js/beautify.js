@@ -156,35 +156,72 @@
     out.push(pts[pts.length - 1]);
     return out;
   }
+  // Góc quặt tại điểm giữa b (0 = thẳng, càng lớn càng gãy)
+  function turnAngle(a, b, c) {
+    var a1 = Math.atan2(b.y - a.y, b.x - a.x), a2 = Math.atan2(c.y - b.y, c.x - b.x);
+    var d = Math.abs(a2 - a1); if (d > Math.PI) d = 2 * Math.PI - d; return d;
+  }
+  // Tách polyline tại các GÓC NHỌN cố ý -> nhiều đoạn; mỗi đoạn sẽ được làm mượt riêng,
+  // nhờ đó góc giữ sắc (giống chữ viết), chỉ đoạn cong/run tay mới được bo mượt.
+  function cornerSplit(pts, thresh) {
+    if (pts.length < 3) return [pts.slice()];
+    var segs = [], cur = [pts[0]];
+    for (var i = 1; i < pts.length - 1; i++) {
+      cur.push(pts[i]);
+      if (turnAngle(pts[i - 1], pts[i], pts[i + 1]) > thresh) { segs.push(cur); cur = [pts[i]]; }
+    }
+    cur.push(pts[pts.length - 1]); segs.push(cur);
+    return segs;
+  }
+  // Nối các đoạn đã làm mượt, bỏ điểm trùng ở mối nối (giữ góc gãy)
+  function joinSegs(list) {
+    var out = [];
+    list.forEach(function (seg, i) { out = out.concat(i === 0 ? seg : seg.slice(1)); });
+    return out;
+  }
+
   // strength: 1 nhẹ · 2 vừa · 3 mạnh · 4 rất mượt
   function refineInk(pts, strength) {
     if (!pts || pts.length < 4) return pts;
     strength = strength || 2;
-    // RDP giữ NHẸ ở mọi mức để KHÔNG méo chữ; độ mượt đến từ số lần làm trơn + mật độ
-    // đường cong (samples), không phải từ rút gọn mạnh.
+    // RDP giữ NHẸ để không méo chữ; "corner" = ngưỡng góc được coi là góc nhọn cố ý
+    // (giữ sắc). Ngưỡng nhỏ = giữ nhiều góc (giống chữ viết hơn, bớt mượt).
+    // pre = số lần làm trơn ĐỦ MẠNH để xoá run tay trước khi tìm đỉnh (nếu không,
+    // tremor bị nhầm thành góc). corner = ngưỡng góc (rad) coi là góc nhọn CỐ Ý — để
+    // CAO (~1.2 ≈ 69°) nên chỉ giữ góc thật, đoạn cong vẫn bo mượt → giống chữ viết.
     var cfg = {
-      1: { eps: 0.010, pre: 1, win: 1, passes: 1, samples: 10, post: 0 },
-      2: { eps: 0.012, pre: 1, win: 1, passes: 2, samples: 12, post: 1 },
-      3: { eps: 0.013, pre: 2, win: 1, passes: 3, samples: 16, post: 2 },
-      4: { eps: 0.014, pre: 2, win: 2, passes: 4, samples: 20, post: 3 }
-    }[strength] || { eps: 0.012, pre: 1, win: 1, passes: 2, samples: 12, post: 1 };
+      1: { eps: 0.016, pre: 2, corner: 1.10, samples: 10 },
+      2: { eps: 0.020, pre: 4, corner: 1.20, samples: 14 },
+      3: { eps: 0.024, pre: 6, corner: 1.30, samples: 16 },
+      4: { eps: 0.028, pre: 8, corner: 1.45, samples: 20 }
+    }[strength] || { eps: 0.020, pre: 4, corner: 1.20, samples: 14 };
     var bb = bbox(pts), size = Math.max(bb.w, bb.h);
     if (size < 8) return pts;
     // 1) Resample đều để ổn định
     var step = Math.max(2, size * 0.02);
     var r = resampleEven(pts, step);
     if (r.length < 4) return pts;
-    // 2) Làm trơn sơ bộ trên nét dày (khử run tay trực tiếp) trước khi rút gọn
-    for (var a = 0; a < cfg.pre; a++) r = smoothPass(r, cfg.win);
-    // 3) Bỏ điểm nhiễu bằng RDP (giữ hình dáng chữ)
-    var simplified = rdp(r, size * cfg.eps);
-    if (simplified.length < 3) simplified = r;
-    // 4) Làm trơn các điểm điều khiển + nội suy Catmull-Rom -> nét cong mượt
-    var sm = simplified;
-    for (var k = 0; k < cfg.passes; k++) sm = smoothPass(sm, cfg.win);
-    var curve = catmullRom(sm, cfg.samples);
-    // 5) Làm trơn lần cuối trên đường cong dày -> rất mượt
-    for (var b2 = 0; b2 < cfg.post; b2++) curve = smoothPass(curve, 2);
+    // 2) Làm trơn sơ bộ ĐỦ MẠNH (khử run tay) rồi rút gọn nhẹ lấy các đỉnh
+    for (var a = 0; a < cfg.pre; a++) r = smoothPass(r, 1);
+    var verts = rdp(r, size * cfg.eps);
+    if (verts.length < 3) return catmullRom(verts, cfg.samples);
+    // 3) Tách tại GÓC NHỌN cố ý -> mỗi đoạn con. PHÂN LOẠI từng đoạn:
+    //    - gần thẳng  -> vẽ lại thành ĐƯỜNG THẲNG sạch (có snap ngang/dọc nhẹ)
+    //    - cong       -> vẽ lại thành ĐƯỜNG CONG mượt
+    // => chữ = tổ hợp nét thẳng + nét cong gọn gàng, trông như chữ viết.
+    var segs = cornerSplit(verts, cfg.corner).map(function (seg) {
+      if (seg.length <= 2) return seg;
+      var endGap = dist(seg[0], seg[seg.length - 1]), L = pathLength(seg);
+      var straightness = L > 0 ? endGap / L : 1;
+      if (straightness > 0.92) {                        // ĐOẠN THẲNG
+        var a0 = seg[0], b0 = seg[seg.length - 1];
+        var sn = snapAngle(a0.x, a0.y, b0.x, b0.y);     // snap ngang/dọc nếu gần đúng
+        return [{ x: sn[0], y: sn[1], pr: a0.pr }, { x: sn[2], y: sn[3], pr: b0.pr }];
+      }
+      var s = smoothPass(seg, 1);                       // ĐOẠN CONG -> làm mượt
+      return catmullRom(s, cfg.samples);
+    });
+    var curve = joinSegs(segs);
     return curve.length >= 2 ? curve : pts;
   }
 
