@@ -85,26 +85,9 @@
     <button data-tool="pan" class="nr-ic tool" title="Di chuyển trang">✋</button>
     <button id="clear" class="nr-ic" title="Xóa trang">🗑</button>
     <span class="nr-sep"></span>
-    <span class="nr-aigrp">
-      <select id="ai-engine" title="Công cụ nhận dạng">
-        <option value="tesseract">AI Tesseract (miễn phí)</option>
-        <option value="server">Máy chủ (Ollama/Claude)</option>
-      </select>
-      <select id="ai-mode" title="Kiểu nhận dạng">
-        <option value="auto">Tự động</option>
-        <option value="text">Chữ tiếng Việt</option>
-        <option value="math">Công thức</option>
-      </select>
-      <select id="text-font" title="Phông chữ kết quả">
-        <option value="">Phông mặc định</option>
-        <option value="'Times New Roman', serif">Times New Roman</option>
-        <option value="Arial, sans-serif">Arial</option>
-        <option value="'Comic Sans MS','Segoe Script',cursive">Chữ viết tay</option>
-      </select>
-      <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
-      <button id="btn-ai" class="nr-ic primary" title="Nhận dạng chữ viết tay">🤖 Nhận dạng</button>
-      <span id="ai-status" class="ai-status"></span>
-    </span>
+    <button id="btn-ai" class="nr-ic primary" title="Nhận dạng chữ viết tay">🤖 Nhận dạng</button>
+    <button id="btn-ai-opt" class="nr-ic" title="Tuỳ chọn nhận dạng">▾</button>
+    <span id="ai-status" class="ai-status"></span>
     <span class="nr-sep"></span>
     <button id="btn-png" class="nr-ic" title="Xuất ảnh PNG">🖼</button>
     <button id="btn-pdf" class="nr-ic" title="Xuất PDF">📄</button>
@@ -264,10 +247,12 @@
           <div class="import-row">
             <button id="set-img" class="btn ghost small">＋ Thêm từ ảnh…</button>
             <button id="set-pdf" class="btn ghost small">＋ Thêm từ PDF…</button>
+            <button id="set-docx" class="btn ghost small">＋ Thêm từ Word…</button>
             <button id="set-nobg" class="btn ghost small">Bỏ nền</button>
           </div>
           <input id="imp-img" type="file" accept="image/*" hidden/>
           <input id="imp-pdf" type="file" accept="application/pdf" hidden/>
+          <input id="imp-docx" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden/>
           <div class="set-sub">Màu giấy</div>
           <div class="swatch-row" data-swatch="bg">
             <button data-c="#FFFFFF" class="cs" style="background:#FFFFFF"></button>
@@ -378,6 +363,31 @@
     </div>
   </div>
 
+  <div id="ai-opts" class="nr-menu ai-opts">
+    <label>Công cụ
+      <select id="ai-engine">
+        <option value="tesseract">AI Tesseract (miễn phí)</option>
+        <option value="server">Máy chủ (Ollama/Claude)</option>
+      </select>
+    </label>
+    <label>Kiểu nhận dạng
+      <select id="ai-mode">
+        <option value="auto">Tự động</option>
+        <option value="text">Chữ tiếng Việt</option>
+        <option value="math">Công thức</option>
+      </select>
+    </label>
+    <label>Phông kết quả
+      <select id="text-font">
+        <option value="">Phông mặc định</option>
+        <option value="'Times New Roman', serif">Times New Roman</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="'Comic Sans MS','Segoe Script',cursive">Chữ viết tay</option>
+      </select>
+    </label>
+    <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
+  </div>
+
   <div id="arrow-menu" class="nr-menu">
     <button data-arrow="arrow">→ Mũi tên</button>
     <button data-arrow="darrow">↔ Hai chiều</button>
@@ -389,6 +399,7 @@
   <div id="toast" class="toast"></div>
 
   <script src="/vendor/pdfjs/pdf.min.js"></script>
+  <script src="/vendor/mammoth.browser.min.js"></script>
   <script src="/vendor/katex/katex.min.js"></script>
   <script src="/vendor/function-plot.js"></script>
   <script src="/js/beautify.js"></script>

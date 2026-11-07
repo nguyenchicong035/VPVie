@@ -127,7 +127,7 @@ katex, function-plot (kèm d3), math.min.js (mathjs UMD `lib/browser/math.js`), 
 
 1. **Nhân bản (Nhân đôi) & menu ngữ cảnh đối tượng** (Sửa/Sao chép/Nhân bản/Cắt/Xóa) — ảnh mẫu có. Gợi ý: khi `state.selected` khác rỗng, hiện thanh nổi (DOM) cạnh vùng chọn; nhân bản = clone item + dịch 20px.
 2. **Menu thả xuống (▾) cho bút/tẩy/hình** để khớp 100% ảnh (hiện mới có menu mũi tên). Dùng lại mẫu `#arrow-menu` + `.nr-menu`.
-3. **Mở Word (.docx) để viết đè** — song song với nhập PDF. Gợi ý: vendor **mammoth.js** (docx→HTML) rồi `html2canvas` → đặt `setPageBg`. Cần tải mammoth từ npm.
+3. ~~Mở Word (.docx) để viết đè~~ — **ĐÃ XONG** (vendor `mammoth.browser.min.js` → HTML → html2canvas → `setPageBg`; nút "Thêm từ Word…" trong Cài đặt).
 4. **Đồng bộ Google Drive** — **CẦN NGƯỜI DÙNG tạo OAuth Client ID của Google** (web app, scope `drive.file`). Chưa làm vì phụ thuộc khoá của người dùng. Trước mắt đã có lưu/mở tệp `.vpvie.json`. Hướng: Google Identity Services (gsi) + Drive REST `files.create/update` lưu sổ JSON.
 5. **Miền nghiệm nâng cao / TikZ** — dán đề TikZ hiện chưa parse (chỉ LaTeX/KaTeX). Khó; cân nhắc bỏ qua.
 6. **Nhận diện chữ viết tay bằng nét (online recognition)** — hiện dùng Tesseract trên ảnh (yếu với chữ tay). Nâng cấp: mô hình nhận dạng theo quỹ đạo nét (stroke-based) nếu tìm được mô hình nguồn mở chạy trình duyệt.

@@ -502,7 +502,14 @@
   document.querySelectorAll("#arrow-menu button").forEach(function (b) {
     b.onclick = function (e) { e.stopPropagation(); activateArrow(b.dataset.arrow); $("arrow-menu").classList.remove("show"); toast("Công cụ: " + b.textContent.trim()); };
   });
-  document.addEventListener("click", function () { var m = $("arrow-menu"); if (m) m.classList.remove("show"); });
+  document.addEventListener("click", function () { document.querySelectorAll(".nr-menu.show").forEach(function (m) { m.classList.remove("show"); }); });
+  if ($("btn-ai-opt")) $("btn-ai-opt").onclick = function (e) {
+    e.stopPropagation();
+    var m = $("ai-opts"), r = this.getBoundingClientRect();
+    document.querySelectorAll(".nr-menu.show").forEach(function (x) { if (x !== m) x.classList.remove("show"); });
+    m.style.left = Math.min(r.left, window.innerWidth - 230) + "px"; m.style.top = (r.bottom + 4) + "px"; m.classList.toggle("show");
+  };
+  if ($("ai-opts")) $("ai-opts").addEventListener("click", function (e) { e.stopPropagation(); });
   // Thước kẻ / đo góc
   if ($("btn-ruler")) $("btn-ruler").onclick = function () { var on = window.VPRuler.toggle(board); this.classList.toggle("active", on); };
   // Hiện/ẩn danh sách trang
@@ -820,6 +827,29 @@
         }
         makeThumbs(); scheduleSave(); toast("Đã nhập " + doc.numPages + " trang PDF. Hãy viết lên đề.");
       } catch (e) { toast("Không mở được PDF."); }
+    };
+    rd.readAsArrayBuffer(f);
+  };
+
+  // ----- Nhập Word (.docx) làm nền trang (dùng mammoth → HTML → ảnh)
+  if ($("set-docx")) $("set-docx").onclick = function () { $("imp-docx").click(); };
+  if ($("imp-docx")) $("imp-docx").onchange = function () {
+    var f = this.files[0]; if (!f) return; this.value = ""; hideDialog("dlg-settings");
+    if (!window.mammoth) { toast("Chưa tải được bộ đọc Word."); return; }
+    var rd = new FileReader();
+    rd.onload = function () {
+      toast("Đang mở Word…");
+      window.mammoth.convertToHtml({ arrayBuffer: rd.result }).then(function (res) {
+        var wrap = document.createElement("div");
+        wrap.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;padding:48px;background:#fff;font-family:'Times New Roman',serif;font-size:16px;line-height:1.5;color:#111";
+        wrap.innerHTML = res.value || "<p>(Tài liệu trống)</p>";
+        document.body.appendChild(wrap);
+        return window.html2canvas(wrap, { scale: 2, backgroundColor: "#fff" }).then(function (cv) {
+          document.body.removeChild(wrap);
+          setPageBg(cv.toDataURL("image/jpeg", 0.85));
+          toast("Đã nhập đề Word. Hãy viết/giải lên trên.");
+        });
+      }).catch(function () { toast("Không mở được tệp Word."); });
     };
     rd.readAsArrayBuffer(f);
   };
