@@ -1045,7 +1045,7 @@
   function renderPlotPreview() {
     var pv = $("plot-preview"); if (!pv || !window.VPGrapher) return;
     var fs = plotFuncs.filter(function (f) { return (f.expr || "").trim(); });
-    try { window.VPGrapher.draw(pv, (fs[0] && fs[0].expr) || "x^2", plotOpts(pv.clientWidth || 360, 300)); }
+    try { window.VPGrapher.draw(pv, (fs[0] && fs[0].expr) || "x^2", plotOpts(pv.clientWidth || 340, pv.clientHeight || 298)); }
     catch (e) { pv.textContent = "Không vẽ được — kiểm tra lại hàm."; }
   }
   var plotPoints = [];
