@@ -592,12 +592,75 @@
     };
   });
   geoBtns.forEach(function (b) {
-    b.onclick = function () {
+    b.onclick = function (e) {
+      if (b.dataset.geo === "line") { e.stopPropagation(); openGeoMenu(b); return; }   // ╱ mở bảng dựng hình động
       state.tool = "geo";
       window.VPGeo.setTool(b.dataset.geo);
       clearActive(); b.classList.add("active");
     };
   });
+  // ===== Bảng DỰNG HÌNH ĐỘNG (4 cột) =====
+  var GEO_HINT = {
+    move: "Kéo để di chuyển điểm.", point: "Bấm để tạo điểm.",
+    segment: "Bấm 2 điểm để vẽ đoạn thẳng.", line: "Bấm 2 điểm để vẽ đường thẳng.", ray: "Bấm 2 điểm: gốc rồi hướng.", "ray-opp": "Bấm 2 điểm: gốc rồi hướng (vẽ tia đối).",
+    circle: "Bấm tâm rồi 1 điểm trên đường tròn.", mid: "Bấm 2 điểm để lấy trung điểm.",
+    perp: "Bấm điểm cần hạ, rồi 2 điểm xác định đường.", parallel: "Bấm điểm, rồi 2 điểm xác định đường song song.",
+    altitude: "Bấm đỉnh A, rồi 2 đỉnh B, C (đường cao từ A).", bisector: "Bấm 3 điểm A, B, C (phân giác góc B).",
+    intersect: "Bấm 4 điểm: đường 1 (2 điểm) rồi đường 2 (2 điểm).",
+    centroid: "Bấm 3 đỉnh tam giác (trọng tâm).", ortho: "Bấm 3 đỉnh (trực tâm).",
+    circum: "Bấm 3 đỉnh (đường tròn ngoại tiếp).", incenter: "Bấm 3 đỉnh (tâm nội tiếp).", incircle: "Bấm 3 đỉnh (đường tròn nội tiếp).",
+    "sym-line": "Bấm điểm cần lấy đối xứng, rồi 2 điểm xác định trục.", "sym-point": "Bấm điểm, rồi tâm đối xứng.",
+    translate: "Bấm điểm, rồi 2 điểm xác định vectơ tịnh tiến.", rotate: "Bấm điểm, rồi tâm quay."
+  };
+  var GEO_COLS = [
+    [["h", "Hình vẽ"], ["opt", "showdots", "Hiện chấm tròn ở các điểm của hình"], ["opt", "snap", "Bắt điểm lưới"],
+     ["h", "Kí hiệu"], ["todo", "Góc (số đo)"], ["todo", "Kí hiệu góc"], ["todo", "Kí hiệu góc vuông"], ["todo", "Kí hiệu đoạn thẳng bằng nhau"], ["todo", "Kí hiệu hai góc bằng nhau"],
+     ["h", "Phép biến hình"], ["t", "sym-line", "Đối xứng trục"], ["t", "sym-point", "Đối xứng tâm"], ["t", "translate", "Tịnh tiến"], ["t", "rotate", "Phép quay"]],
+    [["h", "Vẽ"], ["t", "move", "Di chuyển điểm", "U"], ["t", "point", "Điểm"], ["t", "segment", "Đoạn thẳng qua 2 điểm"], ["t", "line", "Đường thẳng qua 2 điểm"], ["t", "ray", "Tia"], ["t", "ray-opp", "Tia đối"], ["todo", "Đa giác"], ["t", "circle", "Đường tròn (tâm, điểm)"], ["todo", "Cung tròn qua 3 điểm"]],
+    [["h", "Dựng hình"], ["t", "mid", "Trung điểm"], ["t", "perp", "Đường vuông góc"], ["t", "parallel", "Đường song song"], ["t", "altitude", "Đường cao (chân đường vuông góc)"], ["t", "bisector", "Tia phân giác"], ["t", "intersect", "Giao điểm"], ["todo", "Tiếp tuyến của đường tròn"], ["todo", "Tiếp tuyến chung hai đường tròn"]],
+    [["h", "Tâm tam giác"], ["t", "centroid", "Trọng tâm"], ["t", "ortho", "Trực tâm"], ["t", "circum", "Tâm đường tròn ngoại tiếp"], ["t", "incenter", "Tâm đường tròn nội tiếp"], ["t", "circum", "Đường tròn ngoại tiếp (qua 3 đỉnh)"], ["t", "incircle", "Đường tròn nội tiếp (tiếp xúc 3 cạnh)"]]
+  ];
+  var geoMenuBuilt = false;
+  function closeGeoMenu() { var m = $("geo-menu"); if (m) m.classList.remove("show"); }
+  function activateGeoTool(t) {
+    if (t === "rotate") { var a = parseFloat(prompt("Góc quay (độ):", "90")); window.VPGeo.rotAngle = isNaN(a) ? 90 : a; }
+    state.tool = "geo"; window.VPGeo.setTool(t); clearActive();
+    var gb = document.querySelector('[data-geo="line"]'); if (gb) gb.classList.add("active");
+    toast(GEO_HINT[t] || "Chọn điểm trên bảng.");
+  }
+  function buildGeoMenu() {
+    if (geoMenuBuilt) return; var host = $("geo-menu"); if (!host) return;
+    GEO_COLS.forEach(function (colData) {
+      var col = document.createElement("div"); col.className = "sm-col";
+      colData.forEach(function (row) {
+        if (row[0] === "h") { var hd = document.createElement("div"); hd.className = "sm-h"; hd.textContent = row[1]; col.appendChild(hd); return; }
+        var b = document.createElement("button"); b.className = "sm-item";
+        if (row[0] === "opt") {
+          var ck = document.createElement("span"); ck.className = "sm-ck"; ck.textContent = state.opt[row[1]] ? "✓" : "";
+          b.appendChild(ck); var sp = document.createElement("span"); sp.textContent = row[2]; b.appendChild(sp);
+          if (state.opt[row[1]]) b.classList.add("on");
+          b.onclick = function () { state.opt[row[1]] = !state.opt[row[1]]; ck.textContent = state.opt[row[1]] ? "✓" : ""; b.classList.toggle("on", state.opt[row[1]]); saveSettings(); redraw(); };
+        } else if (row[0] === "todo") {
+          var sp2 = document.createElement("span"); sp2.style.paddingLeft = "6px"; sp2.textContent = row[1]; b.appendChild(sp2);
+          b.onclick = function () { toast("Công cụ \"" + row[1] + "\" đang được hoàn thiện."); };
+        } else {
+          var sp3 = document.createElement("span"); sp3.style.paddingLeft = "6px"; sp3.textContent = row[2]; b.appendChild(sp3);
+          if (row[3]) { var k = document.createElement("span"); k.className = "sm-key"; k.textContent = row[3]; b.appendChild(k); }
+          b.onclick = function () { activateGeoTool(row[1]); closeGeoMenu(); };
+        }
+        col.appendChild(b);
+      });
+      host.appendChild(col);
+    });
+    geoMenuBuilt = true;
+  }
+  function openGeoMenu(btn) {
+    buildGeoMenu(); var m = $("geo-menu"), r = btn.getBoundingClientRect();
+    document.querySelectorAll(".nr-menu.show").forEach(function (x) { if (x !== m) x.classList.remove("show"); });
+    if (m.classList.contains("show")) { m.classList.remove("show"); return; }
+    m.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 820)) + "px"; m.style.top = (r.bottom + 4) + "px";
+    m.classList.add("show");
+  }
   document.querySelectorAll("[data-color]").forEach(function (b) {
     b.style.background = b.dataset.color;
     b.onclick = function () {
