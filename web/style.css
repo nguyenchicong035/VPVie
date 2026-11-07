@@ -515,3 +515,38 @@ body.theme-dark .app-menu .am-item:hover{background:#30353d}
 .tn-del{position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;border-radius:6px;background:rgba(255,255,255,.9);cursor:pointer;font-size:13px;line-height:1;display:none;box-shadow:0 1px 4px rgba(0,0,0,.18);z-index:3}
 .thumb:hover .tn-del{display:block}
 .tn-del:hover{background:#fde8ea}
+
+/* ===== Khung chữ soạn thảo + thanh định dạng chữ ===== */
+.ov-text .ov-body{min-width:60px}
+.text-edit{min-width:40px;min-height:1.2em;outline:none;padding:4px 6px;line-height:1.3;white-space:pre-wrap;word-break:break-word;cursor:text;font-family:'Patrick Hand','Be Vietnam Pro',cursive;font-size:40px;color:#111}
+.text-edit:empty:before{content:attr(data-ph);color:#9aa7b4;pointer-events:none}
+.ov-text.frame-border .text-edit{border:1.6px solid #8a93a0;border-radius:8px;padding:6px 10px}
+.ov-text.frame-box .text-edit{border:1.6px solid #d7a93a;border-radius:10px;padding:8px 12px;background:#fffdf4;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.rt-bar{position:fixed;z-index:60;display:flex;align-items:center;gap:4px;padding:5px 8px;background:#fff;border:1px solid #e6e8ee;border-radius:12px;box-shadow:0 8px 28px rgba(20,24,40,.18);font-family:"Segoe UI",system-ui,sans-serif;max-width:96vw;flex-wrap:wrap}
+.rt-bar select{height:30px;border:1px solid #d9dde6;border-radius:8px;padding:0 6px;background:#fff;font-size:13px;color:#222;cursor:pointer}
+.rt-bar .rt-font{min-width:92px}
+.rt-bar .rt-size{width:58px}
+.rt-bar .rt-b,.rt-bar .rt-omega,.rt-bar .rt-fx,.rt-bar .rt-done{height:30px;min-width:30px;border:1px solid transparent;border-radius:8px;background:transparent;cursor:pointer;font-size:14px;color:#222;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.rt-bar .rt-b:hover,.rt-bar .rt-omega:hover,.rt-bar .rt-fx:hover{background:#f1f2f6}
+.rt-bar .rt-b.on{background:#f3e6e9;border-color:#e3c2cb;color:#7a1020}
+.rt-bar .rt-fx{font-style:italic;font-family:'Times New Roman',serif}
+.rt-bar .rt-done{color:#1a7f37;font-weight:600;border-color:#bfe6cb;margin-left:2px}
+.rt-bar .rt-done:hover{background:#eaf7ee}
+.rt-bar .rt-color{height:30px;display:inline-flex;align-items:center;justify-content:center;min-width:30px;border-radius:8px;cursor:pointer;position:relative;font-size:15px;font-weight:600}
+.rt-bar .rt-color:hover{background:#f1f2f6}
+.rt-bar .rt-colin{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.rt-sep{width:1px;height:20px;background:#e6e8ee;margin:0 2px}
+.rt-sym{position:fixed;z-index:62;background:#fff;border:1px solid #e6e8ee;border-radius:10px;box-shadow:0 10px 30px rgba(20,24,40,.2);padding:8px;display:grid;grid-template-columns:repeat(8,30px);gap:2px;max-width:280px}
+.rt-sym button{height:30px;border:none;background:transparent;border-radius:6px;cursor:pointer;font-size:16px}
+.rt-sym button:hover{background:#f1f2f6}
+
+/* Dark theme cho thanh chữ */
+body.theme-dark .rt-bar{background:#262a33;border-color:#3a404c}
+body.theme-dark .rt-bar select,body.theme-dark .rt-bar .rt-b,body.theme-dark .rt-bar .rt-omega,body.theme-dark .rt-bar .rt-fx{background:#2f343f;color:#e8eaf0;border-color:#444b58}
+body.theme-dark .rt-bar .rt-b:hover,body.theme-dark .rt-bar .rt-omega:hover,body.theme-dark .rt-bar .rt-fx:hover{background:#39404c}
+body.theme-dark .rt-sym{background:#262a33;border-color:#3a404c}
+body.theme-dark .rt-sym button{color:#e8eaf0}
+.rt-fx-inline{display:inline-block;vertical-align:middle;margin:0 2px;user-select:none}
+
+/* sửa: thuộc tính hidden phải thắng display của rt-bar/rt-sym */
+.rt-bar[hidden],.rt-sym[hidden]{display:none!important}

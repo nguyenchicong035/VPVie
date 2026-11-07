@@ -128,7 +128,7 @@
       ctx.arc(it.cx, it.cy, it.r, 0, Math.PI * 2);
       if (it.fill) { ctx.fillStyle = it.fill; ctx.fill(); } ctx.stroke();
     } else if (it.type === "ellipse") {
-      ctx.ellipse(it.cx, it.cy, it.rx, it.ry, 0, 0, Math.PI * 2);
+      ctx.ellipse(it.cx, it.cy, it.rx, it.ry, it.rot || 0, 0, Math.PI * 2);
       if (it.fill) { ctx.fillStyle = it.fill; ctx.fill(); } ctx.stroke();
     } else if (it.type === "poly") {
       var pp = it.pts; ctx.moveTo(pp[0].x, pp[0].y); for (var k = 1; k < pp.length; k++) ctx.lineTo(pp[k].x, pp[k].y); ctx.closePath();
@@ -141,7 +141,7 @@
       var sc = it.color || state.color, lw = it.size || 2;
       ctx.strokeStyle = sc; ctx.lineWidth = lw;
       (it.segs || []).forEach(function (s) { ctx.setLineDash(s.dashed ? [6, 5] : []); ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); });
-      (it.ellipses || []).forEach(function (e) { ctx.setLineDash(e.dashed ? [6, 5] : []); ctx.beginPath(); ctx.ellipse(e.cx, e.cy, e.rx, e.ry, 0, e.a0 || 0, (e.a1 != null ? e.a1 : Math.PI * 2)); ctx.stroke(); });
+      (it.ellipses || []).forEach(function (e) { ctx.setLineDash(e.dashed ? [6, 5] : []); ctx.beginPath(); ctx.ellipse(e.cx, e.cy, e.rx, e.ry, e.rot || 0, e.a0 || 0, (e.a1 != null ? e.a1 : Math.PI * 2)); ctx.stroke(); });
       ctx.setLineDash([]);
       ctx.fillStyle = sc; ctx.font = "13px 'Segoe UI'";
       (it.labels || []).forEach(function (l) { ctx.fillText(l.t, l.x, l.y); });
@@ -188,6 +188,11 @@
           ctx.beginPath(); ctx.arc(h.x, h.y, 5, 0, 6.2832);
           ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#7a1020"; ctx.stroke();
         });
+        // tay cầm xoay (vòng tròn phía trên, nối với cạnh trên bằng một đoạn)
+        var rh = rotHandle();
+        ctx.beginPath(); ctx.moveTo(rh.x, ub.miny - 4); ctx.lineTo(rh.x, rh.y + 6); ctx.lineWidth = 1; ctx.strokeStyle = "#7a1020"; ctx.stroke();
+        ctx.beginPath(); ctx.arc(rh.x, rh.y, 6, 0, 6.2832); ctx.fillStyle = "#7a1020"; ctx.fill();
+        ctx.beginPath(); ctx.arc(rh.x, rh.y, 3.2, -0.6, 3.6); ctx.lineWidth = 1.6; ctx.strokeStyle = "#fff"; ctx.stroke();
       }
       ctx.restore();
     }
@@ -232,7 +237,7 @@
     if (it.type === "line" || it.type === "arrow") return { minx: Math.min(it.x1, it.x2), maxx: Math.max(it.x1, it.x2), miny: Math.min(it.y1, it.y2), maxy: Math.max(it.y1, it.y2) };
     if (it.type === "rect") return { minx: it.x, maxx: it.x + it.w, miny: it.y, maxy: it.y + it.h };
     if (it.type === "circle") return { minx: it.cx - it.r, maxx: it.cx + it.r, miny: it.cy - it.r, maxy: it.cy + it.r };
-    if (it.type === "ellipse") return { minx: it.cx - it.rx, maxx: it.cx + it.rx, miny: it.cy - it.ry, maxy: it.cy + it.ry };
+    if (it.type === "ellipse") { var er = it.rot || 0, ec = Math.cos(er), es = Math.sin(er), hw = Math.hypot(it.rx * ec, it.ry * es), hh = Math.hypot(it.rx * es, it.ry * ec); return { minx: it.cx - hw, maxx: it.cx + hw, miny: it.cy - hh, maxy: it.cy + hh }; }
     if (it.type === "triangle" || it.type === "poly" || it.type === "path") { var xs = it.pts.map(function (p) { return p.x; }), ys = it.pts.map(function (p) { return p.y; }); return { minx: Math.min.apply(0, xs), maxx: Math.max.apply(0, xs), miny: Math.min.apply(0, ys), maxy: Math.max.apply(0, ys) }; }
     return { minx: 0, maxx: 0, miny: 0, maxy: 0 };
   }
@@ -267,6 +272,25 @@
       (it.labels || []).forEach(function (l) { var p = { x: l.x, y: l.y }; sp(p); l.x = p.x; l.y = p.y; });
     }
   }
+  // Xoay một hình quanh tâm (cx,cy) một góc ang (radian)
+  function rotateItem(it, ang, cx, cy) {
+    var c = Math.cos(ang), s = Math.sin(ang);
+    function rp(p) { var dx = p.x - cx, dy = p.y - cy; p.x = cx + dx * c - dy * s; p.y = cy + dx * s + dy * c; }
+    if (it.type === "stroke" || it.type === "triangle" || it.type === "poly" || it.type === "path") { (it.points || it.pts).forEach(rp); }
+    else if (it.type === "line" || it.type === "arrow") { var a = { x: it.x1, y: it.y1 }, b = { x: it.x2, y: it.y2 }; rp(a); rp(b); it.x1 = a.x; it.y1 = a.y; it.x2 = b.x; it.y2 = b.y; }
+    else if (it.type === "rect") {
+      // chuyển chữ nhật thành đa giác 4 đỉnh để xoay tự do
+      var pts = [{ x: it.x, y: it.y }, { x: it.x + it.w, y: it.y }, { x: it.x + it.w, y: it.y + it.h }, { x: it.x, y: it.y + it.h }];
+      pts.forEach(rp); it.type = "poly"; it.pts = pts; delete it.x; delete it.y; delete it.w; delete it.h;
+    }
+    else if (it.type === "circle") { var cc = { x: it.cx, y: it.cy }; rp(cc); it.cx = cc.x; it.cy = cc.y; } // tròn: xoay không đổi hình
+    else if (it.type === "ellipse") { var e = { x: it.cx, y: it.cy }; rp(e); it.cx = e.x; it.cy = e.y; it.rot = (it.rot || 0) + ang; }
+    else if (it.type === "solid") {
+      (it.segs || []).forEach(function (sg) { var p1 = { x: sg.x1, y: sg.y1 }, p2 = { x: sg.x2, y: sg.y2 }; rp(p1); rp(p2); sg.x1 = p1.x; sg.y1 = p1.y; sg.x2 = p2.x; sg.y2 = p2.y; });
+      (it.ellipses || []).forEach(function (e2) { var c2 = { x: e2.cx, y: e2.cy }; rp(c2); e2.cx = c2.x; e2.cy = c2.y; e2.rot = (e2.rot || 0) + ang; });
+      (it.labels || []).forEach(function (l) { var p = { x: l.x, y: l.y }; rp(p); l.x = p.x; l.y = p.y; });
+    }
+  }
   // 8 tay cầm trên hộp bao vùng chọn
   function selHandles() {
     var b = selUnionBox();
@@ -276,8 +300,12 @@
       { n: "sw", x: b.minx, y: b.maxy }, { n: "w", x: b.minx, y: (b.miny + b.maxy) / 2 }
     ];
   }
+  // Tay cầm xoay: nằm phía trên cạnh giữa của hộp bao
+  function rotHandle() { var b = selUnionBox(); return { n: "rot", x: (b.minx + b.maxx) / 2, y: b.miny - 26 }; }
   function hitHandle(pt) {
     if (!state.selected || !state.selected.length) return null;
+    var rh = rotHandle();
+    if (Math.abs(pt.x - rh.x) <= 11 && Math.abs(pt.y - rh.y) <= 11) return rh;
     var hs = selHandles();
     for (var i = 0; i < hs.length; i++) if (Math.abs(pt.x - hs[i].x) <= 9 && Math.abs(pt.y - hs[i].y) <= 9) return hs[i];
     return null;
@@ -311,6 +339,12 @@
     if (state.tool === "select") {
       canvas.setPointerCapture(e.pointerId); state.drawing = true;
       var h = hitHandle(pt);
+      if (h && h.n === "rot") {   // kéo tay cầm xoay -> quay quanh tâm hộp bao
+        pushHist(); state.selMode = "rotate"; state.moved = false;
+        var rb = selUnionBox(); var rcx = (rb.minx + rb.maxx) / 2, rcy = (rb.miny + rb.maxy) / 2;
+        state.rot = { cx: rcx, cy: rcy, last: Math.atan2(pt.y - rcy, pt.x - rcx) };
+        redraw(); return;
+      }
       if (h) {   // kéo tay cầm -> đổi kích thước quanh điểm neo (góc/cạnh đối diện)
         pushHist(); state.selMode = "resize"; state.moved = false;
         var b = selUnionBox();
@@ -342,6 +376,10 @@
     if (state.tool === "plotregion" || state.tool === "varregion") { if (state.selBox) { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } return; }
     if (state.tool === "select") {
       if (state.selMode === "marquee") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; }
+      else if (state.selMode === "rotate" && state.rot) {
+        var rr = state.rot, ang = Math.atan2(pt.y - rr.cy, pt.x - rr.cx), d = ang - rr.last;
+        if (d) { state.moved = true; state.selected.forEach(function (i) { if (state.items[i]) rotateItem(state.items[i], d, rr.cx, rr.cy); }); rr.last = ang; }
+      }
       else if (state.selMode === "resize" && state.resize) {
         var rz = state.resize, ox = rz.anchor.x, oy = rz.anchor.y;
         var sx = rz.ax && Math.abs(rz.last.x - ox) > 2 ? (pt.x - ox) / (rz.last.x - ox) : 1;
@@ -379,8 +417,8 @@
         if (Math.abs(bx.x2 - bx.x1) > 4 || Math.abs(bx.y2 - bx.y1) > 4) state.selected = itemsInBox(bx);
         else { var hit = hitItem({ x: bx.x1, y: bx.y1 }); if (hit >= 0) state.selected = [hit]; }   // bấm 1 lần: chọn đối tượng trên cùng
         state.selBox = null;
-      } else if ((state.selMode === "move" || state.selMode === "resize") && !state.moved) undoStack.pop();   // không đổi gì → bỏ bản lưu
-      state.resize = null; state.selMode = null;
+      } else if ((state.selMode === "move" || state.selMode === "resize" || state.selMode === "rotate") && !state.moved) undoStack.pop();   // không đổi gì → bỏ bản lưu
+      state.resize = null; state.rot = null; state.selMode = null;
       redraw(); scheduleSave(); return;
     }
     if (state.tool === "eraser") {
@@ -435,7 +473,22 @@
       if (data.color) body.style.color = data.color;
       if (data.size) body.style.fontSize = data.size + "px";
     }
-    else if (kind === "text") { body.textContent = data.text; if (data.font) body.style.fontFamily = data.font; if (data.size) body.style.fontSize = data.size + "px"; }
+    else if (kind === "text") {
+      var thost = body.closest(".ov");
+      var ed = document.createElement("div");
+      ed.className = "text-edit"; ed.contentEditable = "true"; ed.spellcheck = false;
+      ed.setAttribute("data-ph", "Nhập chữ…");
+      if (data.html != null) ed.innerHTML = data.html; else if (data.text) ed.textContent = data.text;
+      ed.style.fontFamily = data.font || "'Patrick Hand','Be Vietnam Pro',cursive";
+      ed.style.fontSize = (data.size || 40) + "px";
+      if (data.color) ed.style.color = data.color;
+      if (data.align) ed.style.textAlign = data.align;
+      thost.classList.remove("frame-border", "frame-box");
+      if (data.frame && data.frame !== "none") thost.classList.add("frame-" + data.frame);
+      ed.addEventListener("input", function () { data.html = ed.innerHTML; scheduleSave(); if (RT) RT.position(); });
+      ed.addEventListener("focus", function () { if (RT) RT.attach(ed, data, thost); });
+      body.appendChild(ed);
+    }
     else if (kind === "plot") {
       if (data.funcs && data.funcs.length && window.VPGrapher) {
         body.innerHTML = "";
@@ -533,7 +586,7 @@
     if (rz) rz.addEventListener("pointerup", function () { resizing = false; scheduleSave(); });
     // Kéo thân -> di chuyển
     el.addEventListener("pointerdown", function (e) {
-      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors, .ov-resize")) { if (!e.target.closest(".ov-resize")) selectOverlay(el); return; }
+      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors, .text-edit, .ov-resize")) { if (!e.target.closest(".ov-resize")) selectOverlay(el); return; }
       moving = true; sx = e.clientX; sy = e.clientY;
       ox = parseFloat(el.style.left); oy = parseFloat(el.style.top);
       el.setPointerCapture(e.pointerId); el.classList.add("dragging"); selectOverlay(el);
@@ -546,7 +599,102 @@
     el.addEventListener("pointerup", function () { moving = false; el.classList.remove("dragging"); scheduleSave(); });
   }
 
+  // ----- Thanh định dạng chữ (rich text) cho khung chữ
+  function setupRichText() {
+    var bar = document.getElementById("rt-bar"); if (!bar) return null;
+    var sym = document.getElementById("rt-sym");
+    var selFont = bar.querySelector(".rt-font"), selSize = bar.querySelector(".rt-size"), selFrame = bar.querySelector(".rt-frame");
+    var colIn = bar.querySelector(".rt-colin");
+    var cur = null; // {ed, data, host}
+    function save() { if (cur) { cur.data.html = cur.ed.innerHTML; scheduleSave(); } }
+    function exec(cmd) { if (!cur) return; cur.ed.focus(); try { document.execCommand(cmd, false, null); } catch (e) {} save(); refresh(); }
+    function refresh() {
+      ["bold", "italic", "underline", "strikeThrough"].forEach(function (c) {
+        var b = bar.querySelector('[data-cmd="' + c + '"]'); if (!b) return;
+        var on = false; try { on = document.queryCommandState(c); } catch (e) {}
+        b.classList.toggle("on", !!on);
+      });
+    }
+    function position() {
+      if (!cur || bar.hidden) return;
+      var r = cur.host.getBoundingClientRect();
+      var bw = bar.offsetWidth || 520, bh = bar.offsetHeight || 40;
+      var left = Math.max(8, Math.min(window.innerWidth - bw - 8, r.left));
+      var top = r.top - bh - 10; if (top < 8) top = r.bottom + 10;
+      bar.style.left = left + "px"; bar.style.top = top + "px";
+    }
+    function attach(ed, data, host) {
+      cur = { ed: ed, data: data, host: host };
+      selFont.value = data.font || "'Patrick Hand','Be Vietnam Pro',cursive";
+      if (!Array.prototype.some.call(selFont.options, function (o) { return o.value === selFont.value; })) selFont.selectedIndex = 0;
+      selSize.value = String(data.size || 40);
+      selFrame.value = data.frame || "none";
+      colIn.value = data.color || "#111111";
+      bar.hidden = false; refresh(); position();
+    }
+    function hide() { bar.hidden = true; sym.hidden = true; cur = null; }
+    // Nút định dạng: giữ vùng chọn bằng cách chặn mousedown lấy tiêu điểm
+    bar.querySelectorAll(".rt-b").forEach(function (b) {
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      b.addEventListener("click", function (e) { e.preventDefault(); exec(b.dataset.cmd); });
+    });
+    selFont.addEventListener("mousedown", function (e) { e.stopPropagation(); });
+    selFont.addEventListener("change", function () { if (!cur) return; cur.ed.style.fontFamily = selFont.value; cur.data.font = selFont.value; save(); cur.ed.focus(); });
+    selSize.addEventListener("change", function () { if (!cur) return; cur.ed.style.fontSize = selSize.value + "px"; cur.data.size = +selSize.value; save(); position(); cur.ed.focus(); });
+    selFrame.addEventListener("change", function () { if (!cur) return; cur.host.classList.remove("frame-border", "frame-box"); if (selFrame.value !== "none") cur.host.classList.add("frame-" + selFrame.value); cur.data.frame = selFrame.value; save(); position(); cur.ed.focus(); });
+    colIn.addEventListener("mousedown", function (e) { e.stopPropagation(); });
+    colIn.addEventListener("input", function () {
+      if (!cur) return; var v = colIn.value; cur.ed.focus();
+      var sel = window.getSelection();
+      if (sel && sel.rangeCount && !sel.getRangeAt(0).collapsed) { try { document.execCommand("foreColor", false, v); } catch (e) {} }
+      else { cur.ed.style.color = v; cur.data.color = v; }
+      save();
+    });
+    // Ω — bảng ký hiệu đặc biệt
+    var SYMS = "± × ÷ ≠ ≤ ≥ ≈ ∞ √ ∑ ∏ ∫ π α β γ δ θ λ μ σ φ ω Δ Ω → ← ↔ ⇒ ⇔ ∈ ∉ ⊂ ⊆ ∪ ∩ ∅ ∀ ∃ ∠ ⊥ ∥ ° ′ ″ · ∘ ℝ ℤ ℕ ℚ".split(" ");
+    sym.innerHTML = ""; SYMS.forEach(function (s) { var b = document.createElement("button"); b.textContent = s; b.addEventListener("mousedown", function (e) { e.preventDefault(); }); b.addEventListener("click", function () { if (!cur) return; cur.ed.focus(); try { document.execCommand("insertText", false, s); } catch (e) { } save(); }); sym.appendChild(b); });
+    bar.querySelector(".rt-omega").addEventListener("mousedown", function (e) { e.preventDefault(); });
+    bar.querySelector(".rt-omega").addEventListener("click", function () {
+      if (sym.hidden) { sym.hidden = false; var r = bar.querySelector(".rt-omega").getBoundingClientRect(); sym.style.left = Math.min(window.innerWidth - 290, r.left) + "px"; sym.style.top = (r.bottom + 6) + "px"; }
+      else sym.hidden = true;
+    });
+    // √x — chèn công thức Toán (KaTeX) nội tuyến, không chỉnh sửa
+    bar.querySelector(".rt-fx").addEventListener("mousedown", function (e) { e.preventDefault(); });
+    bar.querySelector(".rt-fx").addEventListener("click", function () {
+      if (!cur) return;
+      var latex = prompt("Nhập công thức (LaTeX), ví dụ: \\sqrt{x}, \\frac{a}{b}, x^2:", "");
+      if (!latex) { cur.ed.focus(); return; }
+      var span = document.createElement("span"); span.contentEditable = "false"; span.className = "rt-fx-inline"; span.setAttribute("data-latex", latex);
+      try { window.VPMathPlot.renderMath(span, latex, false); } catch (e) { span.textContent = latex; }
+      cur.ed.focus();
+      var sel = window.getSelection();
+      if (sel && sel.rangeCount) { var rg = sel.getRangeAt(0); rg.deleteContents(); rg.insertNode(span); rg.collapse(false); sel.removeAllRanges(); sel.addRange(rg); }
+      else cur.ed.appendChild(span);
+      save();
+    });
+    bar.querySelector(".rt-done").addEventListener("mousedown", function (e) { e.preventDefault(); });
+    bar.querySelector(".rt-done").addEventListener("click", function () { if (cur) cur.ed.blur(); hide(); });
+    // Nhấn ra ngoài khung chữ + thanh công cụ -> ẩn thanh
+    document.addEventListener("pointerdown", function (e) {
+      if (!cur || bar.hidden) return;
+      if (e.target.closest("#rt-bar") || e.target.closest(".text-edit") || e.target.closest("#rt-sym")) return;
+      hide();
+    }, true);
+    document.addEventListener("keyup", refresh);
+    window.addEventListener("scroll", position, true);
+    window.addEventListener("resize", position);
+    return { attach: attach, hide: hide, position: position };
+  }
+  var RT = setupRichText();
+
   function insertMath(latex, x, y, opts) { if (latex) addOverlayData("math", Object.assign({ latex: latex }, opts || {}), x, y); }
+  // Chèn khung chữ trống, gõ trực tiếp bằng bàn phím + hiện thanh định dạng
+  function insertTextBox(x, y) {
+    var cx = x != null ? x : Math.max(40, canvas.clientWidth / 2 - 80), cy = y != null ? y : Math.max(40, canvas.clientHeight / 2 - 40);
+    var ov = addOverlayData("text", { html: "", font: "'Patrick Hand','Be Vietnam Pro',cursive", size: 40, frame: "none" }, cx, cy);
+    setTimeout(function () { var el = overlay.querySelector('.ov[data-id="' + ov.id + '"] .text-edit'); if (el) { el.focus(); } }, 40);
+    return ov;
+  }
   function insertText(text, x, y, opts) {
     if (!text) return; opts = opts || {};
     addOverlayData("text", { text: text, font: opts.font, size: opts.size }, x, y);
@@ -899,9 +1047,8 @@
     if (!r || !c) return; addOverlayData("table", { rows: r, cols: c, cells: [] }, 120, 110);
   };
   // Khung văn bản / chữ
-  function askText() { var t = prompt("Nhập nội dung chữ:", ""); if (t) insertText(t, 140, 120, { font: $("text-font") ? $("text-font").value : "", size: 22 }); }
-  if ($("btn-textbox")) $("btn-textbox").onclick = askText;
-  if ($("btn-text")) $("btn-text").onclick = askText;
+  if ($("btn-textbox")) $("btn-textbox").onclick = function () { insertTextBox(); };
+  if ($("btn-text")) $("btn-text").onclick = function () { insertTextBox(); };
   // Trình duyệt web nhúng
   if ($("btn-web")) $("btn-web").onclick = function () { var u = prompt("Địa chỉ trang web:", "https://"); if (u && u !== "https://") addOverlayData("web", { url: u }, 120, 110); };
   // Tô màu miền / Chọn vùng (đang phát triển)
