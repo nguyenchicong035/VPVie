@@ -1,9 +1,10 @@
 // VPVie Service Worker — cho phép cài PWA & chạy ngoại tuyến (iPad/Android/máy tính).
 // Chiến lược: cache-first cho tài nguyên cùng nguồn (GET); bỏ qua /api (động).
-const CACHE = 'vpvie-v2-oxyz';
+const CACHE = 'vpvie-v3-formula-accents';
 const CORE = [
   '/bang.html', '/style.css', '/oxyz.css', '/manifest.webmanifest',
   '/js/oxyz-math.js', '/js/tools-oxyz.js',
+  '/js/mathplot.js', '/js/tools-formula.js',
   '/js/app.js', '/js/beautify.js', '/js/license.js', '/js/ink-recognize.js',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'
 ];
