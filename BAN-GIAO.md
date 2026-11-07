@@ -134,6 +134,23 @@ katex, function-plot (kèm d3), math.min.js (mathjs UMD `lib/browser/math.js`), 
 
 ---
 
+## 5b. AI nhận diện — 3 provider (chọn cái mạnh nhất cho máy của bạn)
+
+Trọng tâm: **nhận diện công thức toán viết tay → LaTeX** + **chữ viết tay tiếng Việt**.
+
+| Engine (web) | Provider backend | Cài đặt | Độ mạnh với TOÁN viết tay |
+|---|---|---|---|
+| "AI Tesseract (miễn phí)" | (chạy trong trình duyệt) | Không cần | Thấp – chỉ ra **bản nháp LaTeX** để sửa (Tesseract là OCR chữ in). Có hậu xử lý `mathToLatex`. |
+| "Máy chủ" + `VPVIE_AI_PROVIDER=ollama` (mặc định) | Ollama + `qwen2.5vl:7b` (mô hình thị giác nguồn mở) | `ollama run qwen2.5vl:7b` | **Cao** – khuyến nghị. Hiểu công thức 2D + chữ Việt. |
+| "Máy chủ" + `VPVIE_AI_PROVIDER=pix2tex` | pix2tex (LaTeX-OCR, nguồn mở) | `pip install "pix2tex[api]"` (kéo torch; tải trọng số lần đầu) | **Cao cho công thức** (mạnh với công thức in/chuẩn; viết tay khá). Chỉ ra LaTeX. |
+| "Máy chủ" + `VPVIE_AI_PROVIDER=anthropic` | Claude (tùy chọn, cần API key) | `ANTHROPIC_API_KEY=...` | Rất cao (không miễn phí). |
+
+- Web tự chọn engine **"Máy chủ"** khi `/api/health` báo `ai:true`, và hiện nhãn provider trên thanh tiêu đề.
+- Engine "Máy chủ" **không phụ thuộc provider**: đổi provider chỉ bằng biến môi trường `VPVIE_AI_PROVIDER`, không sửa code.
+- Mã provider: `vpvie/ai/recognize.py` — `_ollama`, `_pix2tex` (lazy `LatexOCR`), `_anthropic`. Prompt máy chủ đã tăng cường cho LaTeX (lũy thừa/phân số/căn/tích phân/nguyên hàm/đạo hàm/giới hạn/hệ PT/ma trận) + giữ dấu tiếng Việt.
+- Web: `recognize.js` có `preprocess` (Otsu + giãn nét), `mathToLatex`, `looksMath`; `app.js` tách dòng (`strokeLines`) cho chữ Việt, chế độ math mở bộ công thức.
+- **Muốn AI mạnh nhất mà vẫn miễn phí:** chạy Ollama với `qwen2.5vl` (hoặc model thị giác lớn hơn nếu máy đủ khỏe), hoặc bật pix2tex cho riêng công thức.
+
 ## 6. Lỗi đã gặp & cách xử lý (để không lặp lại)
 - CDN bị chặn trong trình duyệt → vendor hết thư viện cục bộ.
 - mathjs stub 4KB → dùng `lib/browser/math.js`.
