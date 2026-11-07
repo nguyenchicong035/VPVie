@@ -263,16 +263,20 @@
   </div>
 
   <div id="dlg-var" class="dlg">
-    <div class="dlg-card">
-      <div class="dlg-head">Bảng biến thiên / xét dấu <button data-close="dlg-var" class="x">✕</button></div>
-      <input id="var-input" class="in" placeholder="Nhập hàm số theo x, vd: x^3 - 3x   hoặc   x^2 - 4" />
-      <div class="qrow" style="margin-top:8px">
-        <select id="var-mode"><option value="bbt">Bảng biến thiên</option><option value="xetdau">Bảng xét dấu</option></select>
-        <label class="lbl">x từ</label><input id="var-min" class="in" style="width:70px" value="-10"/>
-        <label class="lbl">đến</label><input id="var-max" class="in" style="width:70px" value="10"/>
+    <div class="dlg-card wide">
+      <div class="dlg-head">Bảng biến thiên <button data-close="dlg-var" class="x">✕</button></div>
+      <div id="var-preview" class="var-preview"></div>
+      <div class="var-inrow">
+        <span class="plot-ys">y =</span>
+        <input id="var-input" class="in" placeholder="x^3 - 3x" />
+        <button id="var-sqrt" class="pf-btn pf-sqrt" title="Chèn căn">√x</button>
+        <button id="var-make" class="btn">Lập bảng</button>
       </div>
-      <div class="hint">Tự tính đạo hàm, tìm nghiệm, xét dấu và dựng bảng.</div>
-      <div class="dlg-foot"><button data-close="dlg-var" class="btn ghost">Hủy</button><button id="var-ok" class="btn">Tạo bảng</button></div>
+      <label class="setchk" style="margin-top:8px"><input type="checkbox" id="var-d2"/> Thêm dòng y″</label>
+      <label class="setchk"><input type="checkbox" id="var-signonly"/> Không có dòng y (chỉ xét dấu)</label>
+      <div class="hint">Bấm <b>Lập bảng</b> để app tự lập từ hàm số, rồi sửa từng ô nếu cần. Gõ giá trị như <code>-inf</code>, <code>+inf</code>, <code>1/2</code>, <code>sqrt(3)</code>, <code>pi</code>. Ô y′: <code>0</code> hoặc <b>Không xác định</b> (<code>‖</code> ở dòng y′). Ô y chọn <b>Không xác định</b> khi hàm không xác định tại mốc (tiệm cận đứng).</div>
+      <div id="var-grid" class="var-grid"></div>
+      <div class="dlg-foot"><button data-close="dlg-var" class="btn ghost">Hủy</button><button id="var-ok" class="btn">Xong</button></div>
     </div>
   </div>
 

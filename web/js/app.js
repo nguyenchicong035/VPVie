@@ -306,7 +306,7 @@
       window.VPGeo.onDown(pt); state.geoDown = true; redraw(); return;
     }
     if (state.tool === "pan") return;   // công cụ di chuyển: không vẽ
-    if (state.tool === "plotregion") { canvas.setPointerCapture(e.pointerId); state.drawing = true; state.selBox = { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y }; redraw(); return; }
+    if (state.tool === "plotregion" || state.tool === "varregion") { canvas.setPointerCapture(e.pointerId); state.drawing = true; state.selBox = { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y }; redraw(); return; }
     if (state.tool === "fill") { fillAt(pt); return; }   // tô màu miền
     if (state.tool === "select") {
       canvas.setPointerCapture(e.pointerId); state.drawing = true;
@@ -339,7 +339,7 @@
     if (!state.drawing) return;
     var pt = pos(e);
     if (state.tool === "eraser") { if (state.eraserMode === "area") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } else eraseAt(pt); return; }
-    if (state.tool === "plotregion") { if (state.selBox) { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } return; }
+    if (state.tool === "plotregion" || state.tool === "varregion") { if (state.selBox) { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } return; }
     if (state.tool === "select") {
       if (state.selMode === "marquee") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; }
       else if (state.selMode === "resize" && state.resize) {
@@ -361,12 +361,14 @@
     if (state.tool === "geo") { if (window.VPGeo) window.VPGeo.onUp(); state.geoDown = false; return; }
     if (!state.drawing) return;
     state.drawing = false;
-    if (state.tool === "plotregion") {
-      var sb = state.selBox; state.selBox = null; redraw();
+    if (state.tool === "plotregion" || state.tool === "varregion") {
+      var sb = state.selBox, which = state.tool; state.selBox = null; redraw();
       if (sb) {
         var rx = Math.min(sb.x1, sb.x2), ry = Math.min(sb.y1, sb.y2), rw = Math.abs(sb.x2 - sb.x1), rh = Math.abs(sb.y2 - sb.y1);
-        if (rw < 40 || rh < 40) { rw = 380; rh = 300; }   // vùng quá nhỏ → kích thước mặc định
-        openPlotDialog({ x: rx, y: ry, w: rw, h: rh });
+        if (rw < 40) rw = which === "varregion" ? 520 : 380;
+        if (rh < 30) rh = which === "varregion" ? 180 : 300;
+        if (which === "varregion") openVarDialog({ x: rx, y: ry, w: rw, h: rh });
+        else openPlotDialog({ x: rx, y: ry, w: rw, h: rh });
       }
       return;
     }
@@ -973,11 +975,66 @@
   if ($("btn-record")) $("btn-record").onclick = toggleRecord;
   if ($("btn-timer")) $("btn-timer").onclick = function () { insertTimer(120, 90); };
   if ($("btn-picker")) $("btn-picker").onclick = function () { insertPicker(160, 90); };
-  $("btn-var").onclick = function () { showDialog("dlg-var"); $("var-input").focus(); };
+  // ===== Bảng biến thiên: kéo chọn vùng -> bảng điền =====
+  var varRegion = null, varGrid = null;
+  $("btn-var").onclick = function () { state.tool = "varregion"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Kéo chuột để chọn vùng đặt bảng biến thiên."); };
+  function openVarDialog(region) {
+    varRegion = region; varGrid = null; showDialog("dlg-var");
+    $("var-grid").innerHTML = ""; $("var-preview").innerHTML = ""; $("var-input").value = $("var-input").value || "x^3 - 3x"; $("var-input").focus(); $("var-input").select();
+  }
+  if ($("var-sqrt")) $("var-sqrt").onclick = function () { var inp = $("var-input"); inp.value += "sqrt()"; inp.focus(); inp.selectionStart = inp.selectionEnd = inp.value.length - 1; };
+  function renderVarPreview() {
+    if (!varGrid) return;
+    try { window.VPVar.buildFromGrid($("var-preview"), { grid: varGrid }); } catch (e) { $("var-preview").textContent = "Không vẽ được bảng."; }
+  }
+  var YP_OPTS = [["", "Trống"], ["0", "0"], ["‖", "Không xác định"]];
+  var SIGN_OPTS = [["+", "+"], ["−", "−"], ["‖", "‖"]];
+  var YTYPE_OPTS = [["value", "Có giá trị"], ["undef", "Không xác định"], ["bar", "Gạch bỏ ‖"]];
+  function sel(opts, val, cb) { var s = document.createElement("select"); opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === val) op.selected = true; s.appendChild(op); }); s.onchange = cb; return s; }
+  function inp(val, cb) { var i = document.createElement("input"); i.value = val || ""; i.oninput = cb; return i; }
+  function buildVarGrid() {
+    var host = $("var-grid"); host.innerHTML = ""; if (!varGrid) return;
+    var moc = varGrid.moc, signs = varGrid.signs, bbt = varGrid.mode === "bbt";
+    var tbl = document.createElement("table");
+    function td(cls, el) { var c = document.createElement("td"); if (cls) c.className = cls; if (el) c.appendChild(el); return c; }
+    // x
+    var rx = document.createElement("tr"); rx.appendChild(td("lbl", document.createTextNode("x")));
+    moc.forEach(function (m, i) { rx.appendChild(td("mcell", inp(m.x, function (e) { m.x = e.target.value; renderVarPreview(); }))); if (i < moc.length - 1) rx.appendChild(td("gapcol")); });
+    tbl.appendChild(rx);
+    // y'
+    var ry = document.createElement("tr"); ry.appendChild(td("lbl", document.createTextNode("y′")));
+    moc.forEach(function (m, i) {
+      ry.appendChild(td("", sel(YP_OPTS, m.yp, function (e) { m.yp = e.target.value; renderVarPreview(); })));
+      if (i < signs.length) ry.appendChild(td("gapcol", sel(SIGN_OPTS, signs[i], function (e) { signs[i] = e.target.value; renderVarPreview(); })));
+    });
+    tbl.appendChild(ry);
+    // y
+    if (bbt) {
+      var ryy = document.createElement("tr"); ryy.appendChild(td("lbl", document.createTextNode("y")));
+      moc.forEach(function (m, i) {
+        var wrap = document.createElement("div");
+        wrap.appendChild(inp(m.y, function (e) { m.y = e.target.value; renderVarPreview(); }));
+        wrap.appendChild(sel(YTYPE_OPTS, m.ytype, function (e) { m.ytype = e.target.value; renderVarPreview(); }));
+        ryy.appendChild(td("mcell", wrap));
+        if (i < signs.length) ryy.appendChild(td("gapcol"));
+      });
+      tbl.appendChild(ryy);
+    }
+    host.appendChild(tbl);
+  }
+  if ($("var-make")) $("var-make").onclick = function () {
+    var expr = $("var-input").value.trim(); if (!expr) { toast("Hãy nhập hàm số."); return; }
+    var mode = $("var-signonly") && $("var-signonly").checked ? "xetdau" : "bbt";
+    try { varGrid = window.VPVar.gridFromExpr(expr, -20, 20, mode); }
+    catch (e) { toast("Không phân tích được hàm số."); return; }
+    buildVarGrid(); renderVarPreview();
+  };
+  if ($("var-signonly")) $("var-signonly").onchange = function () { if ($("var-input").value.trim()) $("var-make").click(); };
   $("var-ok").onclick = function () {
-    var expr = $("var-input").value.trim(); if (!expr) return;
-    insertVar({ expr: expr, mode: $("var-mode").value, xmin: parseFloat($("var-min").value) || -10, xmax: parseFloat($("var-max").value) || 10 }, 90, 90);
-    hideDialog("dlg-var");
+    if (!varGrid) { if ($("var-input").value.trim()) { $("var-make").click(); } if (!varGrid) { toast("Hãy bấm Lập bảng trước."); return; } }
+    var r = varRegion || { x: 90, y: 90, w: 520, h: 180 };
+    addOverlayData("var", { grid: varGrid, w: r.w, h: r.h }, r.x, r.y);
+    hideDialog("dlg-var"); varRegion = null; state.tool = "pen"; clearActive();
   };
   $("btn-png").onclick = async function () { try { toast("Đang tạo ảnh…"); await window.VPExport.png(board); } catch (e) { toast("Lỗi xuất ảnh."); } };
   $("btn-pdf").onclick = async function () { try { toast("Đang tạo PDF…"); await window.VPExport.pdf(board); } catch (e) { toast("Lỗi xuất PDF."); } };

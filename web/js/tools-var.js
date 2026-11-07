@@ -103,6 +103,58 @@
     body.appendChild(tbl);
   }
 
-  function build(body, data) { buildTable(body, data, data.mode === "xetdau" ? "xetdau" : "bbt"); }
-  global.VPVar = { build: build, analyze: analyze };
+  // ---- Lưới sửa được: tạo từ hàm số, rồi vẽ bảng từ lưới ----
+  // grid = { mode, moc: [{x, yp, y, ytype}], signs: ["+"/"−"/""] (giữa các mốc) }
+  function gridFromExpr(expr, xmin, xmax, mode) {
+    var A = analyze(expr, xmin, xmax, mode === "bbt");
+    var rts = A.roots, signs = A.signs.map(function (s) { return s > 0 ? "+" : s < 0 ? "−" : "0"; });
+    var moc = [{ x: "-inf", yp: "", y: "", ytype: "value" }];
+    rts.forEach(function (r) { moc.push({ x: fmtx(r), yp: mode === "bbt" ? "0" : "0", y: "", ytype: "value" }); });
+    moc.push({ x: "+inf", yp: "", y: "", ytype: "value" });
+    if (mode === "bbt") {
+      moc[0].y = signs[0] === "+" ? "-inf" : "+inf";
+      rts.forEach(function (r, i) { moc[i + 1].y = fmt(A.f(r)); });
+      moc[moc.length - 1].y = signs[signs.length - 1] === "+" ? "+inf" : "-inf";
+    }
+    return { mode: mode, expr: expr, deriv: A.dstr, moc: moc, signs: signs };
+  }
+  function parseVal(s) {
+    s = (s || "").trim().toLowerCase().replace("−", "-").replace("∞", "inf");
+    if (s === "-inf" || s === "-vc" || s === "-∞") return -Infinity;
+    if (s === "inf" || s === "+inf" || s === "+∞" || s === "vc") return Infinity;
+    try { return M().evaluate(s); } catch (e) { return NaN; }
+  }
+  function show(s) { if (s == null) return ""; s = ("" + s).trim(); var l = s.toLowerCase().replace("−", "-"); if (l === "-inf" || l === "-∞") return "−∞"; if (l === "inf" || l === "+inf" || l === "+∞") return "+∞"; return s.replace("-", "−"); }
+
+  // Vẽ bảng biến thiên / xét dấu từ lưới (đã sửa tay)
+  function buildFromGrid(body, data) {
+    body.innerHTML = "";
+    var grid = data.grid, mode = grid.mode, moc = grid.moc, signs = grid.signs;
+    var tbl = cell("table", "vartbl");
+    // x
+    var rx = cell("tr"); rx.appendChild(cell("th", null, "x"));
+    moc.forEach(function (m, i) { rx.appendChild(cell("td", "pt", show(m.x))); if (i < moc.length - 1) rx.appendChild(cell("td", "gap")); });
+    tbl.appendChild(rx);
+    // y' (dấu)
+    var rs = cell("tr"); rs.appendChild(cell("th", null, mode === "bbt" ? "y'" : "dấu"));
+    moc.forEach(function (m, i) {
+      rs.appendChild(cell("td", "pt zero", m.yp === "||" ? "‖" : (m.yp === "∄" ? "∄" : (m.yp || ""))));
+      if (i < signs.length) rs.appendChild(cell("td", "sign", signs[i] === "||" ? "‖" : signs[i]));
+    });
+    tbl.appendChild(rs);
+    // y (chỉ bbt)
+    if (mode === "bbt") {
+      var ry = cell("tr"); ry.appendChild(cell("th", null, "y"));
+      moc.forEach(function (m, i) {
+        var val = m.ytype === "undef" ? "∄" : (m.ytype === "bar" ? "‖" : show(m.y));
+        ry.appendChild(cell("td", "pt ext", val));
+        if (i < signs.length) ry.appendChild(cell("td", "arrow", signs[i] === "+" ? "↗" : signs[i] === "−" ? "↘" : ""));
+      });
+      tbl.appendChild(ry);
+    }
+    body.appendChild(tbl);
+  }
+
+  function build(body, data) { if (data.grid) return buildFromGrid(body, data); buildTable(body, data, data.mode === "xetdau" ? "xetdau" : "bbt"); }
+  global.VPVar = { build: build, analyze: analyze, gridFromExpr: gridFromExpr, buildFromGrid: buildFromGrid };
 })(window);
