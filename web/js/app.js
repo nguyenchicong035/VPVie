@@ -106,15 +106,20 @@
     } else if (it.type === "line") {
       ctx.moveTo(it.x1, it.y1); ctx.lineTo(it.x2, it.y2); ctx.stroke();
     } else if (it.type === "rect") {
+      if (it.fill) { ctx.fillStyle = it.fill; ctx.fillRect(it.x, it.y, it.w, it.h); }
       ctx.strokeRect(it.x, it.y, it.w, it.h);
     } else if (it.type === "triangle") {
-      var t = it.pts; ctx.moveTo(t[0].x, t[0].y); ctx.lineTo(t[1].x, t[1].y); ctx.lineTo(t[2].x, t[2].y); ctx.closePath(); ctx.stroke();
+      var t = it.pts; ctx.moveTo(t[0].x, t[0].y); ctx.lineTo(t[1].x, t[1].y); ctx.lineTo(t[2].x, t[2].y); ctx.closePath();
+      if (it.fill) { ctx.fillStyle = it.fill; ctx.fill(); } ctx.stroke();
     } else if (it.type === "circle") {
-      ctx.arc(it.cx, it.cy, it.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.arc(it.cx, it.cy, it.r, 0, Math.PI * 2);
+      if (it.fill) { ctx.fillStyle = it.fill; ctx.fill(); } ctx.stroke();
     } else if (it.type === "ellipse") {
-      ctx.ellipse(it.cx, it.cy, it.rx, it.ry, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.ellipse(it.cx, it.cy, it.rx, it.ry, 0, 0, Math.PI * 2);
+      if (it.fill) { ctx.fillStyle = it.fill; ctx.fill(); } ctx.stroke();
     } else if (it.type === "poly") {
-      var pp = it.pts; ctx.moveTo(pp[0].x, pp[0].y); for (var k = 1; k < pp.length; k++) ctx.lineTo(pp[k].x, pp[k].y); ctx.closePath(); ctx.stroke();
+      var pp = it.pts; ctx.moveTo(pp[0].x, pp[0].y); for (var k = 1; k < pp.length; k++) ctx.lineTo(pp[k].x, pp[k].y); ctx.closePath();
+      if (it.fill) { ctx.fillStyle = it.fill; ctx.fill(); } ctx.stroke();
     } else if (it.type === "path") {
       var pa = it.pts; ctx.moveTo(pa[0].x, pa[0].y); for (var k2 = 1; k2 < pa.length; k2++) ctx.lineTo(pa[k2].x, pa[k2].y); ctx.stroke();
     } else if (it.type === "arrow") {
@@ -184,6 +189,20 @@
     if (it.type === "triangle" || it.type === "poly" || it.type === "path") { var xs = it.pts.map(function (p) { return p.x; }), ys = it.pts.map(function (p) { return p.y; }); return { minx: Math.min.apply(0, xs), maxx: Math.max.apply(0, xs), miny: Math.min.apply(0, ys), maxy: Math.max.apply(0, ys) }; }
     return { minx: 0, maxx: 0, miny: 0, maxy: 0 };
   }
+  // Điểm nằm trong hình kín? (để tô màu miền)
+  function inPoly(pts, pt) { var c = false, n = pts.length; for (var i = 0, j = n - 1; i < n; j = i++) { if (((pts[i].y > pt.y) !== (pts[j].y > pt.y)) && (pt.x < (pts[j].x - pts[i].x) * (pt.y - pts[i].y) / (pts[j].y - pts[i].y) + pts[i].x)) c = !c; } return c; }
+  function containsPoint(it, pt) {
+    if (it.type === "rect") return pt.x >= it.x && pt.x <= it.x + it.w && pt.y >= it.y && pt.y <= it.y + it.h;
+    if (it.type === "circle") return Math.hypot(pt.x - it.cx, pt.y - it.cy) <= it.r;
+    if (it.type === "ellipse") { var dx = (pt.x - it.cx) / it.rx, dy = (pt.y - it.cy) / it.ry; return dx * dx + dy * dy <= 1; }
+    if (it.type === "triangle" || it.type === "poly") return inPoly(it.pts, pt);
+    return false;
+  }
+  function fillAt(pt) {
+    for (var i = state.items.length - 1; i >= 0; i--) { if (containsPoint(state.items[i], pt)) { state.items[i].fill = (state.items[i].fill === state.color) ? null : state.color; redraw(); return true; } }
+    toast("Bấm vào trong một hình kín để tô màu.");
+    return false;
+  }
 
   // ----- Sự kiện vẽ
   canvas.addEventListener("pointerdown", function (e) {
@@ -196,6 +215,7 @@
       window.VPGeo.onDown(pt); state.geoDown = true; redraw(); return;
     }
     if (state.tool === "pan") return;   // công cụ di chuyển: không vẽ
+    if (state.tool === "fill") { fillAt(pt); return; }   // tô màu miền
     canvas.setPointerCapture(e.pointerId);
     if (state.tool === "eraser") { state.drawing = true; eraseAt(pt); return; }
     if (state.tool === "arrow") { state.drawing = true; state.cur = { type: "arrow", x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, style: state.arrowStyle || "arrow", color: state.color, size: state.size }; return; }
@@ -357,7 +377,7 @@
   function $(id) { return document.getElementById(id); }
   var tools = document.querySelectorAll("[data-tool]");
   var geoBtns = document.querySelectorAll("[data-geo]");
-  function clearActive() { tools.forEach(function (x) { x.classList.remove("active"); }); geoBtns.forEach(function (x) { x.classList.remove("active"); }); }
+  function clearActive() { tools.forEach(function (x) { x.classList.remove("active"); }); geoBtns.forEach(function (x) { x.classList.remove("active"); }); ["btn-arrow", "btn-fill"].forEach(function (id) { if ($(id)) $(id).classList.remove("active"); }); }
   tools.forEach(function (b) {
     b.onclick = function () {
       state.tool = b.dataset.tool;
@@ -455,7 +475,7 @@
   // Trình duyệt web nhúng
   if ($("btn-web")) $("btn-web").onclick = function () { var u = prompt("Địa chỉ trang web:", "https://"); if (u && u !== "https://") addOverlayData("web", { url: u }, 120, 110); };
   // Tô màu miền / Chọn vùng (đang phát triển)
-  if ($("btn-fill")) $("btn-fill").onclick = function () { toast("Công cụ tô màu miền đang phát triển."); };
+  if ($("btn-fill")) $("btn-fill").onclick = function () { state.tool = "fill"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Tô màu: bấm vào trong hình kín (bấm lại để bỏ tô)."); };
   if ($("btn-select")) $("btn-select").onclick = function () { toast("Công cụ chọn vùng đang phát triển."); };
   // Quay màn hình
   if ($("btn-record")) $("btn-record").onclick = toggleRecord;
