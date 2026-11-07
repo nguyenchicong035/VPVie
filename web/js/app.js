@@ -86,6 +86,7 @@
 
   // ----- Vẽ
   function drawItem(it) {
+    if (it.type === "oxyz") { window.VPOxyz.drawItem(ctx, it); return; }
     ctx.lineJoin = "round"; ctx.lineCap = "round";
     ctx.strokeStyle = it.color || state.color;
     ctx.lineWidth = it.size || state.size;
@@ -220,7 +221,7 @@
     if (it.type === "stroke") { var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity; it.points.forEach(function (p) { if (p.x < mnx) mnx = p.x; if (p.y < mny) mny = p.y; if (p.x > mxx) mxx = p.x; if (p.y > mxy) mxy = p.y; }); return { minx: mnx, maxx: mxx, miny: mny, maxy: mxy }; }
     if (it.type === "solid") { var sx = [], sy = []; (it.segs || []).forEach(function (s) { sx.push(s.x1, s.x2); sy.push(s.y1, s.y2); }); (it.ellipses || []).forEach(function (e) { sx.push(e.cx - e.rx, e.cx + e.rx); sy.push(e.cy - e.ry, e.cy + e.ry); }); return sx.length ? { minx: Math.min.apply(0, sx), maxx: Math.max.apply(0, sx), miny: Math.min.apply(0, sy), maxy: Math.max.apply(0, sy) } : { minx: 0, maxx: 0, miny: 0, maxy: 0 }; }
     if (it.type === "line" || it.type === "arrow") return { minx: Math.min(it.x1, it.x2), maxx: Math.max(it.x1, it.x2), miny: Math.min(it.y1, it.y2), maxy: Math.max(it.y1, it.y2) };
-    if (it.type === "rect") return { minx: it.x, maxx: it.x + it.w, miny: it.y, maxy: it.y + it.h };
+    if (it.type === "rect" || it.type === "oxyz") return { minx: it.x, maxx: it.x + it.w, miny: it.y, maxy: it.y + it.h };
     if (it.type === "circle") return { minx: it.cx - it.r, maxx: it.cx + it.r, miny: it.cy - it.r, maxy: it.cy + it.r };
     if (it.type === "ellipse") return { minx: it.cx - it.rx, maxx: it.cx + it.rx, miny: it.cy - it.ry, maxy: it.cy + it.ry };
     if (it.type === "triangle" || it.type === "poly" || it.type === "path") { var xs = it.pts.map(function (p) { return p.x; }), ys = it.pts.map(function (p) { return p.y; }); return { minx: Math.min.apply(0, xs), maxx: Math.max.apply(0, xs), miny: Math.min.apply(0, ys), maxy: Math.max.apply(0, ys) }; }
@@ -239,7 +240,7 @@
   function translateItem(it, dx, dy) {
     if (it.type === "stroke" || it.type === "triangle" || it.type === "poly" || it.type === "path") (it.points || it.pts).forEach(function (p) { p.x += dx; p.y += dy; });
     else if (it.type === "line" || it.type === "arrow") { it.x1 += dx; it.y1 += dy; it.x2 += dx; it.y2 += dy; }
-    else if (it.type === "rect") { it.x += dx; it.y += dy; }
+    else if (it.type === "rect" || it.type === "oxyz") { it.x += dx; it.y += dy; }
     else if (it.type === "circle" || it.type === "ellipse") { it.cx += dx; it.cy += dy; }
     else if (it.type === "solid") { (it.segs || []).forEach(function (s) { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; }); (it.ellipses || []).forEach(function (e) { e.cx += dx; e.cy += dy; }); (it.labels || []).forEach(function (l) { l.x += dx; l.y += dy; }); }
   }
@@ -262,6 +263,10 @@
     if (e.pointerType === "touch" && (state.penDown || (Date.now() - (state.lastPen || 0) < 700))) return;
     if (e.pointerType === "pen") { state.penDown = true; state.lastPen = Date.now(); }
     var pt = pos(e);
+    if (state.tool === "oxyz") {
+      canvas.setPointerCapture(e.pointerId); state.drawing = true;
+      state.selBox = { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y }; redraw(); return;
+    }
     if (state.tool === "geo") {
       if (window.VPGeo.tool === "move") canvas.setPointerCapture(e.pointerId);
       window.VPGeo.onDown(pt); state.geoDown = true; redraw(); return;
@@ -286,6 +291,7 @@
     state.cur = { type: "stroke", points: [pt], color: state.color, size: state.size, pen: state.pen };
   });
   canvas.addEventListener("pointermove", function (e) {
+    if (state.tool === "oxyz") { if (state.drawing && state.selBox) { var p3 = pos(e); state.selBox.x2 = p3.x; state.selBox.y2 = p3.y; redraw(); } return; }
     if (state.tool === "geo") { if (state.geoDown && window.VPGeo.onMove(pos(e))) redraw(); return; }
     if (!state.drawing) return;
     var pt = pos(e);
@@ -303,6 +309,15 @@
     if (state.tool === "geo") { if (window.VPGeo) window.VPGeo.onUp(); state.geoDown = false; return; }
     if (!state.drawing) return;
     state.drawing = false;
+    if (state.tool === "oxyz" && state.selBox) {
+      var box3 = normBox(state.selBox); state.selBox = null; redraw();
+      var w3 = box3.x2 - box3.x1, h3 = box3.y2 - box3.y1;
+      if (w3 < 12 && h3 < 12) { w3 = 540; h3 = 400; }
+      w3 = Math.max(160, Math.min(w3, canvas.clientWidth)); h3 = Math.max(140, Math.min(h3, canvas.clientHeight));
+      var item3 = { type: "oxyz", x: Math.max(0, Math.min(box3.x1, canvas.clientWidth-w3)), y: Math.max(0, Math.min(box3.y1, canvas.clientHeight-h3)), w: w3, h: h3 };
+      window.VPOxyz.open(null, function (scene3) { pushHist(); item3.scene = scene3; state.items.push(item3); $("btn-select").click(); state.selected = [state.items.length-1]; redraw(); scheduleSave(); toast("Nhấp đúp vào hình Oxyz để chỉnh sửa."); });
+      return;
+    }
     if (state.tool === "select") {
       if (state.selMode === "marquee" && state.selBox) {
         var bx = { x1: Math.min(state.selBox.x1, state.selBox.x2), y1: Math.min(state.selBox.y1, state.selBox.y2), x2: Math.max(state.selBox.x1, state.selBox.x2), y2: Math.max(state.selBox.y1, state.selBox.y2) };
@@ -341,8 +356,8 @@
   function snap() { return JSON.stringify(state.items); }
   function pushHist() { undoStack.push(snap()); if (undoStack.length > 100) undoStack.shift(); redoStack = []; }
   function resetHist() { undoStack = []; redoStack = []; }
-  function undo() { if (!undoStack.length) { toast("Không còn gì để hoàn tác."); return; } redoStack.push(snap()); state.items = JSON.parse(undoStack.pop()); state.selected = []; redraw(); }
-  function redo() { if (!redoStack.length) return; undoStack.push(snap()); state.items = JSON.parse(redoStack.pop()); state.selected = []; redraw(); }
+  function undo() { if (!undoStack.length) { toast("Không còn gì để hoàn tác."); return; } redoStack.push(snap()); state.items = JSON.parse(undoStack.pop()); state.selected = []; redraw(); scheduleSave(); }
+  function redo() { if (!redoStack.length) return; undoStack.push(snap()); state.items = JSON.parse(redoStack.pop()); state.selected = []; redraw(); scheduleSave(); }
   function normBox(b) { return { x1: Math.min(b.x1, b.x2), y1: Math.min(b.y1, b.y2), x2: Math.max(b.x1, b.x2), y2: Math.max(b.y1, b.y2) }; }
   function itemsInBox(bx) { var r = []; state.items.forEach(function (it, i) { var b = itemBox(it); if (b.maxx >= bx.x1 && b.minx <= bx.x2 && b.maxy >= bx.y1 && b.miny <= bx.y2) r.push(i); }); return r; }
   // Đối tượng trên cùng tại điểm pt (nét tay: gần nét; hình kín: bên trong hoặc gần viền)
@@ -354,8 +369,8 @@
     return -1;
   }
   canvas.addEventListener("pointerup", function (e) { if (e.pointerType === "pen") { state.penDown = false; state.lastPen = Date.now(); } endStroke(); });
-  canvas.addEventListener("pointercancel", function (e) { if (e.pointerType === "pen") { state.penDown = false; state.lastPen = Date.now(); } endStroke(); });
-  canvas.addEventListener("pointerleave", function (e) { if (state.drawing && state.tool !== "eraser") endStroke(); });
+  canvas.addEventListener("pointercancel", function (e) { if (state.tool === "oxyz") { state.drawing = false; state.penDown = false; state.selBox = null; redraw(); return; } if (e.pointerType === "pen") { state.penDown = false; state.lastPen = Date.now(); } endStroke(); });
+  canvas.addEventListener("pointerleave", function (e) { if (state.drawing && state.tool !== "eraser" && state.tool !== "oxyz") endStroke(); });
 
   // ----- Lớp phủ dạng DỮ LIỆU (lưu/mở theo trang được)
   function overlayBody(kind, body, data) {
@@ -497,7 +512,7 @@
   function $(id) { return document.getElementById(id); }
   var tools = document.querySelectorAll("[data-tool]");
   var geoBtns = document.querySelectorAll("[data-geo]");
-  function clearActive() { tools.forEach(function (x) { x.classList.remove("active"); }); geoBtns.forEach(function (x) { x.classList.remove("active"); }); ["btn-arrow", "btn-fill", "btn-select"].forEach(function (id) { if ($(id)) $(id).classList.remove("active"); }); if (state.selected && state.selected.length) { state.selected = []; redraw(); } }
+  function clearActive() { tools.forEach(function (x) { x.classList.remove("active"); }); geoBtns.forEach(function (x) { x.classList.remove("active"); }); ["btn-arrow", "btn-fill", "btn-select", "btn-oxyz"].forEach(function (id) { if ($(id)) $(id).classList.remove("active"); }); if (state.selected && state.selected.length) { state.selected = []; redraw(); } }
   tools.forEach(function (b) {
     b.onclick = function () {
       state.tool = b.dataset.tool;
@@ -736,7 +751,8 @@
   // Phím tắt: Delete, Ctrl+Z/Y, Ctrl+C/X/V/D/A, Esc, phím mũi tên (dịch chuyển)
   document.addEventListener("keydown", function (e) {
     var t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
-    if (document.querySelector(".dlg.show")) return;
+    if (document.querySelector(".dlg.show, .ox-studio")) return;
+    if (e.key === "Escape" && state.tool === "oxyz") { state.drawing = false; state.selBox = null; state.cur = null; $("btn-select").click(); redraw(); return; }
     var k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
     if (mod && k === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
     if (mod && (k === "y" || (k === "z" && e.shiftKey))) { e.preventDefault(); redo(); return; }
@@ -799,6 +815,17 @@
 
   // Mẫu hình học
   $("btn-shapes").onclick = function () { showDialog("dlg-shapes"); };
+  $("btn-oxyz").onclick = function () {
+    state.tool = "oxyz"; state.drawing = false; state.cur = null; state.selBox = null;
+    if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active");
+    toast("Kéo để vẽ khung hệ trục Oxyz (hoặc chạm một lần), rồi gõ điểm, mặt phẳng, mặt cầu...");
+  };
+  canvas.addEventListener("dblclick", function (e) {
+    if (state.tool !== "select") return;
+    var index = hitItem(pos(e)), item = state.items[index];
+    if (!item || item.type !== "oxyz") return;
+    window.VPOxyz.open(item.scene, function (scene3) { pushHist(); item.scene = scene3; redraw(); scheduleSave(); });
+  });
   $("btn-solid").onclick = function () { showDialog("dlg-solid"); };
   document.querySelectorAll("[data-solid]").forEach(function (b) {
     b.onclick = function () {
