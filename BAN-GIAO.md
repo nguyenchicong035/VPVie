@@ -199,6 +199,26 @@ nhưng **làm mượt, bớt run tay, bớt nguệch ngoạc** sau khi viết xo
 > Phân biệt: "Theo nét" (VPInk) = ra CHỮ đánh máy; "Nắn nét" (refineInk) = GIỮ nét tay,
 > chỉ làm mượt. Người dùng muốn cái sau.
 
+## 5e. Đóng gói ỨNG DỤNG: máy tính (.exe) + iPad/Android (PWA) (MỚI)
+
+Cùng một bộ mã web, chạy 3 dạng: ứng dụng máy tính, PWA cài trên iPad, và web.
+
+**Ứng dụng máy tính — Electron** (`desktop/`):
+- `main.js`: khởi động backend — nếu có Python+fastapi thì chạy `run.py` (đủ AI),
+  không thì chạy máy chủ tĩnh Node (`static-server.js`, đủ mọi tính năng ngoại tuyến);
+  rồi mở cửa sổ nạp `bang.html`. `VPVIE_FORCE_OFFLINE=1` để ép ngoại tuyến.
+- `package.json`: electron + electron-builder; `npm run dist:win` → `.exe` (NSIS) + `.msi`.
+- Biểu tượng `desktop/build/icon.ico|png`. Build `.exe` phải chạy trên Windows.
+- Đã smoke-test bằng xvfb: cả 2 chế độ (python/offline) nạp `bang.html`, canvas OK.
+
+**Cài trên iPad/Android — PWA**:
+- `web/manifest.webmanifest` (standalone, theme #7a1020, icons 192/512/maskable),
+  `web/sw.js` (service worker cache-first, bỏ qua /api → chạy ngoại tuyến),
+  thẻ apple-touch-icon + apple-mobile-web-app-capable trong `bang.html`/`index.html`,
+  đăng ký SW. `web/icons/*` (PIL tạo).
+- iPad: Safari → Chia sẻ → Thêm vào màn hình chính. Cần HTTPS khi lên mạng.
+- Đã test: manifest/sw/icon phục vụ đúng kiểu, SW đăng ký, đủ điều kiện cài, không lỗi.
+
 ## 6. Lỗi đã gặp & cách xử lý (để không lặp lại)
 - CDN bị chặn trong trình duyệt → vendor hết thư viện cục bộ.
 - mathjs stub 4KB → dùng `lib/browser/math.js`.

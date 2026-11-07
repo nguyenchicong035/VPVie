@@ -3,6 +3,15 @@
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>VPVie – Bộ ứng dụng văn phòng tiếng Việt</title>
 <link rel="stylesheet" href="/office.css"/>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#7a1020" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="VPVie" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/icons/icon-32.png" />
+
 </head><body>
 <div class="appbar"><span class="logo">VP</span><span class="title">VPVie</span><span style="opacity:.85">· Bộ ứng dụng văn phòng tiếng Việt có AI</span></div>
 <div class="home-wrap">
@@ -17,4 +26,5 @@
     <a class="appcard" href="/pdf.html"><span class="badge live">Hoạt động</span><div class="ic">📄</div><h3>PDF</h3><p>Xem và ghi chú tài liệu PDF.</p></a>
   </div>
 </div>
+  <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
 </body></html>
