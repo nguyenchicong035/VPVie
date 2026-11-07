@@ -884,7 +884,43 @@
   $("plot-ok").onclick = function () { insertPlot($("plot-input").value, 80, 80); hideDialog("dlg-plot"); };
 
   // Mẫu hình học
-  $("btn-shapes").onclick = function () { showDialog("dlg-shapes"); };
+  // Vẽ hình mẫu nhỏ cho từng nút hình 2D (dùng chính bộ dựng hình)
+  function drawItemsThumb(cv, items) {
+    var g = cv.getContext("2d"); g.clearRect(0, 0, cv.width, cv.height);
+    var xs = [], ys = [];
+    items.forEach(function (it) {
+      if (it.pts) it.pts.forEach(function (p) { xs.push(p.x); ys.push(p.y); });
+      else if (it.type === "line") { xs.push(it.x1, it.x2); ys.push(it.y1, it.y2); }
+      else if (it.type === "rect") { xs.push(it.x, it.x + it.w); ys.push(it.y, it.y + it.h); }
+      else if (it.type === "circle") { xs.push(it.cx - it.r, it.cx + it.r); ys.push(it.cy - it.r, it.cy + it.r); }
+      else if (it.type === "ellipse") { xs.push(it.cx - it.rx, it.cx + it.rx); ys.push(it.cy - it.ry, it.cy + it.ry); }
+    });
+    if (!xs.length) return;
+    var mnx = Math.min.apply(0, xs), mxx = Math.max.apply(0, xs), mny = Math.min.apply(0, ys), mxy = Math.max.apply(0, ys);
+    var pad = 7, sc = Math.min((cv.width - pad * 2) / (mxx - mnx || 1), (cv.height - pad * 2) / (mxy - mny || 1));
+    g.save(); g.translate(cv.width / 2, cv.height / 2); g.scale(sc, sc); g.translate(-(mnx + mxx) / 2, -(mny + mxy) / 2);
+    g.strokeStyle = "#1d2a33"; g.lineWidth = 1.5 / sc; g.lineJoin = g.lineCap = "round";
+    items.forEach(function (it) {
+      g.beginPath();
+      if (it.type === "triangle" || it.type === "poly") { it.pts.forEach(function (p, i) { i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y); }); g.closePath(); }
+      else if (it.type === "path") { it.pts.forEach(function (p, i) { i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y); }); }
+      else if (it.type === "line") { g.moveTo(it.x1, it.y1); g.lineTo(it.x2, it.y2); }
+      else if (it.type === "rect") g.rect(it.x, it.y, it.w, it.h);
+      else if (it.type === "circle") g.arc(it.cx, it.cy, it.r, 0, 6.2832);
+      else if (it.type === "ellipse") g.ellipse(it.cx, it.cy, it.rx, it.ry, 0, 0, 6.2832);
+      g.stroke();
+    });
+    g.restore();
+  }
+  var shape2dThumbsDone = false;
+  function renderShape2DThumbs() {
+    if (shape2dThumbsDone) return;
+    document.querySelectorAll("#dlg-shapes [data-shape]").forEach(function (b) {
+      var cv = b.querySelector("canvas.shape-thumb"); if (cv) try { drawItemsThumb(cv, makeShapeItems(b.dataset.shape, 0, 0, 30)); } catch (e) {}
+    });
+    shape2dThumbsDone = true;
+  }
+  $("btn-shapes").onclick = function () { showDialog("dlg-shapes"); renderShape2DThumbs(); };
   // Vẽ hình mẫu nhỏ cho từng nút hình 3D (dùng chính VPSolid)
   var solidThumbsDone = false;
   function drawSolidThumb(cv, kind) {
@@ -921,24 +957,47 @@
     b.onclick = function () { addShapeTemplate(b.dataset.shape); hideDialog("dlg-shapes"); selectLast(); };
   });
   function regPoly(cx, cy, r, n, rot) { var a = []; for (var i = 0; i < n; i++) { var t = rot + i * 2 * Math.PI / n; a.push({ x: cx + r * Math.cos(t), y: cy + r * Math.sin(t) }); } return a; }
+  // Dựng danh sách item cho một hình 2D (dùng chung: chèn + vẽ hình mẫu)
+  function makeShapeItems(kind, cx, cy, s) {
+    var P = function (x, y) { return { x: x, y: y }; }, out = [];
+    function arcPts(r, a0, a1, ysc) { var p = []; ysc = ysc || 1; for (var a = a0; a <= a1 + 1e-6; a += 0.12) p.push(P(cx + r * Math.cos(a), cy - r * Math.sin(a) * ysc)); return p; }
+    if (kind === "triangle") out.push({ type: "triangle", pts: [P(cx, cy - s), P(cx - s, cy + s), P(cx + s, cy + s)] });
+    else if (kind === "triangle-eq") { var h = s * Math.sqrt(3); out.push({ type: "triangle", pts: [P(cx, cy - h / 2), P(cx - s, cy + h / 2), P(cx + s, cy + h / 2)] }); }
+    else if (kind === "iso-tri") out.push({ type: "triangle", pts: [P(cx, cy - s), P(cx - s * 0.68, cy + s), P(cx + s * 0.68, cy + s)] });
+    else if (kind === "right-tri") out.push({ type: "triangle", pts: [P(cx - s, cy - s), P(cx - s, cy + s), P(cx + s, cy + s)] });
+    else if (kind === "alt-tri") {
+      var A = P(cx - 0.25 * s, cy - s), B = P(cx - s, cy + s), C = P(cx + s, cy + s), Hh = P(A.x, cy + s);
+      out.push({ type: "triangle", pts: [A, B, C] });
+      out.push({ type: "line", x1: A.x, y1: A.y, x2: Hh.x, y2: Hh.y });
+      out.push({ type: "path", pts: [P(Hh.x, Hh.y - 11), P(Hh.x + 11, Hh.y - 11), P(Hh.x + 11, Hh.y)] });
+    }
+    else if (kind === "square") out.push({ type: "rect", x: cx - s, y: cy - s, w: 2 * s, h: 2 * s });
+    else if (kind === "rect") out.push({ type: "rect", x: cx - s, y: cy - s * 0.7, w: 2 * s, h: 1.4 * s });
+    else if (kind === "para") out.push({ type: "poly", pts: [P(cx - s + 30, cy - s * 0.6), P(cx + s + 30, cy - s * 0.6), P(cx + s - 30, cy + s * 0.6), P(cx - s - 30, cy + s * 0.6)] });
+    else if (kind === "rhombus") out.push({ type: "poly", pts: [P(cx, cy - s), P(cx + s * 0.7, cy), P(cx, cy + s), P(cx - s * 0.7, cy)] });
+    else if (kind === "trapezoid") out.push({ type: "poly", pts: [P(cx - s * 0.55, cy - s * 0.6), P(cx + s * 0.55, cy - s * 0.6), P(cx + s, cy + s * 0.6), P(cx - s, cy + s * 0.6)] });
+    else if (kind === "pentagon") out.push({ type: "poly", pts: regPoly(cx, cy, s, 5, -Math.PI / 2) });
+    else if (kind === "hexagon") out.push({ type: "poly", pts: regPoly(cx, cy, s, 6, -Math.PI / 2) });
+    else if (kind === "circle") out.push({ type: "circle", cx: cx, cy: cy, r: s });
+    else if (kind === "ellipse") out.push({ type: "ellipse", cx: cx, cy: cy, rx: s * 1.3, ry: s * 0.75 });
+    else if (kind === "arc") out.push({ type: "path", pts: arcPts(s, Math.PI * 0.18, Math.PI * 0.82) });
+    else if (kind === "semicircle") { var p = arcPts(s, 0, Math.PI); p.push(P(cx - s, cy)); out.push({ type: "poly", pts: p }); }
+    else if (kind === "sector") { var ps = arcPts(s, Math.PI * 0.18, Math.PI * 0.82); ps.unshift(P(cx, cy)); ps.push(P(cx, cy)); out.push({ type: "poly", pts: ps }); }
+    else if (kind === "annulus") { out.push({ type: "circle", cx: cx, cy: cy, r: s }); out.push({ type: "circle", cx: cx, cy: cy, r: s * 0.55 }); }
+    else if (kind === "parabola") { var pp = []; for (var x = -s * 1.4; x <= s * 1.4; x += 6) pp.push(P(cx + x, cy + s - (x * x) / (s * 1.0))); out.push({ type: "path", pts: pp }); }
+    else if (kind === "hyperbola") {
+      var l = [], r = []; for (var t = -1.3; t <= 1.3; t += 0.1) { var ch = Math.cosh(t) * s * 0.7, sh = Math.sinh(t) * s * 0.8; l.push(P(cx - ch, cy + sh)); r.push(P(cx + ch, cy + sh)); }
+      out.push({ type: "path", pts: l }); out.push({ type: "path", pts: r });
+    }
+    else if (kind === "axes") { out.push({ type: "line", x1: cx - 180, y1: cy, x2: cx + 180, y2: cy }); out.push({ type: "line", x1: cx, y1: cy - 140, x2: cx, y2: cy + 140 }); }
+    return out;
+  }
   function addShapeTemplate(kind) {
-    var cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, s = 90, c = state.color, w = state.size;
+    var cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, c = state.color, w = state.size;
+    var items = makeShapeItems(kind, cx, cy, 90);
+    if (!items.length) return;
     pushHist();
-    function push(o) { o.color = c; o.size = w; state.items.push(o); }
-    if (kind === "triangle") push({ type: "triangle", pts: [{ x: cx, y: cy - s }, { x: cx - s, y: cy + s }, { x: cx + s, y: cy + s }] });
-    else if (kind === "triangle-eq") { var h = s * Math.sqrt(3); push({ type: "triangle", pts: [{ x: cx, y: cy - h / 2 }, { x: cx - s, y: cy + h / 2 }, { x: cx + s, y: cy + h / 2 }] }); }
-    else if (kind === "right-tri") push({ type: "triangle", pts: [{ x: cx - s, y: cy - s }, { x: cx - s, y: cy + s }, { x: cx + s, y: cy + s }] });
-    else if (kind === "square") push({ type: "rect", x: cx - s, y: cy - s, w: 2 * s, h: 2 * s });
-    else if (kind === "rect") push({ type: "rect", x: cx - s, y: cy - s * 0.7, w: 2 * s, h: 1.4 * s });
-    else if (kind === "para") push({ type: "poly", pts: [{ x: cx - s + 30, y: cy - s * 0.6 }, { x: cx + s + 30, y: cy - s * 0.6 }, { x: cx + s - 30, y: cy + s * 0.6 }, { x: cx - s - 30, y: cy + s * 0.6 }] });
-    else if (kind === "rhombus") push({ type: "poly", pts: [{ x: cx, y: cy - s }, { x: cx + s * 0.7, y: cy }, { x: cx, y: cy + s }, { x: cx - s * 0.7, y: cy }] });
-    else if (kind === "trapezoid") push({ type: "poly", pts: [{ x: cx - s * 0.55, y: cy - s * 0.6 }, { x: cx + s * 0.55, y: cy - s * 0.6 }, { x: cx + s, y: cy + s * 0.6 }, { x: cx - s, y: cy + s * 0.6 }] });
-    else if (kind === "pentagon") push({ type: "poly", pts: regPoly(cx, cy, s, 5, -Math.PI / 2) });
-    else if (kind === "hexagon") push({ type: "poly", pts: regPoly(cx, cy, s, 6, -Math.PI / 2) });
-    else if (kind === "circle") push({ type: "circle", cx: cx, cy: cy, r: s });
-    else if (kind === "ellipse") push({ type: "ellipse", cx: cx, cy: cy, rx: s * 1.3, ry: s * 0.75 });
-    else if (kind === "parabola") { var pts = []; for (var x = -s * 1.4; x <= s * 1.4; x += 6) pts.push({ x: cx + x, y: cy + s - (x * x) / (s * 1.0) }); push({ type: "path", pts: pts }); }
-    else if (kind === "axes") { push({ type: "line", x1: cx - 180, y1: cy, x2: cx + 180, y2: cy }); push({ type: "line", x1: cx, y1: cy - 140, x2: cx, y2: cy + 140 }); }
+    items.forEach(function (o) { o.color = c; o.size = w; state.items.push(o); });
     redraw();
   }
 
