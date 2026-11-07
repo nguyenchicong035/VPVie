@@ -508,3 +508,10 @@ body.theme-dark .nr-ic:hover{background:#30353d}
 body.theme-dark .app-menu,body.theme-dark .dlg-card,body.theme-dark .nr-menu{background:#23272e;color:#e6e8eb;border-color:#3a3f47}
 body.theme-dark .app-menu .am-item{background:#23272e;color:#e6e8eb}
 body.theme-dark .app-menu .am-item:hover{background:#30353d}
+
+/* Nút xóa trên mỗi thumbnail trang */
+.thumb-wrap{position:relative}
+.thumb{position:relative}
+.tn-del{position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;border-radius:6px;background:rgba(255,255,255,.9);cursor:pointer;font-size:13px;line-height:1;display:none;box-shadow:0 1px 4px rgba(0,0,0,.18);z-index:3}
+.thumb:hover .tn-del{display:block}
+.tn-del:hover{background:#fde8ea}

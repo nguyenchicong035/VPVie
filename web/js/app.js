@@ -1588,16 +1588,50 @@
   function makeThumbs() {
     var host = $("thumbs"); if (!host) return; host.innerHTML = "";
     pages.forEach(function (pg, i) {
+      var wrap = document.createElement("div"); wrap.className = "thumb-wrap";
       var d = document.createElement("div"); d.className = "thumb" + (i === cur ? " sel" : "");
       if (pg.thumb) { var im = document.createElement("img"); im.src = pg.thumb; d.appendChild(im); } else { d.style.height = "92px"; d.style.background = "repeating-linear-gradient(#fff 0 10px,#eef2f6 10px 11px)"; }
       var n = document.createElement("div"); n.className = "tn-num"; n.textContent = (i + 1); d.appendChild(n);
+      var del = document.createElement("button"); del.className = "tn-del"; del.innerHTML = "🗑"; del.title = "Xóa trang này";
+      del.onclick = function (e) { e.stopPropagation(); deletePageAt(i); }; d.appendChild(del);
       d.onclick = function () { gotoPage(i); };
-      host.appendChild(d);
+      d.oncontextmenu = function (e) { e.preventDefault(); showPageMenu(i, e.clientX, e.clientY); };
+      wrap.appendChild(d);
+      host.appendChild(wrap);
     });
   }
   function gotoPage(i) { capture(); snapshotThumb(); cur = Math.max(0, Math.min(pages.length - 1, i)); restore(); makeThumbs(); scheduleSave(); }
   function addPage() { capture(); snapshotThumb(); pages.splice(cur + 1, 0, blankPage()); cur++; restore(); makeThumbs(); scheduleSave(); }
-  function delPage() { if (!confirm("Xóa trang hiện tại?")) return; if (pages.length <= 1) pages[0] = blankPage(); else { pages.splice(cur, 1); if (cur >= pages.length) cur = pages.length - 1; } restore(); makeThumbs(); scheduleSave(); }
+  function delPage() { deletePageAt(cur); }
+  function insertPageAt(i, after) { capture(); snapshotThumb(); var at = after ? i + 1 : i; pages.splice(at, 0, blankPage()); cur = at; restore(); makeThumbs(); scheduleSave(); }
+  function duplicatePage(i) { capture(); snapshotThumb(); var cl = JSON.parse(JSON.stringify(pages[i])); pages.splice(i + 1, 0, cl); cur = i + 1; restore(); makeThumbs(); scheduleSave(); toast("Đã nhân bản trang."); }
+  function deletePageAt(i) {
+    if (!confirm("Xóa trang " + (i + 1) + "?")) return;
+    capture();
+    if (pages.length <= 1) { pages[0] = blankPage(); cur = 0; }
+    else { pages.splice(i, 1); if (cur > i) cur--; if (cur >= pages.length) cur = pages.length - 1; }
+    restore(); makeThumbs(); scheduleSave();
+  }
+  // Menu chuột phải cho trang (chèn trước/sau, nhân bản, xóa)
+  var pageMenuIdx = 0;
+  function showPageMenu(i, x, y) {
+    pageMenuIdx = i; var m = $("page-menu"); if (!m) return;
+    document.querySelectorAll(".nr-menu.show").forEach(function (o) { if (o !== m) o.classList.remove("show"); });
+    m.classList.add("show");
+    var w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = Math.max(4, Math.min(x, window.innerWidth - w - 4)) + "px";
+    m.style.top = Math.max(4, Math.min(y, window.innerHeight - h - 4)) + "px";
+  }
+  document.querySelectorAll("#page-menu [data-pm-act]").forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation(); $("page-menu").classList.remove("show");
+      var a = b.dataset.pmAct;
+      if (a === "before") insertPageAt(pageMenuIdx, false);
+      else if (a === "after") insertPageAt(pageMenuIdx, true);
+      else if (a === "dup") duplicatePage(pageMenuIdx);
+      else if (a === "del") deletePageAt(pageMenuIdx);
+    };
+  });
   function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 400); }
   function serialize() { capture(); return JSON.stringify({ v: 1, cur: cur, pages: pages }); }
   function saveLocal() { if (state.opt && state.opt.autosave === false) return; snapshotThumb(); try { localStorage.setItem("vpvie.book", serialize()); } catch (e) {} if ($("thumbs") && $("thumbs").children[cur]) { var im = $("thumbs").children[cur].querySelector("img"); if (im && pages[cur].thumb) im.src = pages[cur].thumb; } }
