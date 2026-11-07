@@ -94,12 +94,23 @@
       if (pen === "hl") { ctx.globalAlpha = 0.38; ctx.lineCap = "butt"; base = Math.max(base * 3.2, 16); }
       else if (pen === "pencil") { ctx.globalAlpha = 0.72; }
       if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0].x, p[0].y, base / 2, 0, 6.2832); ctx.fillStyle = it.color; ctx.fill(); ctx.restore(); return; }
-      for (var i = 1; i < p.length; i++) {
-        var pr = p[i].pr != null ? p[i].pr : 0.5;
-        // bút bi: đều nét; bút dạ: biến thiên theo lực; bút chì: hơi mảnh; dạ quang: đều & dày
-        var lw = pen === "brush" ? base * (0.55 + pr * 0.9) : (pen === "pencil" ? base * 0.85 : base);
-        ctx.beginPath(); ctx.lineWidth = lw;
-        ctx.moveTo(p[i - 1].x, p[i - 1].y); ctx.lineTo(p[i].x, p[i].y); ctx.stroke();
+      // Bút dạ: biến thiên theo lực → vẽ từng đoạn. Bút bi/chì: nét đều → làm mượt bằng
+      // đường cong bậc hai qua trung điểm các điểm (khử răng cưa do lấy mẫu con trỏ).
+      if (pen === "brush") {
+        for (var i = 1; i < p.length; i++) {
+          var pr = p[i].pr != null ? p[i].pr : 0.5;
+          ctx.beginPath(); ctx.lineWidth = base * (0.55 + pr * 0.9);
+          ctx.moveTo(p[i - 1].x, p[i - 1].y); ctx.lineTo(p[i].x, p[i].y); ctx.stroke();
+        }
+      } else {
+        ctx.lineWidth = pen === "pencil" ? base * 0.85 : base;
+        ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y);
+        for (var i = 1; i < p.length - 1; i++) {
+          var mx = (p[i].x + p[i + 1].x) / 2, my = (p[i].y + p[i + 1].y) / 2;
+          ctx.quadraticCurveTo(p[i].x, p[i].y, mx, my);
+        }
+        ctx.lineTo(p[p.length - 1].x, p[p.length - 1].y);
+        ctx.stroke();
       }
       ctx.restore();
       return;
@@ -963,6 +974,47 @@
     catch (e) { gdStatus("Lỗi mở: " + (e.code === "NO_FILE" ? "Drive chưa có sổ nào" : e.message)); toast(e.code === "NO_FILE" ? "Drive chưa có sổ. Hãy Lưu lên Drive trước." : e.message); }
   };
   if ($("gd-signout")) $("gd-signout").onclick = function () { window.VPDrive.signOut(); gdStatus("Đã đăng xuất"); toast("Đã đăng xuất Google."); };
+
+  // ----- Kích hoạt bản quyền theo máy
+  function licMsg(t, ok) { var m = $("lic-msg"); if (m) { m.textContent = t || ""; m.className = "lic-msg" + (t ? (ok ? " ok" : " err") : ""); } }
+  function refreshLicUI() {
+    if (!window.VPLicense) return;
+    var st = window.VPLicense.status(), badge = $("lic-badge"), note = $("lic-state");
+    if (badge) badge.hidden = !st.active;
+    if (st.active && badge) badge.textContent = "✔ " + (st.plan === "free" ? "Đã kích hoạt" : "Bản quyền " + st.plan.toUpperCase());
+    if (note) {
+      if (st.active) {
+        var exp = st.expiry ? (" · hết hạn " + new Date(st.expiry * 1000).toLocaleDateString("vi-VN")) : " · vĩnh viễn";
+        note.textContent = "✔ Đã kích hoạt" + (st.note ? " (" + st.note + ")" : "") + exp;
+        note.className = "lic-state ok";
+      } else { note.textContent = "Chưa kích hoạt — máy này đang dùng bản miễn phí."; note.className = "lic-state no"; }
+    }
+  }
+  if (window.VPLicense) {
+    window.VPLicense.check().then(function () { refreshLicUI(); }).catch(function () {});
+    if ($("btn-license")) $("btn-license").onclick = async function () {
+      showDialog("dlg-license"); licMsg("");
+      if ($("lic-mid")) $("lic-mid").value = await window.VPLicense.machineId();
+      await window.VPLicense.check(); refreshLicUI();
+    };
+    if ($("lic-copy")) $("lic-copy").onclick = function () {
+      var v = $("lic-mid").value; if (!v) return;
+      if (navigator.clipboard) navigator.clipboard.writeText(v).then(function () { toast("Đã chép Mã máy."); }, function () {});
+      else { $("lic-mid").select(); document.execCommand("copy"); toast("Đã chép Mã máy."); }
+    };
+    if ($("lic-activate")) $("lic-activate").onclick = async function () {
+      var key = $("lic-key") ? $("lic-key").value : "";
+      if (!key.trim()) { licMsg("Hãy dán Key kích hoạt.", false); return; }
+      var r = await window.VPLicense.activate(key);
+      if (r.ok) { licMsg("Kích hoạt thành công! Cảm ơn bạn.", true); toast("Đã kích hoạt bản quyền ✓"); $("lic-key").value = ""; }
+      else licMsg(r.reason || "Key không hợp lệ.", false);
+      refreshLicUI();
+    };
+    if ($("lic-deactivate")) $("lic-deactivate").onclick = function () {
+      if (!confirm("Gỡ kích hoạt trên máy này?")) return;
+      window.VPLicense.deactivate(); refreshLicUI(); licMsg("Đã gỡ kích hoạt.", false);
+    };
+  }
   function movePage(d) { var j = cur + d; if (j < 0 || j >= pages.length) return; capture(); snapshotThumb(); var tmp = pages[cur]; pages[cur] = pages[j]; pages[j] = tmp; cur = j; restore(); makeThumbs(); scheduleSave(); }
   if ($("th-up")) $("th-up").onclick = function () { movePage(-1); };
   if ($("th-down")) $("th-down").onclick = function () { movePage(1); };

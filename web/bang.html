@@ -11,7 +11,7 @@
   <!-- Thanh tiêu đề kiểu NoteRenderer -->
   <header class="nr-title">
     <div class="nr-title-left"><a href="/" class="nr-home" title="Về trang chủ">△</a><span id="doc-title">Sổ bài giảng – VPVie</span></div>
-    <div class="nr-title-right"><span id="ai-note" class="ai-note">⚠ Chưa bật AI</span><button id="btn-gdrive" class="appbar-btn" title="Đăng nhập Google & đồng bộ Drive">☁ Google Drive</button></div>
+    <div class="nr-title-right"><span id="lic-badge" class="lic-badge" hidden>✔ Bản quyền</span><span id="ai-note" class="ai-note">⚠ Chưa bật AI</span><button id="btn-license" class="appbar-btn" title="Kích hoạt bản quyền theo máy">🔑 Kích hoạt</button><button id="btn-gdrive" class="appbar-btn" title="Đăng nhập Google & đồng bộ Drive">☁ Google Drive</button></div>
   </header>
 
   <!-- Hàng 1: tệp & điều hướng -->
@@ -460,6 +460,33 @@
     </div>
   </div>
 
+  <!-- Hộp thoại Kích hoạt bản quyền theo máy -->
+  <div id="dlg-license" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">🔑 Kích hoạt bản quyền theo máy <button data-close="dlg-license" class="x">✕</button></div>
+      <div class="lic-state" id="lic-state">Đang kiểm tra…</div>
+      <div class="set-sub" style="margin-top:12px">Mã máy của bạn</div>
+      <div class="gd-row">
+        <input id="lic-mid" class="in" readonly style="flex:1;font-weight:700;letter-spacing:1px"/>
+        <button id="lic-copy" class="btn ghost small">⧉ Chép</button>
+      </div>
+      <div class="hint">Gửi <b>Mã máy</b> này cho người cấp phép (VPVie) để nhận <b>Key kích hoạt</b> dành riêng cho máy này.</div>
+      <div class="set-sub" style="margin-top:14px">Dán Key kích hoạt</div>
+      <div class="gd-row">
+        <input id="lic-key" class="in" placeholder="VPL1.xxxxxxxx.yyyyyyyy" style="flex:1"/>
+        <button id="lic-activate" class="btn">Kích hoạt</button>
+      </div>
+      <div id="lic-msg" class="lic-msg"></div>
+      <div class="gd-actions" style="margin-top:10px">
+        <button id="lic-deactivate" class="btn ghost small">Gỡ kích hoạt máy này</button>
+      </div>
+      <div class="hint">
+        Bản quyền gắn với <b>một máy</b>, kiểm tra bằng chữ ký số nên <b>không thể làm giả</b> và
+        hoạt động <b>ngoại tuyến</b> (không gửi dữ liệu đi đâu). Đổi máy/trình duyệt cần cấp key mới.
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/vendor/pdfjs/pdf.min.js"></script>
@@ -486,6 +513,7 @@
   <script src="/js/tools-ruler.js"></script>
   <script src="/js/tools-export.js"></script>
   <script src="/js/gdrive.js"></script>
+  <script src="/js/license.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

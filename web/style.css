@@ -364,3 +364,11 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .nr-menu button.chk::after{content:"✓";margin-left:auto;padding-left:12px}
 .nr-menu button:disabled{opacity:.4;cursor:default;background:#fff}
 .nr-menu button.danger:hover{background:#fde8ea;color:var(--maroon)}
+
+/* Kích hoạt bản quyền */
+.lic-badge{display:inline-flex;align-items:center;gap:4px;background:#e7f6ec;color:#1a7f37;border:1px solid #bfe6cb;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700}
+.lic-state{font-size:14px;font-weight:600;padding:8px 10px;border-radius:8px;background:#f6f7f9;color:var(--ink)}
+.lic-state.ok{background:#e7f6ec;color:#1a7f37}
+.lic-state.no{background:#fbeef0;color:var(--maroon)}
+.lic-msg{font-size:13px;margin-top:8px;min-height:18px}
+.lic-msg.ok{color:#1a7f37}.lic-msg.err{color:var(--maroon)}
