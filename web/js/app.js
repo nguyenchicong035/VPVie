@@ -816,7 +816,15 @@
     btn.disabled = true; btn.textContent = "Đang nhận dạng…";
     try {
       var engine = $("ai-engine").value, mode = $("ai-mode").value, data, src = cropForOCR();
-      if (engine === "tesseract") {
+      if (engine === "ink") {
+        // Nhận dạng THEO NÉT (ngoại tuyến): dùng quỹ đạo các nét viết tay trên trang
+        statusEl.textContent = "Đang nhận dạng theo nét…";
+        var strokeItems = state.items.filter(function (it) { return it.type === "stroke"; });
+        if (!strokeItems.length) throw new Error("Chưa có nét viết tay để nhận dạng.");
+        var ink = window.VPInk.recognizeItems(strokeItems);
+        if (mode === "math" && ink.latex) data = { kind: "math", latex: ink.latex, text: "", confidence: null };
+        else data = { kind: "text", text: ink.text, latex: "", confidence: null };
+      } else if (engine === "tesseract") {
         statusEl.textContent = "Đang tải mô hình…";
         var lines = (mode === "text") ? strokeLines() : [];   // chỉ tách dòng cho chữ tiếng Việt; toán giữ cả khối 2D
         if (lines.length >= 2) {
@@ -857,6 +865,42 @@
       toast(e.message || "Lỗi nhận dạng.");
     } finally { btn.disabled = false; btn.textContent = old; }
   };
+
+  // ----- Dạy nét chữ (stroke-based): ô viết nhỏ, học mẫu của người dùng
+  (function setupInkTrainer() {
+    var pad = $("ink-pad"); if (!pad || !window.VPInk) return;
+    var pctx = pad.getContext("2d"), strokes = [], curStroke = null, drawingPad = false;
+    function redrawPad() {
+      pctx.clearRect(0, 0, pad.width, pad.height);
+      pctx.strokeStyle = "#7a1020"; pctx.lineWidth = 3; pctx.lineJoin = pctx.lineCap = "round";
+      strokes.concat(curStroke ? [curStroke] : []).forEach(function (s) {
+        if (s.length < 1) return; pctx.beginPath(); pctx.moveTo(s[0].x, s[0].y);
+        for (var i = 1; i < s.length; i++) pctx.lineTo(s[i].x, s[i].y); pctx.stroke();
+      });
+    }
+    function ppos(e) { var r = pad.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    pad.addEventListener("pointerdown", function (e) { pad.setPointerCapture(e.pointerId); drawingPad = true; curStroke = [ppos(e)]; });
+    pad.addEventListener("pointermove", function (e) { if (!drawingPad) return; curStroke.push(ppos(e)); redrawPad(); });
+    function endPad() { if (!drawingPad) return; drawingPad = false; if (curStroke && curStroke.length > 1) strokes.push(curStroke); curStroke = null; redrawPad(); guess(); }
+    pad.addEventListener("pointerup", endPad); pad.addEventListener("pointercancel", endPad);
+    function clearPad() { strokes = []; curStroke = null; redrawPad(); if ($("ink-guess")) $("ink-guess").innerHTML = ""; }
+    function guess() {
+      if (!strokes.length || !$("ink-guess")) return;
+      var r = window.VPInk.recognizeSymbol(strokes);
+      $("ink-guess").innerHTML = r.name ? ("AI đoán: <b>" + r.name + "</b> (" + r.score + "%)") : "";
+    }
+    function updCount() { if ($("ink-count")) $("ink-count").textContent = "Đã dạy " + window.VPInk.templates().length + " mẫu riêng."; }
+    if ($("btn-ink-train")) $("btn-ink-train").onclick = function (e) { e.stopPropagation(); document.querySelectorAll(".nr-menu.show").forEach(function (m) { m.classList.remove("show"); }); clearPad(); updCount(); showDialog("dlg-ink"); };
+    if ($("ink-clearpad")) $("ink-clearpad").onclick = clearPad;
+    if ($("ink-test")) $("ink-test").onclick = guess;
+    if ($("ink-learn")) $("ink-learn").onclick = function () {
+      var lbl = ($("ink-label").value || "").trim();
+      if (!lbl) { toast("Hãy nhập ký hiệu bạn vừa viết."); return; }
+      if (!strokes.length) { toast("Hãy viết ký hiệu vào ô bên trái."); return; }
+      if (window.VPInk.learn(lbl, strokes)) { toast('Đã học nét "' + lbl + '".'); clearPad(); updCount(); }
+    };
+    if ($("ink-reset")) $("ink-reset").onclick = function () { if (confirm("Xoá toàn bộ mẫu nét bạn đã dạy?")) { window.VPInk.resetUser(); updCount(); toast("Đã xoá mẫu đã dạy."); } };
+  })();
 
   // Câu hỏi
   var qTab = "mcq";

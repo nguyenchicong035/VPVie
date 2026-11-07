@@ -1,3 +1,6 @@
+@font-face{font-family:'Patrick Hand';src:url('/vendor/fonts/PatrickHand-Regular.ttf') format('truetype');font-display:swap}
+@font-face{font-family:'Be Vietnam Pro';src:url('/vendor/fonts/BeVietnamPro-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Be Vietnam Pro';src:url('/vendor/fonts/BeVietnamPro-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
 :root{
   --navy:#1F3D55; --navy-d:#152F43; --teal:#13697A; --teal-d:#0E5160;
   --gold:#E3A008; --bg:#EFF3F5; --card:#fff; --line:#D9E1E6; --text:#1D2A33; --muted:#6B7A86;
@@ -372,3 +375,14 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .lic-state.no{background:#fbeef0;color:var(--maroon)}
 .lic-msg{font-size:13px;margin-top:8px;min-height:18px}
 .lic-msg.ok{color:#1a7f37}.lic-msg.err{color:var(--maroon)}
+
+/* Dạy nét chữ (stroke-based) */
+.nr-menu-btn{display:block;width:100%;margin-top:8px;background:#fbeef0;color:var(--maroon);border:1px solid #f0d6db;border-radius:7px;padding:7px 10px;font-size:13px;font-weight:600;cursor:pointer}
+.nr-menu-btn:hover{background:#f6e1e5}
+.ink-train-row{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap}
+.ink-pad{border:2px dashed var(--nrline);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}
+.ink-train-ctrl{display:flex;flex-direction:column;gap:8px;min-width:180px}
+.ink-train-ctrl .in{width:100px;font-size:18px;text-align:center}
+.ink-guess{font-size:13px;color:#555;min-height:18px}
+.ink-guess b{color:var(--maroon);font-size:16px}
+.ink-count{font-size:12px;color:#888;margin-top:4px}

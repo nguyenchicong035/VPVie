@@ -368,7 +368,8 @@
   <div id="ai-opts" class="nr-menu ai-opts">
     <label>Công cụ
       <select id="ai-engine">
-        <option value="tesseract">AI Tesseract (miễn phí)</option>
+        <option value="ink">Theo nét (ngoại tuyến, học được)</option>
+        <option value="tesseract">AI Tesseract (ảnh)</option>
         <option value="server">Máy chủ (Ollama/Claude)</option>
       </select>
     </label>
@@ -382,12 +383,23 @@
     <label>Phông kết quả
       <select id="text-font">
         <option value="">Phông mặc định</option>
-        <option value="'Times New Roman', serif">Times New Roman</option>
-        <option value="Arial, sans-serif">Arial</option>
-        <option value="'Comic Sans MS','Segoe Script',cursive">Chữ viết tay</option>
+        <option value="'Times New Roman','Tinos',serif">Times New Roman</option>
+        <option value="Arial,'Liberation Sans',sans-serif">Arial</option>
+        <option value="Calibri,'Carlito',sans-serif">Calibri</option>
+        <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
+        <option value="Verdana,Geneva,sans-serif">Verdana</option>
+        <option value="Georgia,'Gelasio',serif">Georgia</option>
+        <option value="Cambria,'Caladea',serif">Cambria</option>
+        <option value="'Courier New','Cousine',monospace">Courier New (gõ máy)</option>
+        <option value="'Segoe UI',system-ui,sans-serif">Segoe UI</option>
+        <option value="'Comic Sans MS','Segoe Print',cursive">Comic Sans (vui)</option>
+        <option value="'Segoe Script','Brush Script MT',cursive">Chữ viết tay</option>
+        <option value="'Patrick Hand',cursive">Bảng phấn (Patrick Hand)</option>
+        <option value="'Be Vietnam Pro',sans-serif">Be Vietnam Pro (chữ Việt)</option>
       </select>
     </label>
     <label class="chk"><input type="checkbox" id="ai-replace" checked/> Thay nét bằng chữ</label>
+    <button id="btn-ink-train" class="nr-menu-btn">✍ Dạy nét chữ của tôi…</button>
   </div>
 
   <div id="ctx-menu" class="nr-menu">
@@ -487,6 +499,27 @@
     </div>
   </div>
 
+  <!-- Hộp thoại Dạy nét chữ (stroke-based) -->
+  <div id="dlg-ink" class="dlg">
+    <div class="dlg-card">
+      <div class="dlg-head">✍ Dạy AI nét chữ của bạn <button data-close="dlg-ink" class="x">✕</button></div>
+      <div class="hint">Viết một ký hiệu vào ô bên dưới rồi nhập ký hiệu đó và bấm <b>Dạy</b>.
+        AI sẽ nhớ <b>đúng kiểu viết tay của bạn</b> nên nhận dạng chính xác hơn. Mẫu lưu ngay trên máy này.</div>
+      <div class="ink-train-row">
+        <canvas id="ink-pad" width="260" height="200" class="ink-pad"></canvas>
+        <div class="ink-train-ctrl">
+          <label>Ký hiệu / chữ <input id="ink-label" class="in" maxlength="4" placeholder="VD: 7, +, α, b"/></label>
+          <div class="ink-guess" id="ink-guess"></div>
+          <button id="ink-learn" class="btn">Dạy mẫu này</button>
+          <button id="ink-clearpad" class="btn ghost small">Xoá ô viết</button>
+          <button id="ink-test" class="btn ghost small">Thử nhận dạng</button>
+          <div class="ink-count" id="ink-count"></div>
+          <button id="ink-reset" class="btn ghost small">Xoá hết mẫu đã dạy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="/vendor/pdfjs/pdf.min.js"></script>
@@ -513,6 +546,7 @@
   <script src="/js/tools-ruler.js"></script>
   <script src="/js/tools-export.js"></script>
   <script src="/js/gdrive.js"></script>
+  <script src="/js/ink-recognize.js"></script>
   <script src="/js/license.js"></script>
   <script src="/js/app.js"></script>
 </body>
