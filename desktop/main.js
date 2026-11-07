@@ -2,7 +2,7 @@
 // Khởi động: nếu có Python + phụ thuộc -> chạy máy chủ FastAPI (đủ AI máy chủ);
 // nếu không -> chạy máy chủ tĩnh Node (đủ mọi tính năng ngoại tuyến).
 'use strict';
-const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, desktopCapturer, session } = require('electron');
 const path = require('path');
 const http = require('http');
 const { spawn, spawnSync } = require('child_process');
@@ -82,6 +82,19 @@ async function createWindow() {
   });
   // mở liên kết ngoài bằng trình duyệt mặc định
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) { shell.openExternal(url); return { action: 'deny' }; } return { action: 'allow' }; });
+  // Cho phép quay màn hình (getDisplayMedia) + micro trong ứng dụng
+  try {
+    session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+      desktopCapturer.getSources({ types: ['screen', 'window'] }).then((sources) => {
+        // ưu tiên chính cửa sổ VPVie, nếu không thì màn hình đầu tiên
+        var pick = sources.find((s) => s.name && s.name.indexOf('VPVie') >= 0) || sources.find((s) => s.id.startsWith('screen')) || sources[0];
+        callback({ video: pick, audio: process.platform === 'win32' ? 'loopback' : undefined });
+      }).catch(() => callback({}));
+    }, { useSystemPicker: false });
+    session.defaultSession.setPermissionRequestHandler((wc, permission, cb) => {
+      cb(true);  // ứng dụng cục bộ: cho phép micro/màn hình
+    });
+  } catch (e) { /* phiên bản Electron cũ */ }
   buildMenu();
   const info = await startBackend();
   await win.loadURL(`http://127.0.0.1:${PORT}/bang.html`);
