@@ -117,6 +117,8 @@
       var pp = it.pts; ctx.moveTo(pp[0].x, pp[0].y); for (var k = 1; k < pp.length; k++) ctx.lineTo(pp[k].x, pp[k].y); ctx.closePath(); ctx.stroke();
     } else if (it.type === "path") {
       var pa = it.pts; ctx.moveTo(pa[0].x, pa[0].y); for (var k2 = 1; k2 < pa.length; k2++) ctx.lineTo(pa[k2].x, pa[k2].y); ctx.stroke();
+    } else if (it.type === "arrow") {
+      drawArrow(it);
     } else if (it.type === "solid") {
       var sc = it.color || state.color, lw = it.size || 2;
       ctx.strokeStyle = sc; ctx.lineWidth = lw;
@@ -126,6 +128,27 @@
       ctx.fillStyle = sc; ctx.font = "13px 'Segoe UI'";
       (it.labels || []).forEach(function (l) { ctx.fillText(l.t, l.x, l.y); });
     }
+  }
+
+  // Vẽ mũi tên / đoạn đo / ngoặc
+  function arrowHead(x, y, ang, s) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - s * Math.cos(ang - 0.4), y - s * Math.sin(ang - 0.4)); ctx.lineTo(x - s * Math.cos(ang + 0.4), y - s * Math.sin(ang + 0.4)); ctx.closePath(); ctx.fill(); }
+  function drawArrow(it) {
+    var x1 = it.x1, y1 = it.y1, x2 = it.x2, y2 = it.y2, w = it.size || 2, st = it.style || "arrow";
+    ctx.save(); ctx.strokeStyle = it.color || state.color; ctx.fillStyle = it.color || state.color; ctx.lineWidth = w; ctx.lineCap = "round";
+    var ang = Math.atan2(y2 - y1, x2 - x1), hs = 8 + w * 1.6, L = Math.hypot(x2 - x1, y2 - y1) || 1, nx = -(y2 - y1) / L, ny = (x2 - x1) / L;
+    if (st === "dash") ctx.setLineDash([8, 6]);
+    if (st === "brace") {
+      var o = 12, mx = (x1 + x2) / 2 + nx * o, my = (y1 + y2) / 2 + ny * o;
+      ctx.beginPath(); ctx.moveTo(x1, y1);
+      ctx.quadraticCurveTo(x1 + nx * o, y1 + ny * o, mx - (x2 - x1) / L * 6, my - (y2 - y1) / L * 6);
+      ctx.lineTo(mx, my); ctx.lineTo(mx + (x2 - x1) / L * 6, my + (y2 - y1) / L * 6);
+      ctx.quadraticCurveTo(x2 + nx * o, y2 + ny * o, x2, y2); ctx.stroke(); ctx.restore(); return;
+    }
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+    if (st === "dim") { // đoạn đo: vạch vuông góc 2 đầu
+      ctx.beginPath(); ctx.moveTo(x1 + nx * 6, y1 + ny * 6); ctx.lineTo(x1 - nx * 6, y1 - ny * 6); ctx.moveTo(x2 + nx * 6, y2 + ny * 6); ctx.lineTo(x2 - nx * 6, y2 - ny * 6); ctx.stroke(); }
+    else { arrowHead(x2, y2, ang, hs); if (st === "darrow") arrowHead(x1, y1, ang + Math.PI, hs); }
+    ctx.restore();
   }
 
   function redraw() {
@@ -154,7 +177,7 @@
     return pt.x > b.minx - tol && pt.x < b.maxx + tol && pt.y > b.miny - tol && pt.y < b.maxy + tol;
   }
   function itemBox(it) {
-    if (it.type === "line") return { minx: Math.min(it.x1, it.x2), maxx: Math.max(it.x1, it.x2), miny: Math.min(it.y1, it.y2), maxy: Math.max(it.y1, it.y2) };
+    if (it.type === "line" || it.type === "arrow") return { minx: Math.min(it.x1, it.x2), maxx: Math.max(it.x1, it.x2), miny: Math.min(it.y1, it.y2), maxy: Math.max(it.y1, it.y2) };
     if (it.type === "rect") return { minx: it.x, maxx: it.x + it.w, miny: it.y, maxy: it.y + it.h };
     if (it.type === "circle") return { minx: it.cx - it.r, maxx: it.cx + it.r, miny: it.cy - it.r, maxy: it.cy + it.r };
     if (it.type === "ellipse") return { minx: it.cx - it.rx, maxx: it.cx + it.rx, miny: it.cy - it.ry, maxy: it.cy + it.ry };
@@ -175,6 +198,7 @@
     if (state.tool === "pan") return;   // công cụ di chuyển: không vẽ
     canvas.setPointerCapture(e.pointerId);
     if (state.tool === "eraser") { state.drawing = true; eraseAt(pt); return; }
+    if (state.tool === "arrow") { state.drawing = true; state.cur = { type: "arrow", x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, style: state.arrowStyle || "arrow", color: state.color, size: state.size }; return; }
     state.drawing = true;
     state.cur = { type: "stroke", points: [pt], color: state.color, size: state.size, pen: state.pen };
   });
@@ -183,6 +207,7 @@
     if (!state.drawing) return;
     var pt = pos(e);
     if (state.tool === "eraser") { eraseAt(pt); return; }
+    if (state.tool === "arrow") { state.cur.x2 = pt.x; state.cur.y2 = pt.y; redraw(); return; }
     state.cur.points.push(pt);
     redraw();
   });
@@ -194,6 +219,7 @@
     var s = state.cur; state.cur = null;
     if (!s) return;
     redoStack = [];
+    if (s.type === "arrow") { if (Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 6) state.items.push(s); redraw(); return; }
     if (state.beautify && window.VPBeautify && s.pen !== "hl") {
       var shp = window.VPBeautify.beautify(s.points);
       if (shp) { shp.color = s.color; shp.size = s.size; state.items.push(shp); redraw(); return; }
@@ -395,6 +421,22 @@
       hideDialog("dlg-sci");
     };
   });
+  // Mũi tên / đoạn đo / ngoặc – nút có menu chọn kiểu
+  function activateArrow(style) {
+    state.tool = "arrow"; state.arrowStyle = style || state.arrowStyle || "arrow";
+    if (window.VPGeo) window.VPGeo.setTool(null);
+    clearActive(); $("btn-arrow").classList.add("active");
+  }
+  if ($("btn-arrow")) $("btn-arrow").onclick = function (e) {
+    e.stopPropagation();
+    var m = $("arrow-menu"), r = this.getBoundingClientRect();
+    m.style.left = r.left + "px"; m.style.top = (r.bottom + 4) + "px"; m.classList.toggle("show");
+    activateArrow();
+  };
+  document.querySelectorAll("#arrow-menu button").forEach(function (b) {
+    b.onclick = function (e) { e.stopPropagation(); activateArrow(b.dataset.arrow); $("arrow-menu").classList.remove("show"); toast("Công cụ: " + b.textContent.trim()); };
+  });
+  document.addEventListener("click", function () { var m = $("arrow-menu"); if (m) m.classList.remove("show"); });
   // Thước kẻ / đo góc
   if ($("btn-ruler")) $("btn-ruler").onclick = function () { var on = window.VPRuler.toggle(board); this.classList.toggle("active", on); };
   // Hiện/ẩn danh sách trang
