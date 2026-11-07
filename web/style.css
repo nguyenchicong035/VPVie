@@ -550,3 +550,81 @@ body.theme-dark .rt-sym button{color:#e8eaf0}
 
 /* sửa: thuộc tính hidden phải thắng display của rt-bar/rt-sym */
 .rt-bar[hidden],.rt-sym[hidden]{display:none!important}
+
+/* ===== Thư viện sổ (màn hình đầu) ===== */
+.lib{position:fixed;inset:0;z-index:200;background:#fff;display:flex;flex-direction:column;font-family:"Segoe UI",system-ui,sans-serif;color:#1f2733}
+.lib[hidden]{display:none!important}
+.lib-top{display:flex;align-items:center;gap:18px;padding:16px 26px;border-bottom:1px solid #eef0f4}
+.lib-back{border:none;background:#f3f4f7;border-radius:20px;padding:7px 16px;font-size:14px;color:#3a4150;cursor:pointer;font-weight:500}
+.lib-back:hover{background:#e9ebf0}
+.lib-h{font-size:22px;font-weight:700;margin:0;color:#7a1020}
+.lib-search{margin-left:auto;width:min(340px,38vw);height:38px;border:1px solid #dfe2e9;border-radius:10px;padding:0 14px;font-size:14px;background:#fafbfc}
+.lib-search:focus{outline:none;border-color:#7a1020;background:#fff}
+.lib-body{flex:1;display:flex;min-height:0}
+.lib-side{width:252px;flex:0 0 252px;border-right:1px solid #eef0f4;padding:18px 14px;overflow:auto}
+.lib-nav{width:100%;display:flex;align-items:center;gap:10px;border:none;background:transparent;border-radius:10px;padding:10px 12px;font-size:14.5px;color:#2b3340;cursor:pointer;text-align:left}
+.lib-nav span{flex:1}
+.lib-nav:hover{background:#f4f5f8}
+.lib-nav.active{background:#f3e9ec;color:#7a1020;font-weight:600}
+.lib-badge-n{background:#e6e8ee;color:#555f6e;border-radius:10px;font-size:12px;font-weight:600;padding:1px 9px;min-width:14px;text-align:center}
+.lib-nav.active .lib-badge-n{background:#e3c9d0;color:#7a1020}
+.lib-proj-h{font-size:11.5px;font-weight:700;letter-spacing:.08em;color:#98a1ae;margin:20px 12px 8px}
+.lib-add{color:#5a6271}
+.lib-plus{font-size:16px;width:18px;text-align:center}
+.lib-start{display:flex;align-items:center;gap:9px;margin:22px 12px 0;font-size:13.5px;color:#3a4150;cursor:pointer}
+.lib-start input{width:17px;height:17px;accent-color:#7a1020;cursor:pointer}
+.lib-main{flex:1;padding:22px 30px;overflow:auto;min-width:0}
+.lib-main-h{display:flex;align-items:baseline;gap:12px;margin-bottom:22px}
+.lib-main-h h2{font-size:20px;font-weight:700;margin:0}
+.lib-count{color:#98a1ae;font-size:14px}
+.lib-multi{margin-left:auto;border:1px solid #dfe2e9;background:#fff;border-radius:9px;padding:7px 13px;font-size:13.5px;color:#3a4150;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.lib-multi:hover{background:#f6f7f9}
+.lib-multi.on{background:#f3e9ec;border-color:#e3c9d0;color:#7a1020}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:26px 24px;align-items:start}
+.lib-new{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;aspect-ratio:3/4;border:2px dashed #cdd3dc;border-radius:14px;background:#fafbfc;cursor:pointer;color:#7a8290}
+.lib-new:hover{border-color:#7a1020;color:#7a1020;background:#fdf6f7}
+.lib-new .lp{font-size:40px;font-weight:300;line-height:1}
+.lib-new span{font-size:14px;font-weight:500}
+.lib-card{cursor:pointer;position:relative}
+.lib-cover{position:relative;aspect-ratio:3/4;border:1.5px solid #e3e6ec;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(20,24,40,.05)}
+.lib-card:hover .lib-cover{border-color:#c7b2b8;box-shadow:0 6px 18px rgba(20,24,40,.12)}
+.lib-card.current .lib-cover{border-color:#7a1020;box-shadow:0 0 0 2px #7a102033}
+.lib-cover img{width:100%;height:100%;object-fit:cover;object-position:top}
+.lib-cover .lib-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#c2c8d2;font-size:13px}
+.lib-badge{position:absolute;top:10px;right:10px;background:#7a1020;color:#fff;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:12px}
+.lib-del{position:absolute;top:8px;left:8px;width:28px;height:28px;border:none;border-radius:8px;background:rgba(255,255,255,.92);cursor:pointer;font-size:13px;display:none;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.lib-card:hover .lib-del{display:flex}
+.lib-del:hover{background:#fde8ea;color:#c21807}
+.lib-chk{position:absolute;top:8px;left:8px;width:22px;height:22px;accent-color:#7a1020;display:none}
+.lib.multi .lib-chk{display:block}
+.lib.multi .lib-del{display:none}
+.lib-name{margin-top:10px;font-size:14.5px;font-weight:600;color:#1f2733;display:flex;align-items:center;gap:6px;line-height:1.3}
+.lib-name .lib-more{margin-left:auto;border:none;background:transparent;cursor:pointer;color:#98a1ae;font-size:18px;line-height:1;padding:0 4px;border-radius:6px}
+.lib-name .lib-more:hover{background:#eef0f4;color:#3a4150}
+.lib-date{font-size:12.5px;color:#98a1ae;margin-top:2px}
+.lib-trash-note{margin-top:30px;color:#98a1ae;font-size:13px}
+.lib-more-menu{position:fixed;z-index:210;background:#fff;border:1px solid #e6e8ee;border-radius:10px;box-shadow:0 12px 32px rgba(20,24,40,.2);padding:6px;min-width:168px}
+.lib-more-menu[hidden]{display:none!important}
+.lib-more-menu button{display:block;width:100%;text-align:left;border:none;background:transparent;padding:9px 12px;border-radius:7px;font-size:14px;color:#2b3340;cursor:pointer}
+.lib-more-menu button:hover{background:#f4f5f8}
+.lib-more-menu button.danger:hover{background:#fde8ea;color:#c21807}
+@media (max-width:640px){.lib-side{width:200px;flex-basis:200px}.lib-search{width:40vw}.lib-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:18px}}
+
+/* Dark theme cho Thư viện */
+body.theme-dark .lib{background:#1d2027;color:#e6e8ee}
+body.theme-dark .lib-top,body.theme-dark .lib-side{border-color:#2d313b}
+body.theme-dark .lib-back{background:#2a2e38;color:#cdd2db}
+body.theme-dark .lib-search{background:#23262e;border-color:#353a45;color:#e6e8ee}
+body.theme-dark .lib-nav{color:#cdd2db}
+body.theme-dark .lib-nav:hover{background:#262a33}
+body.theme-dark .lib-nav.active{background:#3a2a2e;color:#f0c7cf}
+body.theme-dark .lib-cover{background:#23262e;border-color:#353a45}
+body.theme-dark .lib-new{background:#23262e;border-color:#3a4049;color:#9aa2af}
+body.theme-dark .lib-name{color:#e6e8ee}
+body.theme-dark .lib-multi{background:#23262e;border-color:#353a45;color:#cdd2db}
+body.theme-dark .lib-more-menu{background:#262a33;border-color:#353a45}
+body.theme-dark .lib-more-menu button{color:#e6e8ee}
+body.theme-dark .lib-more-menu button:hover{background:#30343d}
+.lib-multi.danger{border-color:#eab3b3;color:#c21807}
+.lib-multi.danger:hover{background:#fde8ea}
+body.theme-dark .lib-multi.danger{border-color:#6a3a3a;color:#f0a0a0}

@@ -654,6 +654,35 @@
     </div>
   </div>
 
+  <!-- Thư viện sổ (màn hình đầu khi mở app) -->
+  <div id="library" class="lib" hidden>
+    <header class="lib-top">
+      <button id="lib-back" class="lib-back" title="Quay lại sổ đang mở">&#8249; Về sổ</button>
+      <h1 class="lib-h">Thư viện</h1>
+      <input id="lib-search" class="lib-search" placeholder="Tìm sổ" />
+    </header>
+    <div class="lib-body">
+      <aside class="lib-side">
+        <button class="lib-nav active" data-filter="all"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16 6l4 .8-2.4 12.5-4-.8z"/></svg><span>Tất cả sổ</span><b id="lib-cnt-all" class="lib-badge-n">0</b></button>
+        <button class="lib-nav" data-filter="noproj"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg><span>Không thuộc project</span><b id="lib-cnt-np" class="lib-badge-n">0</b></button>
+        <div class="lib-proj-h">PROJECT</div>
+        <div id="lib-projects"></div>
+        <button id="lib-proj-new" class="lib-nav lib-add"><span class="lib-plus">＋</span><span>Project mới</span></button>
+        <label class="lib-start"><input type="checkbox" id="lib-openstart" /> <span>Mở Thư viện khi mở app</span></label>
+      </aside>
+      <main class="lib-main">
+        <div class="lib-main-h">
+          <h2 id="lib-title">Tất cả sổ</h2><span id="lib-count" class="lib-count">0 sổ</span>
+          <button id="lib-bulk-del" class="lib-multi danger" hidden>🗑 Xóa đã chọn (0)</button>
+          <button id="lib-multi" class="lib-multi"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/></svg> Chọn nhiều</button>
+        </div>
+        <div id="lib-grid" class="lib-grid"></div>
+        <div class="lib-trash-note">Sổ và project đã xóa nằm trong Thùng rác, có thể lấy lại.</div>
+      </main>
+    </div>
+  </div>
+  <div id="lib-more" class="lib-more-menu" hidden></div>
+
   <!-- Menu ứng dụng (nút ☰) -->
   <div id="app-menu-bd" class="app-menu-bd" hidden></div>
   <div id="app-menu" class="app-menu" hidden>

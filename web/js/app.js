@@ -658,19 +658,11 @@
       if (sym.hidden) { sym.hidden = false; var r = bar.querySelector(".rt-omega").getBoundingClientRect(); sym.style.left = Math.min(window.innerWidth - 290, r.left) + "px"; sym.style.top = (r.bottom + 6) + "px"; }
       else sym.hidden = true;
     });
-    // √x — chèn công thức Toán (KaTeX) nội tuyến, không chỉnh sửa
+    // √x — mở bảng công thức LaTeX trực quan, chèn nội tuyến vào khung chữ
     bar.querySelector(".rt-fx").addEventListener("mousedown", function (e) { e.preventDefault(); });
     bar.querySelector(".rt-fx").addEventListener("click", function () {
       if (!cur) return;
-      var latex = prompt("Nhập công thức (LaTeX), ví dụ: \\sqrt{x}, \\frac{a}{b}, x^2:", "");
-      if (!latex) { cur.ed.focus(); return; }
-      var span = document.createElement("span"); span.contentEditable = "false"; span.className = "rt-fx-inline"; span.setAttribute("data-latex", latex);
-      try { window.VPMathPlot.renderMath(span, latex, false); } catch (e) { span.textContent = latex; }
-      cur.ed.focus();
-      var sel = window.getSelection();
-      if (sel && sel.rangeCount) { var rg = sel.getRangeAt(0); rg.deleteContents(); rg.insertNode(span); rg.collapse(false); sel.removeAllRanges(); sel.addRange(rg); }
-      else cur.ed.appendChild(span);
-      save();
+      openTextFormula(cur.ed, cur.data);
     });
     bar.querySelector(".rt-done").addEventListener("mousedown", function (e) { e.preventDefault(); });
     bar.querySelector(".rt-done").addEventListener("click", function () { if (cur) cur.ed.blur(); hide(); });
@@ -961,7 +953,7 @@
   function closeAppMenu() { if ($("app-menu")) $("app-menu").hidden = true; if ($("app-menu-bd")) $("app-menu-bd").hidden = true; }
   if ($("btn-menu")) $("btn-menu").onclick = function (e) { e.stopPropagation(); if ($("app-menu") && $("app-menu").hidden) openAppMenu(); else closeAppMenu(); };
   if ($("app-menu-bd")) $("app-menu-bd").onclick = closeAppMenu;
-  function newBook() { if (!confirm("Tạo sổ mới? Nội dung chưa lưu sẽ mất.")) return; pages = [blankPage()]; cur = 0; restore(); makeThumbs(); updatePageLabel(); scheduleSave(); }
+  function newBook() { createBook(); resetHist(); toast("Đã tạo sổ mới."); }
   function toggleFull() { try { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); } catch (e) {} }
   function applyTheme(t) {
     document.body.classList.remove("theme-dark");
@@ -972,7 +964,7 @@
   }
   (function () { var t = "light"; try { t = localStorage.getItem("vpvie.theme") || "light"; } catch (e) {} applyTheme(t); })();
   var AM = {
-    library: function () { openBookFile(); },
+    library: function () { openLibrary(); },
     "new": newBook,
     newwin: function () { try { window.open(location.href, "_blank"); } catch (e) {} },
     fullscreen: toggleFull,
@@ -1040,7 +1032,26 @@
     else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "s") { e.preventDefault(); saveLocal(); toast("Đã lưu sổ."); }
     else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "s") { e.preventDefault(); downloadBook(); }
   });
-  if ($("btn-library")) $("btn-library").onclick = function () { openBookFile(); };
+  if ($("btn-library")) $("btn-library").onclick = function () { openLibrary(); };
+  // ---- Thư viện: nút & tương tác
+  if ($("lib-back")) $("lib-back").onclick = function () { closeLibrary(); };
+  if ($("lib-search")) $("lib-search").oninput = function () { renderLibrary(); };
+  if ($("lib-proj-new")) $("lib-proj-new").onclick = function () { newProject(); };
+  if ($("lib-openstart")) $("lib-openstart").onchange = function () { lib.openOnStart = this.checked; libSave(); };
+  if ($("lib-multi")) $("lib-multi").onclick = function () {
+    var lb = $("library"); var on = lb.classList.toggle("multi"); this.classList.toggle("on", on);
+    this.lastChild.textContent = on ? " Xong" : " Chọn nhiều";
+    if (!on) { document.querySelectorAll("#lib-grid .lib-chk").forEach(function (c) { c.checked = false; }); }
+    if ($("lib-bulk-del")) $("lib-bulk-del").hidden = true;
+  };
+  if ($("lib-bulk-del")) $("lib-bulk-del").onclick = function () {
+    var ids = checkedIds(); if (!ids.length) return;
+    if (!confirm("Chuyển " + ids.length + " sổ đã chọn vào Thùng rác?")) return;
+    ids.forEach(function (id) { deleteBook(id); });
+    renderLibrary(); updateBulkBar();
+  };
+  document.querySelectorAll("#library .lib-nav[data-filter]").forEach(function (b) { b.onclick = function () { libFilter = b.dataset.filter; syncNav(); renderLibrary(); }; });
+  document.addEventListener("pointerdown", function (e) { var mm = $("lib-more"); if (mm && !mm.hidden && !e.target.closest("#lib-more") && !e.target.closest(".lib-more")) mm.hidden = true; }, true);
   // Chèn bảng
   if ($("btn-table")) $("btn-table").onclick = function () {
     var r = parseInt(prompt("Số hàng:", "3"), 10), c = parseInt(prompt("Số cột:", "3"), 10);
@@ -1292,10 +1303,34 @@
     $("f-math").onclick = function () { window.VPFormula.setMode("math"); this.classList.add("sel"); $("f-text").classList.remove("sel"); window.VPFormula.render($("math-preview"), $("math-input").value); };
     $("f-text").onclick = function () { window.VPFormula.setMode("text"); this.classList.add("sel"); $("f-math").classList.remove("sel"); window.VPFormula.render($("math-preview"), $("math-input").value); };
   }
-  $("btn-math").onclick = function () { showDialog("dlg-math"); buildFormulaUI(); $("math-input").focus(); };
+  var pendingTextFx = null;   // khi mở bảng công thức từ khung chữ (nút √x)
+  function openTextFormula(ed, data) {
+    var range = null;
+    try { var sel = window.getSelection(); if (sel && sel.rangeCount && ed.contains(sel.anchorNode)) range = sel.getRangeAt(0).cloneRange(); } catch (e) {}
+    pendingTextFx = { ed: ed, data: data, range: range };
+    showDialog("dlg-math"); buildFormulaUI();
+    var mi = $("math-input"); if (mi) { mi.value = ""; mi.focus(); }
+    if (window.VPFormula) window.VPFormula.render($("math-preview"), "");
+  }
+  $("btn-math").onclick = function () { pendingTextFx = null; showDialog("dlg-math"); buildFormulaUI(); $("math-input").focus(); };
   $("math-ok").onclick = function () {
-    var st = window.VPFormula.state;
-    insertMath($("math-input").value, 90, 90, { color: st.color, size: st.size, display: st.display, mode: st.mode });
+    var st = window.VPFormula.state, latex = $("math-input").value;
+    if (pendingTextFx) {
+      var tgt = pendingTextFx; pendingTextFx = null;
+      if (latex) {
+        var span = document.createElement("span"); span.contentEditable = "false"; span.className = "rt-fx-inline"; span.setAttribute("data-latex", latex);
+        try { window.VPMathPlot.renderMath(span, latex, false); } catch (e) { span.textContent = latex; }
+        if (st.color) span.style.color = st.color;
+        tgt.ed.focus();
+        var sel = window.getSelection();
+        if (tgt.range) { try { sel.removeAllRanges(); sel.addRange(tgt.range); } catch (e) {} }
+        if (sel && sel.rangeCount && tgt.ed.contains(sel.anchorNode)) { var rg = sel.getRangeAt(0); rg.deleteContents(); rg.insertNode(span); var sp = document.createTextNode("​"); rg.setStartAfter(span); rg.insertNode(sp); rg.setStartAfter(sp); rg.collapse(true); sel.removeAllRanges(); sel.addRange(rg); }
+        else tgt.ed.appendChild(span);
+        tgt.data.html = tgt.ed.innerHTML; scheduleSave();
+      }
+      $("math-input").value = ""; window.VPFormula.render($("math-preview"), ""); hideDialog("dlg-math"); return;
+    }
+    insertMath(latex, 90, 90, { color: st.color, size: st.size, display: st.display, mode: st.mode });
     $("math-input").value = ""; window.VPFormula.render($("math-preview"), ""); hideDialog("dlg-math");
   };
 
@@ -1706,7 +1741,7 @@
 
   // ----- Hộp thoại & toast
   function showDialog(id) { $(id).classList.add("show"); }
-  function hideDialog(id) { $(id).classList.remove("show"); }
+  function hideDialog(id) { $(id).classList.remove("show"); if (id === "dlg-math") pendingTextFx = null; }
   document.querySelectorAll("[data-close]").forEach(function (b) { b.onclick = function () { hideDialog(b.dataset.close); }; });
   var toastEl = $("toast"), toastT;
   function toast(msg) { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function () { toastEl.classList.remove("show"); }, 2600); }
@@ -1781,13 +1816,205 @@
   });
   function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 400); }
   function serialize() { capture(); return JSON.stringify({ v: 1, cur: cur, pages: pages }); }
-  function saveLocal() { if (state.opt && state.opt.autosave === false) return; snapshotThumb(); try { localStorage.setItem("vpvie.book", serialize()); } catch (e) {} if ($("thumbs") && $("thumbs").children[cur]) { var im = $("thumbs").children[cur].querySelector("img"); if (im && pages[cur].thumb) im.src = pages[cur].thumb; } }
+  function saveLocal() {
+    if (state.opt && state.opt.autosave === false) return;
+    snapshotThumb();
+    try { if (lib.current) localStorage.setItem(bookKey(lib.current), serialize()); } catch (e) {}
+    updateCurrentMeta();
+    if ($("thumbs") && $("thumbs").children[cur]) { var im = $("thumbs").children[cur].querySelector("img"); if (im && pages[cur].thumb) im.src = pages[cur].thumb; }
+  }
   function loadBook(obj) {
     if (!obj || !obj.pages || !obj.pages.length) return;
     pages = obj.pages.map(function (pg) { return { items: pg.items || [], geo: { points: (pg.geo && pg.geo.points) || [], shapes: (pg.geo && pg.geo.shapes) || [] }, overlays: pg.overlays || [], thumb: pg.thumb, bg: pg.bg || null }; });
     cur = Math.min(obj.cur || 0, pages.length - 1); restore(); makeThumbs();
   }
-  function loadLocal() { try { var s = localStorage.getItem("vpvie.book"); if (s) loadBook(JSON.parse(s)); } catch (e) {} }
+
+  // ===== Thư viện sổ (nhiều sổ, màn hình đầu) =====
+  var lib = { books: [], projects: [], current: null, openOnStart: true, trash: [] };
+  var libFilter = "all";
+  function bookKey(id) { return "vpvie.book." + id; }
+  function genId() { return "b" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36); }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function defaultBookName() { var d = new Date(); return "Sổ " + d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + "." + pad2(d.getMinutes()); }
+  function fmtDate(ts) { var d = new Date(ts); return d.getDate() + " thg " + (d.getMonth() + 1) + ", " + d.getFullYear(); }
+  function libSave() { try { localStorage.setItem("vpvie.lib", JSON.stringify(lib)); } catch (e) {} }
+  function curMeta() { return lib.books.filter(function (b) { return b.id === lib.current; })[0] || null; }
+  function updateCurrentMeta() {
+    var m = curMeta(); if (!m) return;
+    m.updated = Date.now();
+    try { if (pages[cur] && pages[cur].thumb) m.cover = pages[cur].thumb; else if (pages[0] && pages[0].thumb) m.cover = pages[0].thumb; } catch (e) {}
+    libSave();
+  }
+  function libLoad() {
+    try { var s = JSON.parse(localStorage.getItem("vpvie.lib") || "null"); if (s) lib = s; } catch (e) {}
+    if (!lib.books) lib.books = [];
+    if (!lib.projects) lib.projects = [];
+    if (!lib.trash) lib.trash = [];
+    if (typeof lib.openOnStart !== "boolean") lib.openOnStart = true;
+    if (!lib.books.length) {
+      var old = null; try { old = localStorage.getItem("vpvie.book"); } catch (e) {}
+      var id = genId();
+      lib.books.push({ id: id, name: defaultBookName(), created: Date.now(), updated: Date.now(), project: null, cover: null });
+      lib.current = id;
+      if (old) { try { localStorage.setItem(bookKey(id), old); } catch (e) {} }
+      libSave();
+    }
+    if (!lib.current || !lib.books.some(function (b) { return b.id === lib.current; })) lib.current = lib.books[0] && lib.books[0].id;
+  }
+  function loadCurrentContent() {
+    if (!lib.current) { pages = [blankPage()]; cur = 0; restore(); makeThumbs(); return; }
+    var s = null; try { s = localStorage.getItem(bookKey(lib.current)); } catch (e) {}
+    if (s) { try { loadBook(JSON.parse(s)); } catch (e) { pages = [blankPage()]; cur = 0; restore(); makeThumbs(); } }
+    else { pages = [blankPage()]; cur = 0; restore(); makeThumbs(); }
+    setDocTitle();
+  }
+  function loadLocal() { libLoad(); loadCurrentContent(); }
+  function setDocTitle() { var m = curMeta(); if ($("doc-title")) $("doc-title").textContent = (m ? m.name : "Sổ bài giảng") + " – VPVie"; }
+  function persistCurrent() { try { if (lib.current) localStorage.setItem(bookKey(lib.current), serialize()); } catch (e) {} updateCurrentMeta(); }
+  // --- thao tác sổ
+  function createBook(project) {
+    persistCurrent();
+    var id = genId();
+    lib.books.unshift({ id: id, name: defaultBookName(), created: Date.now(), updated: Date.now(), project: project || null, cover: null });
+    lib.current = id; libSave();
+    pages = [blankPage()]; cur = 0; restore(); makeThumbs(); updatePageLabel();
+    try { localStorage.setItem(bookKey(id), serialize()); } catch (e) {}
+    setDocTitle();
+    return id;
+  }
+  function openBook(id) {
+    if (id === lib.current) { closeLibrary(); return; }
+    persistCurrent();
+    lib.current = id; libSave();
+    loadCurrentContent(); updatePageLabel(); resetHist();
+    closeLibrary();
+  }
+  function deleteBook(id) {
+    var idx = -1; lib.books.forEach(function (b, i) { if (b.id === id) idx = i; });
+    if (idx < 0) return;
+    var m = lib.books[idx];
+    var content = ""; try { content = localStorage.getItem(bookKey(id)) || ""; } catch (e) {}
+    lib.trash.push({ meta: m, content: content, deletedAt: Date.now() });
+    lib.books.splice(idx, 1);
+    try { localStorage.removeItem(bookKey(id)); } catch (e) {}
+    if (lib.current === id) {
+      if (lib.books.length) { lib.current = lib.books[0].id; libSave(); loadCurrentContent(); updatePageLabel(); }
+      else { libSave(); createBook(); }
+    } else libSave();
+    renderLibrary();
+  }
+  function renameBook(id) {
+    var m = lib.books.filter(function (b) { return b.id === id; })[0]; if (!m) return;
+    var nn = prompt("Đổi tên sổ:", m.name); if (nn == null) return;
+    m.name = nn.trim() || m.name; libSave(); if (id === lib.current) setDocTitle(); renderLibrary();
+  }
+  function duplicateBook(id) {
+    var m = lib.books.filter(function (b) { return b.id === id; })[0]; if (!m) return;
+    if (id === lib.current) persistCurrent();
+    var content = ""; try { content = localStorage.getItem(bookKey(id)) || ""; } catch (e) {}
+    var nid = genId();
+    var idx = lib.books.indexOf(m);
+    lib.books.splice(idx + 1, 0, { id: nid, name: m.name + " (bản sao)", created: Date.now(), updated: Date.now(), project: m.project || null, cover: m.cover || null });
+    try { localStorage.setItem(bookKey(nid), content); } catch (e) {}
+    libSave(); renderLibrary();
+  }
+  function moveBookToProject(id, proj) {
+    var m = lib.books.filter(function (b) { return b.id === id; })[0]; if (!m) return;
+    m.project = proj; libSave(); renderLibrary();
+  }
+  function newProject() {
+    var nn = prompt("Tên project mới:", ""); if (!nn) return;
+    lib.projects.push({ id: "p" + genId(), name: nn.trim() }); libSave(); renderLibrary();
+  }
+  // --- giao diện Thư viện
+  function filteredBooks() {
+    var list = lib.books.slice();
+    if (libFilter === "noproj") list = list.filter(function (b) { return !b.project; });
+    else if (libFilter && libFilter.indexOf("p") === 0 && libFilter !== "all") list = list.filter(function (b) { return b.project === libFilter; });
+    var q = ($("lib-search") && $("lib-search").value || "").trim().toLowerCase();
+    if (q) list = list.filter(function (b) { return (b.name || "").toLowerCase().indexOf(q) >= 0; });
+    return list;
+  }
+  function renderLibrary() {
+    var grid = $("lib-grid"); if (!grid) return;
+    // bộ đếm
+    if ($("lib-cnt-all")) $("lib-cnt-all").textContent = lib.books.length;
+    if ($("lib-cnt-np")) $("lib-cnt-np").textContent = lib.books.filter(function (b) { return !b.project; }).length;
+    // danh sách project ở sidebar
+    var pc = $("lib-projects");
+    if (pc) {
+      pc.innerHTML = "";
+      lib.projects.forEach(function (p) {
+        var b = document.createElement("button"); b.className = "lib-nav" + (libFilter === p.id ? " active" : ""); b.dataset.filter = p.id;
+        b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span></span><b class="lib-badge-n"></b>';
+        b.querySelector("span").textContent = p.name;
+        b.querySelector("b").textContent = lib.books.filter(function (x) { return x.project === p.id; }).length;
+        b.onclick = function () { libFilter = p.id; syncNav(); renderLibrary(); };
+        pc.appendChild(b);
+      });
+    }
+    // tiêu đề
+    var titleMap = { all: "Tất cả sổ", noproj: "Không thuộc project" };
+    var ft = titleMap[libFilter]; if (!ft) { var pp = lib.projects.filter(function (p) { return p.id === libFilter; })[0]; ft = pp ? pp.name : "Tất cả sổ"; }
+    if ($("lib-title")) $("lib-title").textContent = ft;
+    var list = filteredBooks();
+    if ($("lib-count")) $("lib-count").textContent = list.length + " sổ";
+    // lưới thẻ
+    grid.innerHTML = "";
+    var add = document.createElement("div"); add.className = "lib-new"; add.innerHTML = '<span class="lp">＋</span><span>Sổ mới</span>';
+    add.onclick = function () { var p = (libFilter.indexOf("p") === 0 && libFilter !== "all" && libFilter !== "noproj") ? libFilter : null; createBook(p); renderLibrary(); closeLibrary(); };
+    grid.appendChild(add);
+    list.forEach(function (m) {
+      var card = document.createElement("div"); card.className = "lib-card" + (m.id === lib.current ? " current" : ""); card.dataset.id = m.id;
+      var cover = '<div class="lib-cover">' + (m.cover ? '<img src="' + m.cover + '">' : '<div class="lib-ph">Sổ trống</div>') + (m.id === lib.current ? '<span class="lib-badge">Đang mở</span>' : '') + '<input type="checkbox" class="lib-chk"><button class="lib-del" title="Xóa">🗑</button></div>';
+      card.innerHTML = cover + '<div class="lib-name"><span class="nm"></span><button class="lib-more" title="Tùy chọn">⋯</button></div><div class="lib-date">' + fmtDate(m.updated || m.created) + '</div>';
+      card.querySelector(".nm").textContent = m.name;
+      card.onclick = function (e) {
+        if (e.target.closest(".lib-more") || e.target.closest(".lib-del")) return;
+        if ($("library").classList.contains("multi")) { if (!e.target.closest(".lib-chk")) { var c = card.querySelector(".lib-chk"); c.checked = !c.checked; } updateBulkBar(); return; }
+        if (e.target.closest(".lib-chk")) return;
+        openBook(m.id);
+      };
+      card.querySelector(".lib-chk").onchange = function () { updateBulkBar(); };
+      card.querySelector(".lib-del").onclick = function (e) { e.stopPropagation(); if (confirm("Chuyển sổ “" + m.name + "” vào Thùng rác?")) deleteBook(m.id); };
+      card.querySelector(".lib-more").onclick = function (e) { e.stopPropagation(); openMoreMenu(e.currentTarget, m); };
+      grid.appendChild(card);
+    });
+  }
+  function checkedIds() { return Array.prototype.map.call(document.querySelectorAll("#lib-grid .lib-card"), function (c) { return c.querySelector(".lib-chk") && c.querySelector(".lib-chk").checked ? c.dataset.id : null; }).filter(Boolean); }
+  function updateBulkBar() {
+    var btn = $("lib-bulk-del"); var n = checkedIds().length;
+    if (btn) { btn.hidden = n === 0; btn.textContent = "🗑 Xóa đã chọn (" + n + ")"; }
+  }
+  function syncNav() { document.querySelectorAll("#library .lib-nav[data-filter]").forEach(function (b) { b.classList.toggle("active", b.dataset.filter === libFilter); }); }
+  function openMoreMenu(anchor, m) {
+    var menu = $("lib-more"); if (!menu) return;
+    menu.innerHTML = "";
+    function item(label, fn, danger) { var b = document.createElement("button"); b.textContent = label; if (danger) b.className = "danger"; b.onclick = function () { menu.hidden = true; fn(); }; menu.appendChild(b); }
+    item("Đổi tên", function () { renameBook(m.id); });
+    item("Nhân bản", function () { duplicateBook(m.id); });
+    if (lib.projects.length) {
+      item(m.project ? "Bỏ khỏi project" : "Thêm vào project…", function () {
+        if (m.project) { moveBookToProject(m.id, null); return; }
+        var names = lib.projects.map(function (p, i) { return (i + 1) + ". " + p.name; }).join("\n");
+        var k = prompt("Chọn project (nhập số):\n" + names, "1"); var idx = parseInt(k, 10) - 1;
+        if (lib.projects[idx]) moveBookToProject(m.id, lib.projects[idx].id);
+      });
+    }
+    item("Xóa", function () { if (confirm("Chuyển sổ “" + m.name + "” vào Thùng rác?")) deleteBook(m.id); }, true);
+    var r = anchor.getBoundingClientRect();
+    menu.hidden = false;
+    menu.style.left = Math.min(window.innerWidth - menu.offsetWidth - 8, r.left) + "px";
+    menu.style.top = (r.bottom + 4) + "px";
+  }
+  function openLibrary() {
+    persistCurrent();
+    var lb = $("library"); if (!lb) return;
+    if ($("lib-openstart")) $("lib-openstart").checked = lib.openOnStart;
+    if ($("lib-search")) $("lib-search").value = "";
+    lb.hidden = false; syncNav(); renderLibrary();
+  }
+  function closeLibrary() { var lb = $("library"); if (lb) lb.hidden = true; var mm = $("lib-more"); if (mm) mm.hidden = true; }
   // ----- Thư mục lưu sổ / video (app desktop)
   var folders = { books: "", videos: "" };
   function loadFolders() { try { var f = JSON.parse(localStorage.getItem("vpvie.folders") || "null"); if (f) folders = f; } catch (e) {} }
@@ -2056,6 +2283,7 @@
   loadLocal();
   updatePageLabel();
   makeThumbs();
+  if (lib.openOnStart) openLibrary();
   // expose cho kiểm thử
-  window.__vp = { state: state, insertMath: insertMath, insertPlot: insertPlot, redraw: redraw, resize: resize, gotoPage: gotoPage, addPage: addPage, pages: function () { return pages; }, cur: function () { return cur; }, strokeLines: strokeLines };
+  window.__vp = { state: state, insertMath: insertMath, insertPlot: insertPlot, redraw: redraw, resize: resize, gotoPage: gotoPage, addPage: addPage, pages: function () { return pages; }, cur: function () { return cur; }, strokeLines: strokeLines, lib: function () { return lib; }, openLibrary: openLibrary, closeLibrary: closeLibrary, createBook: createBook };
 })();
