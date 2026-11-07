@@ -306,6 +306,7 @@
       window.VPGeo.onDown(pt); state.geoDown = true; redraw(); return;
     }
     if (state.tool === "pan") return;   // công cụ di chuyển: không vẽ
+    if (state.tool === "plotregion") { canvas.setPointerCapture(e.pointerId); state.drawing = true; state.selBox = { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y }; redraw(); return; }
     if (state.tool === "fill") { fillAt(pt); return; }   // tô màu miền
     if (state.tool === "select") {
       canvas.setPointerCapture(e.pointerId); state.drawing = true;
@@ -338,6 +339,7 @@
     if (!state.drawing) return;
     var pt = pos(e);
     if (state.tool === "eraser") { if (state.eraserMode === "area") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } else eraseAt(pt); return; }
+    if (state.tool === "plotregion") { if (state.selBox) { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } return; }
     if (state.tool === "select") {
       if (state.selMode === "marquee") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; }
       else if (state.selMode === "resize" && state.resize) {
@@ -359,6 +361,15 @@
     if (state.tool === "geo") { if (window.VPGeo) window.VPGeo.onUp(); state.geoDown = false; return; }
     if (!state.drawing) return;
     state.drawing = false;
+    if (state.tool === "plotregion") {
+      var sb = state.selBox; state.selBox = null; redraw();
+      if (sb) {
+        var rx = Math.min(sb.x1, sb.x2), ry = Math.min(sb.y1, sb.y2), rw = Math.abs(sb.x2 - sb.x1), rh = Math.abs(sb.y2 - sb.y1);
+        if (rw < 40 || rh < 40) { rw = 380; rh = 300; }   // vùng quá nhỏ → kích thước mặc định
+        openPlotDialog({ x: rx, y: ry, w: rw, h: rh });
+      }
+      return;
+    }
     if (state.tool === "select") {
       if (state.selMode === "marquee" && state.selBox) {
         var bx = { x1: Math.min(state.selBox.x1, state.selBox.x2), y1: Math.min(state.selBox.y1, state.selBox.y2), x2: Math.max(state.selBox.x1, state.selBox.x2), y2: Math.max(state.selBox.y1, state.selBox.y2) };
@@ -423,7 +434,7 @@
       if (data.size) body.style.fontSize = data.size + "px";
     }
     else if (kind === "text") { body.textContent = data.text; if (data.font) body.style.fontFamily = data.font; if (data.size) body.style.fontSize = data.size + "px"; }
-    else if (kind === "plot") window.VPCalc.buildGraph(body, data.expr);
+    else if (kind === "plot") window.VPCalc.buildGraph(body, data.expr, data);
     else if (kind === "calc") window.VPSci.build(body);
     else if (kind === "quiz") data.sub === "tf" ? window.VPQuiz.buildTF(body, data) : window.VPQuiz.buildMCQ(body, data);
     else if (kind === "var") window.VPVar.build(body, data);
@@ -565,7 +576,7 @@
     });
     return lines.map(function (l) { return { x: l.minx, y: l.miny, w: l.maxx - l.minx, h: l.maxy - l.miny }; });
   }
-  function insertPlot(expr, x, y) { if (expr) addOverlayData("plot", { expr: expr }, x, y); }
+  function insertPlot(expr, x, y, w, h) { if (expr) addOverlayData("plot", { expr: expr, w: w, h: h }, x, y); }
   function insertCalc(x, y) { addOverlayData("calc", {}, x, y); }
   function insertNote(x, y) { addOverlayData("note", { text: "", color: "#FFF1A6" }, x, y); }
   function insertVar(data, x, y) { addOverlayData("var", data, x, y); }
@@ -615,15 +626,50 @@
   var GEO_COLS = [
     [["h", "Hình vẽ"], ["opt", "showdots", "Hiện chấm tròn ở các điểm của hình"], ["opt", "snap", "Bắt điểm lưới"],
      ["h", "Kí hiệu"], ["todo", "Góc (số đo)"], ["todo", "Kí hiệu góc"], ["todo", "Kí hiệu góc vuông"], ["todo", "Kí hiệu đoạn thẳng bằng nhau"], ["todo", "Kí hiệu hai góc bằng nhau"],
-     ["h", "Phép biến hình"], ["t", "sym-line", "Đối xứng trục"], ["t", "sym-point", "Đối xứng tâm"], ["t", "translate", "Tịnh tiến"], ["t", "rotate", "Phép quay"]],
+     ["h", "Phép biến hình"], ["t", "sym-line", "Đối xứng trục"], ["t", "sym-point", "Đối xứng tâm"], ["t", "translate", "Tịnh tiến"], ["t", "rotate", "Phép quay"], ["t", "homothety", "Phép vị tự"]],
     [["h", "Vẽ"], ["t", "move", "Di chuyển điểm", "U"], ["t", "point", "Điểm"], ["t", "segment", "Đoạn thẳng qua 2 điểm"], ["t", "line", "Đường thẳng qua 2 điểm"], ["t", "ray", "Tia"], ["t", "ray-opp", "Tia đối"], ["todo", "Đa giác"], ["t", "circle", "Đường tròn (tâm, điểm)"], ["todo", "Cung tròn qua 3 điểm"]],
     [["h", "Dựng hình"], ["t", "mid", "Trung điểm"], ["t", "perp", "Đường vuông góc"], ["t", "parallel", "Đường song song"], ["t", "altitude", "Đường cao (chân đường vuông góc)"], ["t", "bisector", "Tia phân giác"], ["t", "intersect", "Giao điểm"], ["todo", "Tiếp tuyến của đường tròn"], ["todo", "Tiếp tuyến chung hai đường tròn"]],
     [["h", "Tâm tam giác"], ["t", "centroid", "Trọng tâm"], ["t", "ortho", "Trực tâm"], ["t", "circum", "Tâm đường tròn ngoại tiếp"], ["t", "incenter", "Tâm đường tròn nội tiếp"], ["t", "circum", "Đường tròn ngoại tiếp (qua 3 đỉnh)"], ["t", "incircle", "Đường tròn nội tiếp (tiếp xúc 3 cạnh)"]]
   ];
+  // Vẽ icon schematic nhỏ cho từng công cụ dựng hình
+  function drawGeoIcon(cv, id) {
+    var g = cv.getContext("2d"); g.clearRect(0, 0, cv.width, cv.height);
+    g.strokeStyle = "#8a1020"; g.fillStyle = "#8a1020"; g.lineWidth = 1.5; g.lineJoin = g.lineCap = "round";
+    var W = cv.width, H = cv.height, cx = W / 2, cy = H / 2;
+    function dot(x, y, r) { g.beginPath(); g.arc(x, y, r || 2, 0, 6.28); g.fill(); }
+    function ln(x1, y1, x2, y2) { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+    function arr(x1, y1, x2, y2) { ln(x1, y1, x2, y2); var a = Math.atan2(y2 - y1, x2 - x1); g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - 5 * Math.cos(a - .5), y2 - 5 * Math.sin(a - .5)); g.lineTo(x2 - 5 * Math.cos(a + .5), y2 - 5 * Math.sin(a + .5)); g.closePath(); g.fill(); }
+    var pad = 4, x0 = pad, x1 = W - pad, y0 = pad, y1 = H - pad;
+    switch (id) {
+      case "move": arr(x0 + 2, y1 - 2, x1 - 4, y0 + 4); dot(x0 + 2, y1 - 2); break;
+      case "point": dot(cx, cy, 3); break;
+      case "segment": ln(x0, y1 - 2, x1, y0 + 2); dot(x0, y1 - 2); dot(x1, y0 + 2); break;
+      case "line": ln(x0, cy, x1, cy); dot(cx - 7, cy); dot(cx + 7, cy); break;
+      case "ray": dot(x0 + 1, cy); arr(x0 + 1, cy, x1, cy); break;
+      case "ray-opp": dot(cx, cy); arr(cx, cy, x0, cy); arr(cx, cy, x1, cy); break;
+      case "circle": g.beginPath(); g.arc(cx, cy, Math.min(W, H) / 2 - pad, 0, 6.28); g.stroke(); dot(cx, cy); break;
+      case "mid": ln(x0, cy, x1, cy); dot(x0, cy); dot(x1, cy); dot(cx, cy, 3); break;
+      case "perp": ln(x0, y1, x1, y1); ln(cx, y0, cx, y1); g.strokeRect(cx, y1 - 7, 7, 7); break;
+      case "parallel": ln(x0, cy - 5, x1, cy - 5); ln(x0, cy + 5, x1, cy + 5); break;
+      case "altitude": g.beginPath(); g.moveTo(cx, y0); g.lineTo(x0, y1); g.lineTo(x1, y1); g.closePath(); g.stroke(); ln(cx, y0, cx, y1); break;
+      case "bisector": ln(x0, y1, x1, y0); ln(x0, y1, x1, y1); ln(x0, y1, x1 - 2, cy); break;
+      case "intersect": ln(x0, y0, x1, y1); ln(x0, y1, x1, y0); dot(cx, cy, 3); break;
+      case "centroid": case "ortho": case "circum": case "incenter":
+        g.beginPath(); g.moveTo(cx, y0); g.lineTo(x0, y1); g.lineTo(x1, y1); g.closePath(); g.stroke(); dot(cx, cy + 2, 3); break;
+      case "incircle": g.beginPath(); g.moveTo(cx, y0); g.lineTo(x0, y1); g.lineTo(x1, y1); g.closePath(); g.stroke(); g.beginPath(); g.arc(cx, cy + 3, 5, 0, 6.28); g.stroke(); break;
+      case "sym-line": ln(cx, y0, cx, y1); dot(cx - 7, cy); dot(cx + 7, cy); g.setLineDash([2, 2]); ln(cx - 7, cy, cx + 7, cy); g.setLineDash([]); break;
+      case "sym-point": dot(cx, cy); dot(x0 + 2, y1 - 2); dot(x1 - 2, y0 + 2); break;
+      case "translate": arr(x0, y1, x1 - 3, y0 + 3); break;
+      case "rotate": g.beginPath(); g.arc(cx, cy, 6, -0.5, 3.6); g.stroke(); dot(cx, cy); break;
+      case "homothety": dot(x0 + 2, cy); ln(x0 + 2, cy, x1 - 2, cy); dot(cx, cy); dot(x1 - 2, cy, 3); break;
+      default: g.beginPath(); g.arc(cx, cy, 3, 0, 6.28); g.stroke();
+    }
+  }
   var geoMenuBuilt = false;
   function closeGeoMenu() { var m = $("geo-menu"); if (m) m.classList.remove("show"); }
   function activateGeoTool(t) {
     if (t === "rotate") { var a = parseFloat(prompt("Góc quay (độ):", "90")); window.VPGeo.rotAngle = isNaN(a) ? 90 : a; }
+    if (t === "homothety") { var k = parseFloat(prompt("Tỉ số vị tự k:", "2")); window.VPGeo.homoK = isNaN(k) ? 2 : k; }
     state.tool = "geo"; window.VPGeo.setTool(t); clearActive();
     var gb = document.querySelector('[data-geo="line"]'); if (gb) gb.classList.add("active");
     toast(GEO_HINT[t] || "Chọn điểm trên bảng.");
@@ -641,10 +687,13 @@
           if (state.opt[row[1]]) b.classList.add("on");
           b.onclick = function () { state.opt[row[1]] = !state.opt[row[1]]; ck.textContent = state.opt[row[1]] ? "✓" : ""; b.classList.toggle("on", state.opt[row[1]]); saveSettings(); redraw(); };
         } else if (row[0] === "todo") {
-          var sp2 = document.createElement("span"); sp2.style.paddingLeft = "6px"; sp2.textContent = row[1]; b.appendChild(sp2);
+          var ic0 = document.createElement("canvas"); ic0.className = "sm-ic"; ic0.width = 30; ic0.height = 24; b.appendChild(ic0);
+          var sp2 = document.createElement("span"); sp2.textContent = row[1]; b.appendChild(sp2);
           b.onclick = function () { toast("Công cụ \"" + row[1] + "\" đang được hoàn thiện."); };
         } else {
-          var sp3 = document.createElement("span"); sp3.style.paddingLeft = "6px"; sp3.textContent = row[2]; b.appendChild(sp3);
+          var ic = document.createElement("canvas"); ic.className = "sm-ic"; ic.width = 30; ic.height = 24; b.appendChild(ic);
+          try { drawGeoIcon(ic, row[1]); } catch (e) {}
+          var sp3 = document.createElement("span"); sp3.textContent = row[2]; b.appendChild(sp3);
           if (row[3]) { var k = document.createElement("span"); k.className = "sm-key"; k.textContent = row[3]; b.appendChild(k); }
           b.onclick = function () { activateGeoTool(row[1]); closeGeoMenu(); };
         }
@@ -943,8 +992,27 @@
   };
 
   // Hộp thoại đồ thị
-  $("btn-plot").onclick = function () { showDialog("dlg-plot"); $("plot-input").focus(); };
-  $("plot-ok").onclick = function () { insertPlot($("plot-input").value, 80, 80); hideDialog("dlg-plot"); };
+  // Đồ thị: kéo chọn vùng trước, rồi hiện bảng điền hàm số
+  $("btn-plot").onclick = function () { state.tool = "plotregion"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Kéo chuột để chọn vùng chứa đồ thị."); };
+  var plotRegion = null;
+  function openPlotDialog(region) {
+    plotRegion = region; showDialog("dlg-plot");
+    var inp = $("plot-input"); inp.value = inp.value || "x^2 - 2"; inp.focus(); inp.select();
+    renderPlotPreview();
+  }
+  function renderPlotPreview() {
+    var pv = $("plot-preview"); if (!pv || !window.VPGrapher) return;
+    try { window.VPGrapher.draw(pv, ($("plot-input").value || "x^2").replace(/^\s*y\s*=\s*/i, ""), { w: pv.clientWidth || 360, h: 260 }); }
+    catch (e) { pv.textContent = "Không vẽ được — kiểm tra lại hàm."; }
+  }
+  if ($("plot-input")) $("plot-input").addEventListener("input", function () { clearTimeout(window._pvT); window._pvT = setTimeout(renderPlotPreview, 250); });
+  $("plot-ok").onclick = function () {
+    var expr = $("plot-input").value; if (!expr.trim()) { toast("Hãy nhập hàm số."); return; }
+    var r = plotRegion || { x: 90, y: 90, w: 380, h: 300 };
+    insertPlot(expr, r.x, r.y, r.w, r.h);
+    hideDialog("dlg-plot"); plotRegion = null;
+    state.tool = "pen"; clearActive();
+  };
 
   // Mẫu hình học
   // Vẽ hình mẫu nhỏ cho từng nút hình 2D (dùng chính bộ dựng hình)

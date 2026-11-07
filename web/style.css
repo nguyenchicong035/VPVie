@@ -432,3 +432,8 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .sm-item .sm-ck{width:16px;flex:0 0 16px;color:var(--maroon,#7a1020)}
 .sm-item .sm-key{margin-left:auto;font-size:11px;color:#9aa0a8;padding-left:8px}
 .sm-item input.sm-n{width:40px;margin-left:auto;padding:2px 5px;border:1px solid var(--line,#e2e6ea);border-radius:5px;font-size:12px}
+/* Bảng đồ thị: ô y= + xem trước */
+.plot-row{display:flex;align-items:center;gap:8px}
+.plot-row .plot-ys{font-style:italic;font-weight:600;color:var(--maroon,#7a1020)}
+.plot-row .in{flex:1}
+.plot-preview{margin-top:12px;border:1px solid var(--line,#e2e6ea);border-radius:10px;min-height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}

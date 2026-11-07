@@ -170,8 +170,9 @@
   <div id="dlg-plot" class="dlg">
     <div class="dlg-card">
       <div class="dlg-head">Vẽ đồ thị từ phương trình <button data-close="dlg-plot" class="x">✕</button></div>
-      <input id="plot-input" class="in" placeholder="Hàm: y = x^2 - 2x - 3  ·  Bất PT: y < x^2 - 2  ·  Hệ: y >= x; y <= -x+4" />
-      <div class="hint">Hàm số: tự đánh dấu đỉnh, giao trục, tiệm cận, đường gióng. Bất phương trình (&lt; &gt; &le; &ge;) hoặc hệ (ngăn bằng dấu ;) sẽ tô miền nghiệm.</div>
+      <div class="plot-row"><span class="plot-ys">y =</span><input id="plot-input" class="in" placeholder="x^2 - 2x - 3  ·  Bất PT: y < x^2 - 2  ·  Hệ: y >= x; y <= -x+4" /></div>
+      <div id="plot-preview" class="plot-preview"></div>
+      <div class="hint">Hàm số: tự đánh dấu đỉnh, giao trục, tiệm cận, đường gióng. Bất phương trình (&lt; &gt; &le; &ge;) hoặc hệ (ngăn bằng dấu ;) sẽ tô miền nghiệm. Đồ thị sẽ đặt vừa vùng bạn vừa kéo.</div>
       <div class="dlg-foot"><button data-close="dlg-plot" class="btn ghost">Hủy</button><button id="plot-ok" class="btn">Vẽ</button></div>
     </div>
   </div>

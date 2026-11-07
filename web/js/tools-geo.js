@@ -9,7 +9,7 @@
     segment: 2, ray: 2, "ray-opp": 2, line: 2, circle: 2, mid: 2, perpbis: 2, bisector: 3,
     centroid: 3, ortho: 3, circum: 3, incenter: 3, incircle: 3,
     perp: 3, parallel: 3, altitude: 3, intersect: 4,
-    "sym-line": 3, "sym-point": 2, translate: 3, rotate: 2
+    "sym-line": 3, "sym-point": 2, translate: 3, rotate: 2, homothety: 2
   };
 
   var G = {
@@ -47,6 +47,7 @@
       else if (t === "sym-point") this.addDerived({ t: "reflP", p: a, o: b }, (this.get(a) && this.get(a).label || "") + "'");
       else if (t === "translate") this.addDerived({ t: "trans", p: a, a: b, b: c }, (this.get(a) && this.get(a).label || "") + "'");
       else if (t === "rotate") this.addDerived({ t: "rot", p: a, o: b, ang: G.rotAngle || 90 }, (this.get(a) && this.get(a).label || "") + "'");
+      else if (t === "homothety") this.addDerived({ t: "homo", p: a, o: b, k: (G.homoK == null ? 2 : G.homoK) }, (this.get(a) && this.get(a).label || "") + "'");
       else if (t === "incircle") { var I2 = this.addDerived({ t: "incenter", p: [a, b, c] }, "I"); var Fs = this.addDerived({ t: "foot", p: I2.id, a: a, b: b }, ""); this.shapes.push({ type: "circle", c: I2.id, p: Fs.id }); }
     },
 
@@ -81,6 +82,7 @@
           else if (d.t === "reflP") { var sp = P(d.p), so = P(d.o); p.x = 2 * so.x - sp.x; p.y = 2 * so.y - sp.y; }
           else if (d.t === "trans") { var tp = P(d.p), ta = P(d.a), tb = P(d.b); p.x = tp.x + (tb.x - ta.x); p.y = tp.y + (tb.y - ta.y); }
           else if (d.t === "rot") { var qp = P(d.p), qo = P(d.o), th = (d.ang || 90) * Math.PI / 180, qdx = qp.x - qo.x, qdy = qp.y - qo.y; p.x = qo.x + qdx * Math.cos(th) - qdy * Math.sin(th); p.y = qo.y + qdx * Math.sin(th) + qdy * Math.cos(th); }
+          else if (d.t === "homo") { var zp = P(d.p), zo = P(d.o), zk = (d.k == null ? 2 : d.k); p.x = zo.x + (zp.x - zo.x) * zk; p.y = zo.y + (zp.y - zo.y) * zk; }
         });
       }
     },
