@@ -897,7 +897,7 @@ body.theme-dark .hist-info b{color:#e6e8ee}
 
 /* ===== Bản đồ tư duy ===== */
 .ov-mindmap .ov-body{padding:0}
-.mm{position:relative;background:#fbfcfe;border-radius:12px;overflow:hidden}
+.mm{position:relative;background:transparent;border-radius:12px;overflow:visible}
 .mm-links{position:absolute;left:0;top:0;pointer-events:none}
 .mm-node{position:absolute;transform:translate(-50%,-50%);background:#fff;border:2px solid var(--c,#7a1020);border-radius:12px;padding:5px 10px;min-width:48px;max-width:150px;box-shadow:0 2px 7px rgba(20,24,40,.12);cursor:move;display:flex;align-items:center;gap:4px}
 .mm-node.root{background:var(--c,#7a1020);border-color:var(--c,#7a1020);box-shadow:0 3px 12px rgba(122,16,32,.3)}
@@ -909,6 +909,6 @@ body.theme-dark .hist-info b{color:#e6e8ee}
 .mm-del{background:#eef0f4;color:#8a95a2;font-size:14px}
 .mm-del:hover{background:#fde8ea;color:#c21807}
 .mm-add:hover{filter:brightness(1.12)}
-body.theme-dark .mm{background:#1f2229}
+body.theme-dark .mm{background:transparent}
 body.theme-dark .mm-node{background:#2a2e38}
 body.theme-dark .mm-txt{color:#e6e8ee}
