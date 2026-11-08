@@ -123,7 +123,7 @@
     c.fillStyle = "#7a1020"; c.font = "bold 12px 'Segoe UI'"; c.textAlign = "center"; c.fillText("R ≈ " + (Math.round(R / PX * 10) / 10) + " cm", cx, cy - 10);
   }
 
-  var MK = { ruler: makeRuler, proto: makeProtractor, square: makeSquare, compass: makeCompass };
+  var MK = { ruler: makeRuler, proto: makeProtractor, round: makeProtractor, square: makeSquare, parabol: makeRuler, compass: makeCompass };
   global.VPRuler = {
     toggle: function (board) { return this.show(board, "ruler"); },
     show: function (board, kind) {
@@ -131,6 +131,7 @@
       if (el && elKind === kind) { remove(); return false; }
       remove(); el = (MK[kind] || makeRuler)(board); elKind = kind; return true;
     },
+    hide: function () { remove(); elKind = null; },
     active: function () { return !!el; }, kind: function () { return elKind; }
   };
 })(window);

@@ -19,6 +19,11 @@
     pen: "ball",      // ball | brush | pencil | hl (dạ quang)
     tidyInk: true,    // tự nắn mượt nét chữ viết tay sau khi viết
     tidyStrength: 4,  // 1 nhẹ · 2 vừa · 3 mạnh · 4 rất mượt (mặc định)
+    pressure: true,   // bút theo lực nhấn (nét to nhỏ)
+    writeMode: "both",// hand | line | shape | both (chế độ viết / làm đẹp)
+    laserColor: "#FF3B30", laserGlow: 1, laserLife: 0, // bút laser
+    fillAlpha: 0.35,  // độ trong suốt khi tô miền
+    eraseSize: 0,     // cỡ tẩy từng đoạn (0 = cả nét)
     // Cài đặt trang giấy + hình vẽ (toàn cục, không theo trang)
     paper: { style: "lined", bg: "#FFFFFF", lineColor: "#9CC2F0", spacing: 34, thickness: 1, orient: "portrait", titlebox: true, margin: true, pagebreak: true },
     opt: { showdots: true, autolabel: false, snap: false, lblsize: 16, lblcolor: "#111111", dotsize: 4, subject: "toan", cursor: "pen", cursize: "s", touch: "auto", autosave: true, penlead: true, scratchrase: false },
@@ -130,10 +135,12 @@
       if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0].x, p[0].y, base / 2, 0, 6.2832); ctx.fillStyle = it.color; ctx.fill(); ctx.restore(); return; }
       // Bút dạ: biến thiên theo lực → vẽ từng đoạn. Bút bi/chì: nét đều → làm mượt bằng
       // đường cong bậc hai qua trung điểm các điểm (khử răng cưa do lấy mẫu con trỏ).
-      if (pen === "brush") {
+      if (pen === "brush" || pen === "fountain") {
+        var usePr = it.pressure !== false;
         for (var i = 1; i < p.length; i++) {
           var pr = p[i].pr != null ? p[i].pr : 0.5;
-          ctx.beginPath(); ctx.lineWidth = base * (0.55 + pr * 0.9);
+          ctx.beginPath();
+          ctx.lineWidth = usePr ? base * (pen === "fountain" ? (0.35 + pr * 1.25) : (0.55 + pr * 0.9)) : base;
           ctx.moveTo(p[i - 1].x, p[i - 1].y); ctx.lineTo(p[i].x, p[i].y); ctx.stroke();
         }
       } else {
@@ -223,10 +230,10 @@
     ctx.shadowBlur = 0; ctx.strokeStyle = "#fff"; ctx.lineWidth = Math.max(1, base * 0.5); ctx.globalAlpha = 0.95 * a; laserStrokePath(p);
   }
   var laserTrails = [], laserAnim = 0, LASER_LIFE = 1200, LASER_FADE = 650;
-  function addLaserTrail(s) { s.born = performance.now(); laserTrails.push(s); if (!laserAnim) laserAnim = requestAnimationFrame(laserTick); }
+  function addLaserTrail(s) { s.born = performance.now(); s.life = (typeof state.laserLife === "number" && state.laserLife > 0) ? state.laserLife : LASER_LIFE; laserTrails.push(s); if (!laserAnim) laserAnim = requestAnimationFrame(laserTick); }
   function laserTick() {
     var now = performance.now();
-    laserTrails = laserTrails.filter(function (t) { return now - t.born < LASER_LIFE; });
+    laserTrails = laserTrails.filter(function (t) { return now - t.born < (t.life || LASER_LIFE); });
     redraw();
     laserAnim = laserTrails.length ? requestAnimationFrame(laserTick) : 0;
   }
@@ -234,7 +241,8 @@
     if (!laserTrails.length) return;
     var now = performance.now();
     laserTrails.forEach(function (t) {
-      var age = now - t.born, al = age < LASER_LIFE - LASER_FADE ? 1 : Math.max(0, (LASER_LIFE - age) / LASER_FADE);
+      var life = t.life || LASER_LIFE, fade = Math.min(LASER_FADE, life);
+      var age = now - t.born, al = (age < life - fade ? 1 : Math.max(0, (life - age) / fade)) * (t._alpha != null ? t._alpha : 1);
       ctx.save(); drawLaserStroke(t.points, t.size || state.size, t.color, al); ctx.restore();
     });
   }
@@ -384,17 +392,32 @@
   function selUnionBox() { var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity; state.selected.forEach(function (i) { var it = state.items[i]; if (!it) return; var b = itemBox(it); if (b.minx < mnx) mnx = b.minx; if (b.miny < mny) mny = b.miny; if (b.maxx > mxx) mxx = b.maxx; if (b.maxy > mxy) mxy = b.maxy; }); return { minx: mnx, miny: mny, maxx: mxx, maxy: mxy }; }
   function updateSelBar() {
     var bar = document.getElementById("sel-bar"); if (!bar) return;
-    if (state.tool === "select" && state.selected && state.selected.length && !state.selBox) { var b = selUnionBox(); bar.style.left = Math.max(2, b.minx - 4) + "px"; bar.style.top = Math.max(2, b.miny - 66) + "px"; bar.classList.add("show"); }
+    if (state.tool === "select" && state.selected && state.selected.length && !state.selBox) { var b = selUnionBox(); bar.style.left = Math.max(2, b.minx - 4) + "px"; bar.style.top = Math.max(2, b.miny - 66) + "px"; bar.classList.add("show"); var eb = bar.querySelector(".sb-edit"); if (eb) eb.hidden = !selEditable(); }
     else bar.classList.remove("show");
   }
+  function hexToRgba(hex, a) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return hex;
+    var n = parseInt(m[1], 16); return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+  }
   function fillAt(pt) {
-    for (var i = state.items.length - 1; i >= 0; i--) { if (containsPoint(state.items[i], pt)) { pushHist(); state.items[i].fill = (state.items[i].fill === state.color) ? null : state.color; redraw(); return true; } }
+    var alpha = state.fillAlpha != null ? state.fillAlpha : 0.35;
+    var want = alpha <= 0 ? null : hexToRgba(state.color, alpha);
+    for (var i = state.items.length - 1; i >= 0; i--) {
+      if (containsPoint(state.items[i], pt)) {
+        pushHist();
+        if (want == null) state.items[i].fill = null;                       // Bỏ màu (0%)
+        else state.items[i].fill = (state.items[i].fill === want) ? null : want;
+        redraw(); scheduleSave(); return true;
+      }
+    }
     toast("Bấm vào trong một hình kín để tô màu.");
     return false;
   }
 
   // ----- Sự kiện vẽ
   canvas.addEventListener("pointerdown", function (e) {
+    // Bỏ chọn mọi lớp phủ (ẩn thanh công cụ nổi) khi thao tác trên canvas
+    overlay.querySelectorAll(".ov.sel").forEach(function (o) { o.classList.remove("sel"); });
     // Chống chạm nhầm lòng bàn tay: khi đang dùng bút thì bỏ qua ngón tay (touch)
     if (e.pointerType === "touch" && (state.penDown || (Date.now() - (state.lastPen || 0) < 700))) return;
     if (e.pointerType === "pen") { state.penDown = true; state.lastPen = Date.now(); }
@@ -440,7 +463,9 @@
     }
     if (state.tool === "arrow") { state.drawing = true; state.cur = { type: "arrow", x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y, style: state.arrowStyle || "arrow", color: state.color, size: state.size }; return; }
     state.drawing = true;
-    state.cur = { type: "stroke", points: [pt], color: state.color, size: state.size, pen: state.pen };
+    var isLas = state.pen === "laser" || state.pen === "laserp";
+    var scol = isLas ? (state.laserUsePen ? state.color : (state.laserColor || "#FF3B30")) : state.color;
+    state.cur = { type: "stroke", points: [pt], color: scol, size: state.size, pen: state.pen, pressure: state.pressure !== false, _alpha: isLas ? (state.laserGlow || 1) : undefined };
   });
   canvas.addEventListener("pointermove", function (e) {
     if (state.tool === "oxyz") { if (state.drawing && state.selBox) { var p3 = pos(e); state.selBox.x2 = p3.x; state.selBox.y2 = p3.y; redraw(); } return; }
@@ -521,9 +546,12 @@
     var isLaser = s.type === "stroke" && s.pen === "laser";
     if (s.type !== "arrow" || Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 6) pushHist();
     if (s.type === "arrow") { if (Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 6) state.items.push(s); redraw(); return; }
-    if (state.beautify && window.VPBeautify && s.pen !== "hl" && !isLaser) {
+    var wm = state.writeMode || "both";
+    if (state.beautify && wm !== "hand" && window.VPBeautify && s.pen !== "hl" && !isLaser) {
       var shp = window.VPBeautify.beautify(s.points);
-      if (shp) { shp.color = s.color; shp.size = s.size; state.items.push(shp); redraw(); return; }
+      var isLine = shp && shp.type === "line";
+      var keep = shp && (wm === "both" || (wm === "line" && isLine) || (wm === "shape" && !isLine));
+      if (keep) { shp.color = s.color; shp.size = s.size; state.items.push(shp); redraw(); return; }
     }
     // Nắn nét chữ viết tay: làm mượt, bớt run tay — VẪN là nét chữ của người dùng
     if (state.tidyInk && window.VPBeautify && s.type === "stroke" && s.pen !== "hl" && !isLaser && s.points.length > 3) {
@@ -648,9 +676,19 @@
     body.style.transformOrigin = "top left";
     body.style.transform = s === 1 ? "" : "scale(" + s + ")";
   }
+  var OV_EDITABLE = { var: 1, plot: 1, math: 1, chart: 1, mindmap: 1 };
   function makeOverlayEl(ov) {
     var el = document.createElement("div");
     el.className = "ov ov-" + ov.kind; el.style.left = ov.x + "px"; el.style.top = ov.y + "px"; el.dataset.id = ov.id;
+    // Thanh công cụ nổi phía trên đối tượng (hiện khi chọn)
+    var tb = document.createElement("div"); tb.className = "ov-bar";
+    function tbtn(txt, title, fn) { var b = document.createElement("button"); b.innerHTML = txt; b.title = title; b.onpointerdown = function (e) { e.stopPropagation(); }; b.onclick = function (e) { e.stopPropagation(); fn(); }; tb.appendChild(b); return b; }
+    if (OV_EDITABLE[ov.kind]) tbtn("✎ Sửa", "Sửa nội dung", function () { editOverlay(ov); });
+    tbtn("⎘ Sao chép", "Sao chép", function () { ovClip = JSON.parse(JSON.stringify(ov.data)); ovClipKind = ov.kind; toast("Đã sao chép đối tượng."); });
+    tbtn("⧉ Nhân bản", "Nhân bản", function () { addOverlayData(ov.kind, JSON.parse(JSON.stringify(ov.data)), ov.x + 24, ov.y + 24); });
+    tbtn("✂ Cắt", "Cắt", function () { ovClip = JSON.parse(JSON.stringify(ov.data)); ovClipKind = ov.kind; removeOverlay(ov.id); });
+    tbtn("🗑 Xóa", "Xóa", function () { removeOverlay(ov.id); });
+    el.appendChild(tb);
     var body = document.createElement("div"); body.className = "ov-body"; el.appendChild(body);
     var del = document.createElement("button"); del.className = "ov-del"; del.textContent = "✕"; del.title = "Xóa";
     del.onclick = function () { removeOverlay(ov.id); };
@@ -660,7 +698,38 @@
     overlayBody(ov.kind, body, ov.data);
     applyOvScale(el, ov);
     makeDraggable(el, ov, rz);
+    if (OV_EDITABLE[ov.kind]) el.addEventListener("dblclick", function (e) { e.stopPropagation(); editOverlay(ov); });
     return el;
+  }
+  var ovClip = null, ovClipKind = null, editOv = null;
+  function reRenderOverlay(ov) {
+    var old = overlay.querySelector('.ov[data-id="' + ov.id + '"]');
+    if (old) overlay.replaceChild(makeOverlayEl(ov), old); else renderOverlays();
+    scheduleSave();
+  }
+  function editOverlay(ov) {
+    editOv = ov;
+    if (ov.kind === "math") {
+      showDialog("dlg-math"); buildFormulaUI();
+      if ($("math-input")) $("math-input").value = ov.data.latex || "";
+      if (window.VPFormula) {
+        if (VPFormula.setColor) VPFormula.setColor(ov.data.color || "#111111");
+        if (VPFormula.setSize) VPFormula.setSize(ov.data.size || 46);
+        if (VPFormula.setDisplay) VPFormula.setDisplay(ov.data.display !== false);
+        if (VPFormula.setMode) VPFormula.setMode(ov.data.mode || "math");
+        VPFormula.render($("math-preview"), ov.data.latex || "");
+      }
+      if ($("f-size")) { $("f-size").value = ov.data.size || 46; $("f-size-val").textContent = ov.data.size || 46; }
+      if ($("f-display")) $("f-display").checked = ov.data.display !== false;
+    } else if (ov.kind === "plot") {
+      if (ov.data.funcs && ov.data.funcs.length) plotFuncs = ov.data.funcs.map(function (f) { return { expr: f.expr, color: f.color || "#C21807", dash: !!f.dash }; });
+      else if (ov.data.expr) plotFuncs = [{ expr: ov.data.expr, color: "#C21807", dash: false }];
+      plotPoints = ov.data.points || []; plotView = ov.data.view || null; plotAutoFit = ov.data.autoY !== false;
+      showDialog("dlg-plot"); buildFuncRows(); renderPlotPreview();
+    } else if (ov.kind === "var") {
+      varGrid = JSON.parse(JSON.stringify(ov.data.grid)); varRegion = { x: ov.x, y: ov.y, w: ov.data.w, h: ov.data.h };
+      showDialog("dlg-var"); buildVarGrid(); renderVarPreview();
+    } else { editOv = null; toast("Nhấp đúp hoặc kéo tay cầm để chỉnh đối tượng này."); }
   }
   function renderOverlays() { overlay.innerHTML = ""; state.overlays.forEach(function (ov) { overlay.appendChild(makeOverlayEl(ov)); }); }
   function addOverlayData(kind, data, x, y) {
@@ -1039,7 +1108,7 @@
     var cx = Math.max(40, canvas.clientWidth / 2 - 40), cy = Math.max(40, canvas.clientHeight / 2 - 40);
     addOverlayData("sticker", { text: text, skind: kind }, cx, cy);
   }
-  if ($("btn-shapes-fav")) $("btn-shapes-fav").onclick = function (e) { buildStickerMenu(); var r = this.getBoundingClientRect(); showMenuAt($("sticker-menu"), r.left, r.bottom + 4); e.stopPropagation(); };
+  if ($("btn-shapes-fav")) $("btn-shapes-fav").onclick = function (e) { e.stopPropagation(); buildFavMenu(); var r = this.getBoundingClientRect(); showMenuAt($("fav-menu"), Math.min(r.left, window.innerWidth - $("fav-menu").offsetWidth - 8), r.bottom + 4); };
   document.querySelectorAll("[data-sci]").forEach(function (b) {
     b.onclick = function () {
       var k = b.dataset.sci;
@@ -1279,8 +1348,14 @@
     back: function () { if (!hasSel()) return; pushHist(); var sel = selItems(), set = {}; state.selected.forEach(function (i) { set[i] = 1; }); state.items = sel.concat(state.items.filter(function (it, i) { return !set[i]; })); state.selected = sel.map(function (_, k) { return k; }); },
     fill: function () { if (!hasSel()) return; pushHist(); state.selected.forEach(function (i) { var it = state.items[i]; if (it && ["rect", "circle", "ellipse", "triangle", "poly"].indexOf(it.type) >= 0) it.fill = state.color; }); },
     stroke: function () { if (!hasSel()) return; pushHist(); state.selected.forEach(function (i) { if (state.items[i]) state.items[i].color = state.color; }); },
-    all: function () { enterSelect(); state.selected = state.items.map(function (_, i) { return i; }); }
+    all: function () { enterSelect(); state.selected = state.items.map(function (_, i) { return i; }); },
+    edit: function () {
+      if (state.selected.length !== 1) return;
+      var it = state.items[state.selected[0]];
+      if (it && it.type === "oxyz" && window.VPOxyz) window.VPOxyz.open(it.scene, function (sc) { pushHist(); it.scene = sc; redraw(); scheduleSave(); });
+    }
   };
+  function selEditable() { return state.selected.length === 1 && state.items[state.selected[0]] && state.items[state.selected[0]].type === "oxyz"; }
   function runAct(act) { if (!selActions[act]) return; selActions[act](); redraw(); scheduleSave(); }
   document.querySelectorAll("#sel-bar button").forEach(function (b) {
     b.onclick = function (e) { e.stopPropagation(); runAct(b.dataset.act); };
@@ -1331,36 +1406,77 @@
     var btn = document.querySelector('[data-tool="eraser"][data-erase="' + mode + '"]') || document.querySelector('[data-tool="eraser"]');
     if (btn) btn.classList.add("active");
   }
-  function syncMenuChecks() {
-    document.querySelectorAll("#pen-menu [data-pm]").forEach(function (b) { b.classList.toggle("chk", state.tool === "pen" && state.pen === b.dataset.pm); });
-    document.querySelectorAll("#pen-menu [data-pz]").forEach(function (b) { b.classList.toggle("chk", state.size === parseInt(b.dataset.pz, 10)); });
-    var bz = document.querySelector('#pen-menu [data-pb]'); if (bz) bz.classList.toggle("chk", !!state.beautify);
-    var pt = document.querySelector('#pen-menu [data-pt]'); if (pt) pt.classList.toggle("chk", !!state.tidyInk);
-    document.querySelectorAll("#pen-menu [data-tidy]").forEach(function (b) { b.classList.toggle("chk", state.tidyInk && (state.tidyStrength || 2) === parseInt(b.dataset.tidy, 10)); });
-    document.querySelectorAll("#eraser-menu [data-em]").forEach(function (b) { b.classList.toggle("chk", state.tool === "eraser" && (state.eraserMode || "stroke") === b.dataset.em); });
+  // ===== Bảng màu lớn trong menu bút (≈30 màu, 5 hàng) =====
+  var PEN_PALETTE = [
+    "#111111", "#5B5B5B", "#8A8A8A", "#C0C0C0", "#FFFFFF", "#7A1020",
+    "#C21807", "#E8453C", "#FF7A00", "#F2A516", "#FFD400", "#9C6B1E",
+    "#1A7F37", "#39B54A", "#8BC53F", "#0FA3A3", "#1F7A8C", "#1F6FEB",
+    "#2D5BFF", "#5B8DEF", "#7A3FB3", "#B06AB3", "#E83E8C", "#F06292",
+    "#6D4C41", "#A1887F", "#455A64", "#90A4AE", "#F5C6A5", "#FCE8D5"
+  ];
+  var PEN_LABEL = { ball: "Bút bi", brush: "Bút dạ", pencil: "Bút chì", fountain: "Bút máy", hl: "Bút dạ quang", laser: "Bút laser", laserp: "Con trỏ laser" };
+  function buildPenPalette() {
+    var g = $("pm-palette"); if (!g || g.childElementCount) return;
+    PEN_PALETTE.forEach(function (c) {
+      var b = document.createElement("button"); b.className = "pm-sw"; b.dataset.c = c; b.style.background = c; b.title = c;
+      b.onclick = function (e) { e.stopPropagation(); setPenColor(c); };
+      g.appendChild(b);
+    });
   }
-  [["btn-pen-dd", "pen-menu"], ["btn-eraser-dd", "eraser-menu"]].forEach(function (pr) {
+  function setPenColor(c) {
+    state.color = c;
+    document.querySelectorAll("[data-color]").forEach(function (x) { x.classList.toggle("sel", x.dataset.color === c); });
+    syncPenMenu();
+  }
+  var SMOOTH_LABEL = ["Tắt", "Hơi mượt", "Mượt vừa", "Mượt", "Mượt nhất"];
+  function syncPenMenu() {
+    $("pm-penname") && ($("pm-penname").textContent = PEN_LABEL[state.pen] || "Bút");
+    document.querySelectorAll("#pm-pentypes .pm-pt").forEach(function (b) { b.classList.toggle("sel", b.dataset.pm === state.pen); });
+    document.querySelectorAll("#pm-palette .pm-sw").forEach(function (b) { b.classList.toggle("sel", (b.dataset.c || "").toLowerCase() === (state.color || "").toLowerCase()); });
+    if ($("pm-thick")) $("pm-thick").value = state.size || 3;
+    var sm = state.tidyInk ? (state.tidyStrength || 4) : 0;
+    if ($("pm-smooth")) { $("pm-smooth").value = sm; $("pm-smooth-val").textContent = SMOOTH_LABEL[sm]; }
+    if ($("pm-pressure")) $("pm-pressure").checked = state.pressure !== false;
+  }
+  function syncMenuChecks() {
+    syncPenMenu();
+    document.querySelectorAll("#eraser-menu [data-em]").forEach(function (b) {
+      var on = state.tool === "eraser" && (state.eraserMode || "stroke") === b.dataset.em && (parseInt(b.dataset.esz, 10) || 0) === (state.eraseSize || 0);
+      b.classList.toggle("chk", on);
+    });
+    document.querySelectorAll("#write-menu [data-wm]").forEach(function (b) { b.classList.toggle("chk", (state.writeMode || "both") === b.dataset.wm && (b.dataset.wm === "hand" ? !state.beautify : state.beautify)); });
+    document.querySelectorAll("#laser-menu [data-ll]").forEach(function (b) { b.classList.toggle("chk", String(state.laserLife) === b.dataset.ll || (b.dataset.ll === "fade" && state.pen === "laserp" && !state.laserLife)); });
+    document.querySelectorAll("#laser-dots .laser-dot").forEach(function (b) { b.classList.toggle("sel", b.dataset.lc === "pen" ? !!state.laserUsePen : (!state.laserUsePen && b.dataset.lc === state.laserColor)); });
+    document.querySelectorAll("#fill-menu [data-fm]").forEach(function (b) { b.classList.toggle("chk", state.tool === "fill" && (state.fillMode || "area") === b.dataset.fm); });
+  }
+  buildPenPalette();
+  // Mở các menu thả xuống
+  [["btn-pen-dd", "pen-menu"], ["btn-eraser-dd", "eraser-menu"], ["btn-write-dd", "write-menu"], ["btn-laser-dd", "laser-menu"], ["btn-fill-dd", "fill-menu"], ["btn-select-dd", "select-menu"], ["btn-text-dd", "text-menu"]].forEach(function (pr) {
     var btn = $(pr[0]); if (!btn) return;
     btn.onclick = function (e) {
       e.stopPropagation(); var m = $(pr[1]), r = this.getBoundingClientRect();
       if (m.classList.contains("show")) { m.classList.remove("show"); return; }
-      syncMenuChecks(); showMenuAt(m, r.left, r.bottom + 4);
+      syncMenuChecks(); if (pr[1] === "fav-menu") buildFavMenu(); showMenuAt(m, Math.min(r.left, window.innerWidth - m.offsetWidth - 8), r.bottom + 4);
     };
   });
-  document.querySelectorAll("#pen-menu button").forEach(function (b) {
-    b.onclick = function (e) {
-      e.stopPropagation();
-      if (b.dataset.pm) { setPen(b.dataset.pm); toast("Bút: " + b.textContent.trim()); }
-      else if (b.dataset.pz) {
-        state.size = parseInt(b.dataset.pz, 10);
-        document.querySelectorAll("[data-sizedot]").forEach(function (x) { x.classList.toggle("sel", parseInt(x.dataset.sizedot, 10) === state.size); });
-      } else if (b.dataset.pb != null) { $("beautify").click(); }
-      else if (b.dataset.pt != null) { state.tidyInk = !state.tidyInk; saveSettings(); toast(state.tidyInk ? "Tự nắn mượt nét chữ: BẬT" : "Tự nắn mượt nét chữ: TẮT"); }
-      else if (b.dataset.tidy != null) { state.tidyInk = true; state.tidyStrength = parseInt(b.dataset.tidy, 10); saveSettings(); toast("Nắn nét mức " + b.dataset.tidy + " (" + b.textContent.trim().replace(/^\d+ · /, "") + ")"); }
-      else if (b.dataset.tidyAll != null) { tidyWholePage(); }
-      syncMenuChecks();
-    };
+  // Chọn loại bút (hàng icon)
+  document.querySelectorAll("#pm-pentypes .pm-pt").forEach(function (b) {
+    b.onclick = function (e) { e.stopPropagation(); setPen(b.dataset.pm); if (b.dataset.pm === "hl") { var h = document.querySelector("[data-hl]"); if (h) state.color = h.dataset.hl; } toast("Bút: " + (PEN_LABEL[b.dataset.pm] || "")); syncPenMenu(); };
   });
+  // Độ dày
+  if ($("pm-thick")) $("pm-thick").oninput = function () {
+    state.size = parseInt(this.value, 10) || 3;
+    document.querySelectorAll("[data-sizedot]").forEach(function (x) { x.classList.toggle("sel", parseInt(x.dataset.sizedot, 10) === state.size); });
+  };
+  // Độ mượt nét (0 = tắt nắn; 1..4 mức nắn)
+  if ($("pm-smooth")) $("pm-smooth").oninput = function () {
+    var v = parseInt(this.value, 10) || 0;
+    state.tidyInk = v > 0; if (v > 0) state.tidyStrength = v;
+    $("pm-smooth-val").textContent = SMOOTH_LABEL[v];
+    if (typeof saveSettings === "function") saveSettings();
+  };
+  // Lực nhấn bút
+  if ($("pm-pressure")) $("pm-pressure").onchange = function () { state.pressure = this.checked; if (typeof saveSettings === "function") saveSettings(); };
   // Nắn mượt lại mọi nét viết tay trên trang (giữ nguyên là nét chữ)
   function tidyWholePage() {
     if (!window.VPBeautify) return;
@@ -1374,11 +1490,169 @@
   document.querySelectorAll("#eraser-menu button").forEach(function (b) {
     b.onclick = function (e) {
       e.stopPropagation(); $("eraser-menu").classList.remove("show");
-      if (b.dataset.em) { setEraser(b.dataset.em); toast("Tẩy: " + b.textContent.trim()); }
-      else if (b.dataset.ex === "ink") { if (!state.items.some(function (it) { return it.type === "stroke"; })) { toast("Trang không có nét viết tay."); return; } clearStrokes(); state.selected = []; redraw(); toast("Đã xoá nét viết tay (Ctrl+Z để hoàn tác)."); }
-      else if (b.dataset.ex === "page") $("clear").click();
+      if (b.dataset.em) { state.eraseSize = parseInt(b.dataset.esz, 10) || 0; setEraser(b.dataset.em); toast("Tẩy: " + b.textContent.replace(/\s*[A-Z]$/, "").trim()); }
     };
   });
+  // ===== Chế độ viết (CHẾ ĐỘ VIẾT) =====
+  document.querySelectorAll("#write-menu [data-wm]").forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation(); $("write-menu").classList.remove("show");
+      var wm = b.dataset.wm; state.writeMode = wm;
+      state.beautify = (wm !== "hand");
+      var bt = $("beautify"); if (bt) bt.classList.toggle("on", state.beautify);
+      var notes = { hand: "Nét giữ nguyên như bạn viết.", line: "Tự nắn các nét thành đường thẳng.", shape: "Tự nhận hình (tròn, tam giác, chữ nhật…).", both: "Nắn cả hình và đường thẳng." };
+      if ($("wm-note")) $("wm-note").textContent = notes[wm] || "";
+      if (typeof saveSettings === "function") saveSettings();
+      toast("Chế độ viết: " + b.textContent.trim());
+    };
+  });
+  // Nút ✨ bấm nhanh: bật/tắt làm đẹp (giữ tay <-> thành hình)
+  // ===== Bút laser =====
+  var LASER_COLORS = ["#FF3B30", "#FF9500", "#FFCC00", "#34C759", "#00C7BE", "#0A84FF", "#AF52DE", "#FF2D55"];
+  (function buildLaserDots() {
+    var g = $("laser-dots"); if (!g) return;
+    var first = document.createElement("button"); first.className = "laser-dot pen-tint"; first.dataset.lc = "pen"; first.title = "Theo màu bút";
+    first.onclick = function (e) { e.stopPropagation(); state.laserUsePen = true; syncMenuChecks(); }; g.appendChild(first);
+    LASER_COLORS.forEach(function (c) {
+      var d = document.createElement("button"); d.className = "laser-dot"; d.dataset.lc = c; d.style.background = c; d.style.color = c;
+      d.onclick = function (e) { e.stopPropagation(); state.laserUsePen = false; state.laserColor = c; syncMenuChecks(); }; g.appendChild(d);
+    });
+  })();
+  if ($("btn-laser")) $("btn-laser").onclick = function () { setPen(state.laserLife ? "laserp" : "laser"); this.classList.add("active"); toast("Bút laser phát sáng."); };
+  document.querySelectorAll("#laser-menu [data-ll]").forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation(); $("laser-menu").classList.remove("show");
+      var v = b.dataset.ll;
+      if (v === "0") { state.laserLife = 0; setPen("laser"); }
+      else if (v === "fade") { state.laserLife = 0; setPen("laserp"); state.laserLife = 1200; }
+      else { state.laserLife = parseInt(v, 10); setPen("laserp"); }
+      if ($("btn-laser")) $("btn-laser").classList.add("active");
+      toast("Laser: " + b.textContent.trim());
+    };
+  });
+  if ($("laser-usepen")) $("laser-usepen").onchange = function () { state.laserUsePen = this.checked; syncMenuChecks(); };
+  if ($("laser-glow")) $("laser-glow").oninput = function () { state.laserGlow = (parseInt(this.value, 10) || 100) / 100; $("laser-glow-val").textContent = this.value + "%"; };
+  // ===== Tô màu miền =====
+  document.querySelectorAll("#fill-menu [data-fm]").forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation(); $("fill-menu").classList.remove("show");
+      var fm = b.dataset.fm;
+      if (fm === "clear") { state.tool = "fill"; state.fillMode = "clear"; state.fillAlpha = 0; if ($("fill-alpha")) { $("fill-alpha").value = 0; $("fill-alpha-val").textContent = "0%"; } }
+      else { state.fillMode = fm; if (state.fillAlpha <= 0) state.fillAlpha = 0.35; }
+      state.tool = "fill"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); $("btn-fill").classList.add("active");
+      toast(fm === "clear" ? "Chạm vào chỗ đã tô để bỏ màu." : "Tô màu: bấm vào trong hình kín.");
+    };
+  });
+  if ($("fill-alpha")) $("fill-alpha").oninput = function () { state.fillAlpha = (parseInt(this.value, 10) || 0) / 100; $("fill-alpha-val").textContent = this.value + "%"; };
+  // ===== Kiểu chọn / cắt =====
+  document.querySelectorAll("#select-menu [data-sm]").forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation(); $("select-menu").classList.remove("show");
+      var sm = b.dataset.sm;
+      if (sm === "space") { state.tool = "varregion"; } // chọn vùng rồi chèn khoảng trống (tạm map)
+      state.selectMode = sm;
+      if (sm !== "space") $("btn-select").click();
+      if (sm === "lasso") toast("Khoanh vùng tự do để chọn.");
+      else if (sm === "object") toast("Chạm từng đối tượng để chọn.");
+      else if (sm === "cropR" || sm === "cropF") toast("Khoanh vùng trên ảnh để cắt.");
+      else if (sm === "space") toast("Kéo dọc để chèn khoảng trống.");
+      else toast("Chọn vùng chữ nhật.");
+    };
+  });
+  // ===== Menu chữ T: chèn đường / mũi tên / ngoặc / bảng =====
+  var TX_ITEMS = [
+    ["text", "Gõ chữ (T)", '<path d="M6 7h12M12 7v11"/>'],
+    ["line", "Đường thẳng", '<path d="M5 19L19 5"/>'],
+    ["dash", "Nét đứt", '<path d="M5 19L19 5" stroke-dasharray="3 3"/>'],
+    ["dot", "Gạch chấm", '<path d="M5 19L19 5" stroke-dasharray="1 4"/>'],
+    ["arrow", "Mũi tên", '<path d="M6 18L18 6"/><path d="M11 6h7v7"/>'],
+    ["darrow", "Mũi tên hai đầu", '<path d="M6 18L18 6"/><path d="M11 6h7v7"/><path d="M13 18H6v-7"/>'],
+    ["elbow", "Đường gấp khúc", '<path d="M6 6v8h8"/>'],
+    ["elbowA", "Mũi tên gấp khúc", '<path d="M6 6v8h7"/><path d="M11 11l4 3-4 3"/>'],
+    ["elbow2", "Gấp khúc hai đầu", '<path d="M6 8l0 8 8 0"/><path d="M9 5l-3 3 3 3"/>'],
+    ["curve", "Đường cong nối", '<path d="M5 18C5 10 19 14 19 6"/>'],
+    ["curveA", "Mũi tên cong", '<path d="M5 18C5 10 17 14 18 7"/><path d="M14 7h5v5"/>'],
+    ["curve2", "Cong hai đầu", '<path d="M5 17C8 9 16 9 19 17"/>'],
+    ["arc", "Cung", '<path d="M5 16a9 9 0 0 1 14 0"/>'],
+    ["brackets", "Cặp ngoặc vuông", '<path d="M9 5H6v14h3M15 5h3v14h-3"/>'],
+    ["braces", "Cặp ngoặc nhọn", '<path d="M10 5c-2 0-2 3-3 3-1 0-1 0-1 4 0 0 0 4 1 4 1 0 1 3 3 3M14 5c2 0 2 3 3 3 1 0 1 0 1 4 0 0 0 4-1 4-1 0-1 3-3 3"/>'],
+    ["bracketL", "Ngoặc vuông trái", '<path d="M14 5h-4v14h4"/>'],
+    ["bracketR", "Ngoặc vuông phải", '<path d="M10 5h4v14h-4"/>'],
+    ["braceL", "Ngoặc nhọn trái", '<path d="M14 5c-3 0-2 6-5 7 3 1 2 7 5 7"/>'],
+    ["braceR", "Ngoặc nhọn phải", '<path d="M10 5c3 0 2 6 5 7-3 1-2 7-5 7"/>'],
+    ["connector", "Mũi tên nối khung", '<rect x="4" y="13" width="6" height="6" rx="1"/><rect x="14" y="5" width="6" height="6" rx="1"/><path d="M10 15l4-4"/>'],
+    ["callout", "Chú thích", '<path d="M5 15c0-6 14-6 14 0M5 15h4M15 15h4" /><path d="M14 10l5-4"/>']
+  ];
+  function buildTextMenu() {
+    var g = $("tx-grid"); if (!g || g.childElementCount) return;
+    TX_ITEMS.forEach(function (it) {
+      var b = document.createElement("button"); b.className = "tx-cell"; b.dataset.tx = it[0];
+      b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + it[2] + '</svg><span>' + it[1] + '</span>';
+      b.onclick = function (e) { e.stopPropagation(); $("text-menu").classList.remove("show"); pickTextTool(it[0], it[1]); };
+      g.appendChild(b);
+    });
+  }
+  buildTextMenu();
+  function pickTextTool(id, label) {
+    if (id === "text") { insertTextBox(); return; }
+    if (id === "line") { if (window.VPGeo) { window.VPGeo.setTool("line"); state.tool = "geo"; clearActive(); } toast("Vẽ đường thẳng."); return; }
+    var arrowMap = { dash: "dash", dot: "dash", arrow: "arrow", darrow: "darrow", elbow: "arrow", elbowA: "arrow", elbow2: "darrow", curve: "arrow", curveA: "arrow", curve2: "darrow", connector: "arrow", callout: "arrow", brace: "brace" };
+    if (id === "arc") { addShapeTemplate && addShapeTemplate("arc"); selectLast && selectLast(); return; }
+    if (/^brack|^brace/.test(id)) { activateArrow("brace"); toast("Vẽ " + label.toLowerCase() + "."); return; }
+    if (arrowMap[id]) { activateArrow(arrowMap[id]); toast("Vẽ " + label.toLowerCase() + "."); return; }
+    toast(label + ": đang hoàn thiện.");
+  }
+  if ($("text-menu")) $("text-menu").querySelector(".tx-table") && ($("text-menu").querySelector(".tx-table").onclick = function (e) { e.stopPropagation(); $("text-menu").classList.remove("show"); if ($("btn-table")) $("btn-table").click(); });
+  // ===== Dụng cụ: Cắt dụng cụ (R) =====
+  document.querySelectorAll("#ruler-menu [data-ruler]").forEach(function (b) {
+    if (b.dataset.ruler === "off") b.onclick = function () { $("ruler-menu").classList.remove("show"); if (window.VPRuler && window.VPRuler.hide) window.VPRuler.hide(); if ($("btn-ruler")) $("btn-ruler").classList.remove("active"); };
+  });
+  // ===== Ưa thích (khay công cụ hay dùng) =====
+  var FAV_TOOLS = [
+    { id: "stickers", ic: "★", lb: "Nhãn dán", run: function (e) { buildStickerMenu(); var r = $("btn-shapes-fav").getBoundingClientRect(); showMenuAt($("sticker-menu"), r.left, r.bottom + 4); } },
+    { id: "math", ic: "√x", lb: "Công thức", run: function () { $("btn-math").click(); } },
+    { id: "plot", ic: "📈", lb: "Đồ thị", run: function () { $("btn-plot").click(); } },
+    { id: "var", ic: "▦", lb: "Bảng BT", run: function () { $("btn-var").click(); } },
+    { id: "shapes", ic: "△", lb: "Hình 2D", run: function () { $("btn-shapes").click(); } },
+    { id: "solid", ic: "◳", lb: "Hình 3D", run: function () { $("btn-solid").click(); } },
+    { id: "oxyz", ic: "⊹", lb: "Oxyz", run: function () { $("btn-oxyz").click(); } },
+    { id: "table", ic: "⊞", lb: "Bảng", run: function () { $("btn-table").click(); } },
+    { id: "ruler", ic: "📐", lb: "Thước", run: function () { var r = $("btn-ruler").getBoundingClientRect(); showMenuAt($("ruler-menu"), r.left, r.bottom + 4); } },
+    { id: "timer", ic: "⏱", lb: "Đồng hồ", run: function () { $("btn-timer").click(); } },
+    { id: "picker", ic: "🎲", lb: "Lớp học", run: function () { $("btn-picker").click(); } },
+    { id: "note", ic: "🗒", lb: "Giấy note", run: function () { $("btn-note").click(); } },
+    { id: "textbox", ic: "⌯", lb: "Khung chữ", run: function () { $("btn-textbox").click(); } },
+    { id: "web", ic: "🌐", lb: "Web", run: function () { $("btn-web").click(); } }
+  ];
+  function favGet() { try { return JSON.parse(localStorage.getItem("vpvie.favs") || "[]"); } catch (e) { return []; } }
+  function favSet(a) { try { localStorage.setItem("vpvie.favs", JSON.stringify(a)); } catch (e) {} }
+  var favEditing = false;
+  function buildFavMenu() {
+    var body = $("fav-body"); if (!body) return;
+    var favs = favGet(); body.innerHTML = "";
+    if (favEditing) {
+      body.className = "fav-body";
+      FAV_TOOLS.forEach(function (t) {
+        var b = document.createElement("button"); b.className = "fav-item fav-pick" + (favs.indexOf(t.id) >= 0 ? " on" : "");
+        b.innerHTML = t.ic + "<span>" + t.lb + "</span>";
+        b.onclick = function (e) { e.stopPropagation(); var f = favGet(); var i = f.indexOf(t.id); if (i >= 0) f.splice(i, 1); else f.push(t.id); favSet(f); buildFavMenu(); };
+        body.appendChild(b);
+      });
+      return;
+    }
+    if (!favs.length) {
+      var p = document.createElement("div"); p.className = "fav-empty";
+      p.textContent = "Chưa có công cụ nào. Bấm Sửa để chọn những thứ bạn hay dùng, từ mọi menu.";
+      body.appendChild(p); return;
+    }
+    favs.forEach(function (id) {
+      var t = FAV_TOOLS.filter(function (x) { return x.id === id; })[0]; if (!t) return;
+      var b = document.createElement("button"); b.className = "fav-item"; b.innerHTML = t.ic + "<span>" + t.lb + "</span>";
+      b.onclick = function (e) { e.stopPropagation(); $("fav-menu").classList.remove("show"); t.run(e); };
+      body.appendChild(b);
+    });
+  }
+  if ($("fav-edit")) $("fav-edit").onclick = function (e) { e.stopPropagation(); favEditing = !favEditing; this.textContent = favEditing ? "✓ Xong" : "✎ Sửa"; buildFavMenu(); };
   // Phím tắt: Delete, Ctrl+Z/Y, Ctrl+C/X/V/D/A, Esc, phím mũi tên (dịch chuyển)
   document.addEventListener("keydown", function (e) {
     var t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
@@ -1583,6 +1857,7 @@
   $("var-ok").onclick = function () {
     if (!varGrid) { if ($("var-input").value.trim()) { $("var-make").click(); } if (!varGrid) { toast("Hãy bấm Lập bảng trước."); return; } }
     var r = varRegion || { x: 90, y: 90, w: 520, h: 180 };
+    if (editOv && editOv.kind === "var") { editOv.data.grid = varGrid; editOv.data.w = r.w; editOv.data.h = r.h; reRenderOverlay(editOv); editOv = null; hideDialog("dlg-var"); varRegion = null; state.tool = "pen"; clearActive(); return; }
     addOverlayData("var", { grid: varGrid, w: r.w, h: r.h }, r.x, r.y);
     hideDialog("dlg-var"); varRegion = null; state.tool = "pen"; clearActive();
   };
@@ -1619,6 +1894,10 @@
   $("btn-math").onclick = function () { pendingTextFx = null; showDialog("dlg-math"); buildFormulaUI(); $("math-input").focus(); };
   $("math-ok").onclick = function () {
     var st = window.VPFormula.state, latex = $("math-input").value;
+    if (editOv && editOv.kind === "math") {
+      editOv.data.latex = latex; editOv.data.color = st.color; editOv.data.size = st.size; editOv.data.display = st.display; editOv.data.mode = st.mode;
+      reRenderOverlay(editOv); editOv = null; $("math-input").value = ""; window.VPFormula.render($("math-preview"), ""); hideDialog("dlg-math"); return;
+    }
     if (pendingTextFx) {
       var tgt = pendingTextFx; pendingTextFx = null;
       if (latex) {
@@ -1715,6 +1994,7 @@
     var r = plotRegion || { x: 90, y: 90, w: 380, h: 300 };
     var data = { funcs: fs.map(function (f) { return { expr: f.expr, color: f.color, dash: f.dash, xmin: f.xmin, xmax: f.xmax }; }), expr: fs[0].expr, w: r.w, h: r.h, autoY: plotAutoFit, points: plotPoints.slice() };
     if (plotView) { data.view = plotView; }
+    if (editOv && editOv.kind === "plot") { editOv.data = Object.assign(editOv.data, data); reRenderOverlay(editOv); editOv = null; hideDialog("dlg-plot"); plotRegion = null; state.tool = "pen"; clearActive(); return; }
     addOverlayData("plot", data, r.x, r.y);
     hideDialog("dlg-plot"); plotRegion = null; state.tool = "pen"; clearActive();
   };
@@ -2056,7 +2336,7 @@
 
   // ----- Hộp thoại & toast
   function showDialog(id) { $(id).classList.add("show"); }
-  function hideDialog(id) { $(id).classList.remove("show"); if (id === "dlg-math") pendingTextFx = null; }
+  function hideDialog(id) { $(id).classList.remove("show"); if (id === "dlg-math") pendingTextFx = null; if (id === "dlg-math" || id === "dlg-plot" || id === "dlg-var") editOv = null; }
   document.querySelectorAll("[data-close]").forEach(function (b) { b.onclick = function () { hideDialog(b.dataset.close); }; });
   var toastEl = $("toast"), toastT;
   function toast(msg) { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function () { toastEl.classList.remove("show"); }, 2600); }

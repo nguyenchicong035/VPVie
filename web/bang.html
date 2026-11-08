@@ -52,7 +52,8 @@
     <button data-tool="eraser" data-erase="stroke" class="nr-ic tool" title="Tẩy">⌫</button><button id="btn-eraser-dd" class="nr-dd" title="Tuỳ chọn tẩy">▾</button>
     <button data-tool="pen" data-pen="brush" class="nr-ic tool" title="Bút dạ (nét theo lực)">〰</button>
     <button data-tool="pen" data-pen="pencil" class="nr-ic tool" title="Bút chì">✎</button>
-    <button id="beautify" class="nr-ic on" title="Làm đẹp nét (giữ tay thành hình/đường thẳng)">✨</button>
+    <button id="beautify" class="nr-ic on" title="Chế độ viết (giữ tay / nắn thẳng / thành hình)">✨</button><button id="btn-write-dd" class="nr-dd" title="Chế độ viết">▾</button>
+    <button id="btn-laser" class="nr-ic tool" title="Bút laser phát sáng">🪄</button><button id="btn-laser-dd" class="nr-dd" title="Tuỳ chọn laser">▾</button>
     <!-- Màu bút -->
     <span class="nr-pill">
       <button data-color="#111111" class="sw sel"></button>
@@ -93,10 +94,10 @@
 
   <!-- Hàng 3: văn bản, tô, chọn, di chuyển + nhận dạng AI -->
   <div class="nr-row nr-row-tools2">
-    <button id="btn-text" class="nr-ic" title="Chữ">T</button>
-    <button id="btn-fill" class="nr-ic" title="Tô màu miền"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c3.2 4.3 5.3 7 5.3 9.6a5.3 5.3 0 0 1-10.6 0C6.7 10.5 8.8 7.8 12 3.5Z"/></svg></button>
+    <button id="btn-text" class="nr-ic" title="Chữ & chèn đường/mũi tên">T</button><button id="btn-text-dd" class="nr-dd" title="Chèn đường, mũi tên, ngoặc">▾</button>
+    <button id="btn-fill" class="nr-ic" title="Tô màu miền"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c3.2 4.3 5.3 7 5.3 9.6a5.3 5.3 0 0 1-10.6 0C6.7 10.5 8.8 7.8 12 3.5Z"/></svg></button><button id="btn-fill-dd" class="nr-dd" title="Tuỳ chọn tô">▾</button>
     <button data-tool="eraser" data-erase="area" class="nr-ic tool" title="Tẩy vùng (khoanh để xoá)">▨</button>
-    <button id="btn-select" class="nr-ic" title="Chọn vùng">⬚</button>
+    <button id="btn-select" class="nr-ic" title="Chọn vùng">⬚</button><button id="btn-select-dd" class="nr-dd" title="Kiểu chọn">▾</button>
     <button data-tool="pan" class="nr-ic tool" title="Di chuyển trang">✋</button>
     <button id="clear" class="nr-ic" title="Xóa trang">🗑</button>
     <span class="nr-sep"></span>
@@ -121,12 +122,13 @@
       <canvas id="paper"></canvas>
       <div id="overlay" class="overlay"></div>
       <div id="sel-bar" class="sel-bar">
-        <button data-act="copy" title="Sao chép (Ctrl+C)">⎘ Chép</button>
-        <button data-act="cut" title="Cắt (Ctrl+X)">✂ Cắt</button>
+        <button data-act="edit" class="sb-edit" title="Sửa" hidden>✎ Sửa</button>
+        <button data-act="copy" title="Sao chép (Ctrl+C)">⎘ Sao chép</button>
         <button data-act="dup" title="Nhân bản (Ctrl+D)">⧉ Nhân bản</button>
+        <button data-act="cut" title="Cắt (Ctrl+X)">✂ Cắt</button>
         <button data-act="fill" title="Tô màu">🎨 Tô</button>
         <button data-act="stroke" title="Màu viền">✏ Viền</button>
-        <button data-act="del" title="Xoá">🗑 Xoá</button>
+        <button data-act="del" title="Xoá">🗑 Xóa</button>
       </div>
       <!-- Khung chọn vùng quay (chế độ Vùng trang viết) -->
       <div id="rec-region" class="rec-region" hidden>
@@ -561,38 +563,90 @@
     <button data-act="all">⬚ Chọn tất cả<kbd>Ctrl+A</kbd></button>
     <button data-act="del" class="danger">🗑 Xoá<kbd>Del</kbd></button>
   </div>
-  <div id="pen-menu" class="nr-menu">
-    <div class="nr-menu-h">Loại bút</div>
-    <button data-pm="ball">🖊 Bút bi</button>
-    <button data-pm="brush">〰 Bút dạ (theo lực nhấn)</button>
-    <button data-pm="pencil">✎ Bút chì</button>
-    <button data-pm="hl">▮ Bút dạ quang</button>
-    <button data-pm="laser">✦ Bút laser (giữ nét phát sáng)</button>
-    <button data-pm="laserp">➤ Con trỏ laser (tự tan)</button>
-    <hr/>
-    <div class="nr-menu-h">Độ dày nét</div>
-    <button data-pz="2">— Mảnh</button>
-    <button data-pz="4">━ Vừa</button>
-    <button data-pz="8">▬ Đậm</button>
-    <button data-pz="14">█ Rất đậm</button>
-    <hr/>
-    <div class="nr-menu-h">Nắn nét chữ viết tay</div>
-    <button data-pt="1">✍ Tự nắn mượt nét chữ</button>
-    <button data-tidy="1">1 · Nhẹ</button>
-    <button data-tidy="2">2 · Vừa</button>
-    <button data-tidy="3">3 · Mạnh</button>
-    <button data-tidy="4">4 · Rất mượt</button>
-    <button data-tidy-all="1">🧹 Nắn lại toàn trang</button>
-    <hr/>
-    <button data-pb="1">✨ Nắn thành hình (thẳng/tròn)</button>
+  <div id="pen-menu" class="nr-menu pen-menu-rich">
+    <div class="pm-head"><span class="nr-menu-h">Loại bút</span><span id="pm-penname" class="pm-penname">Bút bi</span></div>
+    <div class="pm-pentypes" id="pm-pentypes">
+      <button data-pm="ball" class="pm-pt" title="Bút bi"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19l1.2-3.4L15.8 6a1.7 1.7 0 0 1 2.4 0l.8.8a1.7 1.7 0 0 1 0 2.4l-9.6 9.6L6 20z"/><path d="M14.5 7.3l2.2 2.2"/></svg></button>
+      <button data-pm="brush" class="pm-pt" title="Bút dạ (theo lực nhấn)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c2.5 0 3-2 5-2s2.5 2 5 2 3-2 5-2"/><path d="M8 12l6-6 4 4-6 6z"/><path d="M14 6l4 4"/></svg></button>
+      <button data-pm="pencil" class="pm-pt" title="Bút chì"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5V21h2.5L18 9.5 15.5 7z"/><path d="M14 8.5l2.5 2.5"/><path d="M16 5.5l1.2-1.2a1.3 1.3 0 0 1 1.9 0l.6.6a1.3 1.3 0 0 1 0 1.9L18.5 8z"/></svg></button>
+      <button data-pm="fountain" class="pm-pt" title="Bút máy"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18l2-6 9-9 2 2-9 9z"/><path d="M8 12l4 4"/><path d="M6 18l-2 2"/><path d="M10.5 9.5l4 4"/></svg></button>
+      <button data-pm="hl" class="pm-pt" title="Bút dạ quang"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l4 4-3.5 3.5a1.5 1.5 0 0 1-1 .4H5v-3.4a1.5 1.5 0 0 1 .4-1z"/><path d="M12 8l4 4 3-3a1.7 1.7 0 0 0 0-2.4l-1.6-1.6a1.7 1.7 0 0 0-2.4 0z"/><path d="M5 21h6"/></svg></button>
+    </div>
+    <div class="pm-palette" id="pm-palette"></div>
+    <div class="pm-slider-row">
+      <span class="pm-lbl">Độ dày</span>
+      <input type="range" id="pm-thick" class="pm-range" min="1" max="20" value="3"/>
+      <span class="pm-wave" id="pm-wave"></span>
+    </div>
+    <div class="pm-slider-row">
+      <span class="pm-lbl">Độ mượt nét</span>
+      <input type="range" id="pm-smooth" class="pm-range" min="0" max="4" value="4"/>
+      <span class="pm-sval" id="pm-smooth-val">Mượt nhất</span>
+    </div>
+    <label class="pm-chk"><input type="checkbox" id="pm-pressure" checked/> <span>Lực nhấn bút <i>(nét to nhỏ theo lực nhấn)</i></span></label>
   </div>
   <div id="eraser-menu" class="nr-menu">
-    <button data-em="stroke">⌫ Tẩy cả nét</button>
-    <button data-em="part">◌ Tẩy một phần nét</button>
-    <button data-em="area">▨ Tẩy vùng (khoanh)</button>
+    <button data-em="stroke" data-esz="0">⌫ Tẩy cả nét<kbd>X</kbd></button>
+    <button data-em="part" data-esz="8">◦ Tẩy từng đoạn - Nhỏ<kbd>Z</kbd></button>
+    <button data-em="part" data-esz="18">◌ Tẩy từng đoạn - Vừa<kbd>A</kbd></button>
+    <button data-em="part" data-esz="34">◯ Tẩy từng đoạn - Lớn<kbd>W</kbd></button>
+  </div>
+  <div id="write-menu" class="nr-menu">
+    <div class="nr-menu-h">Chế độ viết</div>
+    <button data-wm="hand">✍ Viết tay</button>
+    <button data-wm="line">／ Tự kẻ thẳng</button>
+    <button data-wm="shape">◇ Tự thành hình</button>
+    <button data-wm="both">✦ Hình và đường thẳng</button>
+    <div class="wm-note" id="wm-note">Nét giữ nguyên như bạn viết.</div>
+  </div>
+  <div id="laser-menu" class="nr-menu">
+    <div class="nr-menu-h">Bút laser phát sáng</div>
+    <button data-ll="0">∞ Giữ nét tới khi đổi công cụ</button>
+    <button data-ll="fade">🌙 Mờ dần sau khi viết</button>
+    <button data-ll="1000">① Mất sau 1 giây</button>
+    <button data-ll="3000">③ Mất sau 3 giây</button>
+    <button data-ll="5000">⑤ Mất sau 5 giây</button>
+    <button data-ll="15000">⑮ Mất sau 15 giây</button>
     <hr/>
-    <button data-ex="ink">✋ Xoá mọi nét viết tay</button>
-    <button data-ex="page" class="danger">🗑 Xoá toàn trang</button>
+    <div class="nr-menu-h">Màu laser</div>
+    <div class="laser-dots" id="laser-dots"></div>
+    <label class="pm-chk"><input type="checkbox" id="laser-usepen"/> <span>Ô đầu: theo màu bút đang chọn</span></label>
+    <div class="pm-slider-row">
+      <span class="pm-lbl">Độ chói</span>
+      <input type="range" id="laser-glow" class="pm-range" min="40" max="100" value="100"/>
+      <span class="pm-sval" id="laser-glow-val">100%</span>
+    </div>
+  </div>
+  <div id="fill-menu" class="nr-menu">
+    <button data-fm="area" class="fm-opt"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.3" fill="currentColor" stroke="none"/></svg> Tô miền kín</button>
+    <button data-fm="poly" class="fm-opt"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l3 5.5 6 .9-4.3 4.4 1 6-5.7-3-5.7 3 1-6L4 9.4l6-.9z"/></svg> Tô miền đa giác</button>
+    <hr/>
+    <button data-fm="clear" class="fm-opt"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 20L20 4"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Bỏ màu (0%)</button>
+    <div class="pm-slider-row">
+      <span class="pm-lbl">Độ trong suốt</span>
+      <input type="range" id="fill-alpha" class="pm-range" min="0" max="100" value="35"/>
+      <span class="pm-sval maroon" id="fill-alpha-val">35%</span>
+    </div>
+    <div class="wm-note">Chạm vào chỗ đã tô: đổi sang màu đang chọn; ở 0% thì bỏ hết mọi lớp màu ở chỗ đó.</div>
+  </div>
+  <div id="select-menu" class="nr-menu">
+    <button data-sm="rect">⬚ Chọn vùng chữ nhật<kbd>N</kbd></button>
+    <button data-sm="lasso">⬭ Khoanh vùng tự do<kbd>K</kbd></button>
+    <button data-sm="object">☞ Chọn từng đối tượng<kbd>O</kbd></button>
+    <hr/>
+    <button data-sm="cropR">⛶ Cắt ảnh theo vùng chữ nhật</button>
+    <button data-sm="cropF">◈ Cắt ảnh theo vùng tự do</button>
+    <hr/>
+    <button data-sm="space">⇕ Chèn khoảng trống<kbd>I</kbd></button>
+  </div>
+  <div id="text-menu" class="nr-menu text-menu">
+    <div class="tx-grid" id="tx-grid"></div>
+    <hr/>
+    <button data-tx="table" class="tx-table"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10h16M4 14.5h16M9.5 5v14M14.5 5v14"/></svg> Chèn bảng…</button>
+  </div>
+  <div id="fav-menu" class="nr-menu fav-menu">
+    <div class="fav-head"><span class="nr-menu-h">★ Ưa thích</span><button id="fav-edit" class="fav-edit">✎ Sửa</button></div>
+    <div class="fav-body" id="fav-body"></div>
   </div>
   <div id="shapes-menu" class="nr-menu shapes-menu"></div>
   <div id="geo-menu" class="nr-menu shapes-menu"></div>
@@ -635,11 +689,14 @@
   </div>
 
   <div id="ruler-menu" class="nr-menu">
-    <div class="nr-menu-h">Dụng cụ đo vẽ</div>
-    <button data-ruler="ruler">📏 Thước thẳng (có vạch cm)</button>
-    <button data-ruler="square">📐 Êke (tam giác vuông)</button>
-    <button data-ruler="proto">🧭 Thước đo góc</button>
-    <button data-ruler="compass">⭕ Compa (vẽ đường tròn)</button>
+    <button data-ruler="ruler">📏 Thước kẻ</button>
+    <button data-ruler="proto">🖻 Thước đo độ</button>
+    <button data-ruler="round">◴ Thước tròn</button>
+    <button data-ruler="square">📐 Ê-ke</button>
+    <button data-ruler="parabol">⌣ Thước parabol</button>
+    <button data-ruler="compass">🖊 Compa</button>
+    <hr/>
+    <button data-ruler="off">✕ Cắt dụng cụ<kbd>R</kbd></button>
   </div>
   <div id="sticker-menu" class="nr-menu sticker-menu">
     <div class="nr-menu-h">Nhãn dán khen thưởng</div>
