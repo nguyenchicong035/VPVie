@@ -1,7 +1,29 @@
 # BIÊN BẢN BÀN GIAO CÔNG VIỆC — Phần mềm VPVie
 
 > Tài liệu để chuyển giao cho người/tài khoản tiếp theo. Cập nhật lần cuối: xem commit mới nhất.
-> Kho mã: **github.com/nguyenchicong035/vpvie** — nhánh làm việc: **main**.
+> Kho mã: **github.com/nguyenchicong035/vpvie**.
+> Nhánh có đầy đủ tính năng mới nhất: **`claude/compassionate-pascal-67xbhe`** (đã gộp `main`).
+
+---
+
+## 0. Cập nhật mới nhất (tổng hợp các tính năng đã thêm)
+
+**Bảng dạy học (`web/bang.html`) — mỗi vật thể là 1 lớp, kéo-thả/phóng to/xoay/xóa; lưu theo trang.**
+
+- **Khung chữ viết tay**: gõ bàn phím + thanh định dạng nổi (font Viết tay = Patrick Hand đủ dấu, B/I/U, màu, danh sách, căn lề, khung viền, Ω ký hiệu, √x mở **bảng công thức LaTeX** chèn nội tuyến).
+- **Thư viện sổ** (màn hình đầu): nhiều sổ dạng thẻ, Sổ mới, tìm sổ, chọn nhiều, "Mở Thư viện khi mở app"; **Lịch sử phiên bản** (☰) khôi phục được.
+- **Công cụ lớp học** (nút ⚅): Gọi tên ngẫu nhiên (Đơn giản / Xé túi mù), Vòng quay, Chia nhóm, Điểm danh, Bảng thi đua; **quản lý nhiều lớp theo file .txt** (chọn lớp đang dạy → đổi danh sách).
+- **Trò chơi câu đố** + **Ô chữ bí mật** (☰ hoặc menu lớp học): soạn theo file, báo đỏ/xanh + giải thích + đếm giờ, 5 nền chủ đề.
+- **Dụng cụ đo vẽ** (nút 📐 dropdown): Thước thẳng, Êke, Thước đo góc, Compa.
+- **Chèn vào trang** (☰): Bản đồ tư duy, Biểu đồ số liệu (cột/tròn/đường), Flashcard, Bảng cửu chương, **Video (file/YouTube, cắt đoạn)**, Bảng chữ cái tiếng Việt, Nhãn dán & con dấu (nút ★).
+- **Trình chiếu & điều hướng** (☰): Xem tổng thể trang (lưới), **Ghi chú giáo viên** (ẩn khi chiếu), hiệu ứng chuyển trang, **Rèm che & Đèn rọi**.
+- **Bút**: bút bi/dạ/chì, dạ quang, **bút laser phát sáng** + con trỏ laser tự tan; nắn nét mức 4.
+- **Mẫu trang** (Cài đặt → Kiểu giấy): Tập viết 4 dòng, Ô li, Khuông nhạc.
+- **Quay màn hình**: thanh thiết lập chọn Vùng / Cả cửa sổ + thu micro; lưu .webm.
+- **Nhận dạng công thức viết tay → LaTeX** (menu Nhận dạng ▾, mở bộ công thức để sửa).
+- **Oxyz 3D Studio** (nút 📐 hệ trục, do nhánh `main` phát triển, đã gộp): dựng điểm/vectơ/đường/mặt phẳng/mặt cầu trong hệ toạ độ Oxyz, 5 mô hình mẫu.
+
+**Kỹ thuật:** mỗi vật thể overlay là 1 `kind` trong `overlayBody()` (app.js) + 1 file `js/tools-*.js`. PWA `sw.js` cache-first, đường dẫn tương đối (chạy cả GitHub Pages thư mục con lẫn gốc), **bump `CACHE` mỗi lần phát hành**. Toàn bộ kiểm thử bằng Playwright (Chromium thật) trước khi commit.
 
 ---
 
