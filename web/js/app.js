@@ -401,7 +401,7 @@
         var cv = (isOxyz.scene && isOxyz.scene.camera && isOxyz.scene.camera.view) || "3d";
         bar.querySelectorAll(".sb-oxyz [data-oxv]").forEach(function (x) { x.classList.toggle("on", x.dataset.oxv === cv); });
         var axb = bar.querySelector(".sb-oxyz [data-oxaxes]"); if (axb) axb.textContent = (isOxyz.scene && isOxyz.scene.display && isOxyz.scene.display.axes === false) ? "⊹ Hiện trục" : "⊹ Ẩn trục";
-        var spb = bar.querySelector(".sb-oxyz [data-oxspin]"); if (spb) spb.classList.toggle("on", oxSpin.item === isOxyz);
+        var spb = bar.querySelector(".sb-oxyz [data-oxspin]"); if (spb) spb.classList.toggle("on", state.oxyzRot === isOxyz);
       }
     }
     else bar.classList.remove("show");
@@ -446,6 +446,11 @@
     if (state.tool === "fill") { fillAt(pt); return; }   // tô màu miền
     if (state.tool === "select") {
       canvas.setPointerCapture(e.pointerId); state.drawing = true;
+      // Chế độ xoay 3D tự do: kéo trên hình Oxyz để xoay mọi phía
+      if (state.oxyzRot && state.oxyzRot.type === "oxyz" && boxHit(state.oxyzRot, pt) && state.oxyzRot.scene) {
+        var i3 = state.items.indexOf(state.oxyzRot);
+        if (i3 >= 0) { pushHist(); state.selected = [i3]; state.selMode = "rot3d"; state.moved = false; var cam = state.oxyzRot.scene.camera || {}; state.rot3d = { start: pt, yaw0: cam.yaw || 0, pitch0: cam.pitch || 0 }; redraw(); return; }
+      }
       var h = hitHandle(pt);
       if (h && h.n === "rot") {   // kéo tay cầm xoay -> quay quanh tâm hộp bao
         pushHist(); state.selMode = "rotate"; state.moved = false;
@@ -486,6 +491,13 @@
     if (state.tool === "eraser") { if (state.eraserMode === "area") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } else eraseAt(pt); return; }
     if (state.tool === "plotregion" || state.tool === "varregion") { if (state.selBox) { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; redraw(); } return; }
     if (state.tool === "select") {
+      if (state.selMode === "rot3d" && state.rot3d && state.oxyzRot && state.oxyzRot.scene) {
+        var r3 = state.rot3d, cam3 = state.oxyzRot.scene.camera;
+        cam3.view = "3d";
+        cam3.yaw = r3.yaw0 + (pt.x - r3.start.x) * 0.01;
+        cam3.pitch = Math.max(-1.45, Math.min(1.45, r3.pitch0 + (pt.y - r3.start.y) * 0.01));
+        state.moved = true; redraw(); return;
+      }
       if (state.selMode === "marquee") { state.selBox.x2 = pt.x; state.selBox.y2 = pt.y; }
       else if (state.selMode === "rotate" && state.rot) {
         var rr = state.rot, ang = Math.atan2(pt.y - rr.cy, pt.x - rr.cx), d = ang - rr.last;
@@ -537,8 +549,8 @@
         if (Math.abs(bx.x2 - bx.x1) > 4 || Math.abs(bx.y2 - bx.y1) > 4) state.selected = itemsInBox(bx);
         else { var hit = hitItem({ x: bx.x1, y: bx.y1 }); if (hit >= 0) state.selected = [hit]; }   // bấm 1 lần: chọn đối tượng trên cùng
         state.selBox = null;
-      } else if ((state.selMode === "move" || state.selMode === "resize" || state.selMode === "rotate") && !state.moved) undoStack.pop();   // không đổi gì → bỏ bản lưu
-      state.resize = null; state.rot = null; state.selMode = null;
+      } else if ((state.selMode === "move" || state.selMode === "resize" || state.selMode === "rotate" || state.selMode === "rot3d") && !state.moved) undoStack.pop();   // không đổi gì → bỏ bản lưu
+      state.resize = null; state.rot = null; state.rot3d = null; state.selMode = null;
       redraw(); scheduleSave(); return;
     }
     if (state.tool === "eraser") {
@@ -1370,27 +1382,21 @@
   function selOxyzItem() { if (state.selected.length !== 1) return null; var it = state.items[state.selected[0]]; return (it && it.type === "oxyz") ? it : null; }
   function runAct(act) { if (!selActions[act]) return; selActions[act](); redraw(); scheduleSave(); }
   // ===== Thanh công cụ Oxyz (góc nhìn / xoay 3D / ẩn trục) =====
-  var oxSpin = { item: null, raf: 0 };
-  function oxSpinStop() { if (oxSpin.raf) cancelAnimationFrame(oxSpin.raf); oxSpin.raf = 0; oxSpin.item = null; }
-  function oxSpinTick() {
-    var it = oxSpin.item;
-    if (!it || !it.scene || selOxyzItem() !== it) { oxSpinStop(); if (typeof redraw === "function") redraw(); return; }
-    if (it.scene.camera) { it.scene.camera.view = "3d"; it.scene.camera.yaw = (it.scene.camera.yaw || 0) + 0.02; }
-    redraw(); oxSpin.raf = requestAnimationFrame(oxSpinTick);
-  }
+  // state.oxyzRot: hình Oxyz đang ở chế độ "xoay tự do" (kéo trên hình để xoay mọi phía)
   document.querySelectorAll("#sel-bar button[data-act]").forEach(function (b) {
-    b.onclick = function (e) { e.stopPropagation(); if (b.dataset.act === "edit") oxSpinStop(); runAct(b.dataset.act); };
+    b.onclick = function (e) { e.stopPropagation(); if (b.dataset.act === "edit") state.oxyzRot = null; runAct(b.dataset.act); };
   });
   document.querySelectorAll("#sel-bar [data-oxv]").forEach(function (b) {
-    b.onclick = function (e) { e.stopPropagation(); var it = selOxyzItem(); if (!it || !window.VPOxyz) return; oxSpinStop(); pushHist(); it.scene.camera = Object.assign(window.VPOxyz.defaults().camera, { view: b.dataset.oxv }); if (it.scene.display) it.scene.display.auto = false; redraw(); scheduleSave(); updateSelBar(); };
+    b.onclick = function (e) { e.stopPropagation(); var it = selOxyzItem(); if (!it || !window.VPOxyz) return; state.oxyzRot = null; pushHist(); it.scene.camera = Object.assign(window.VPOxyz.defaults().camera, { view: b.dataset.oxv }); if (it.scene.display) it.scene.display.auto = false; redraw(); scheduleSave(); updateSelBar(); };
   });
   var oxAxesBtn = document.querySelector("#sel-bar [data-oxaxes]");
   if (oxAxesBtn) oxAxesBtn.onclick = function (e) { e.stopPropagation(); var it = selOxyzItem(); if (!it) return; pushHist(); it.scene.display = it.scene.display || {}; it.scene.display.axes = !(it.scene.display.axes !== false); redraw(); scheduleSave(); updateSelBar(); };
   var oxSpinBtn = document.querySelector("#sel-bar [data-oxspin]");
   if (oxSpinBtn) oxSpinBtn.onclick = function (e) {
     e.stopPropagation(); var it = selOxyzItem(); if (!it) return;
-    if (oxSpin.item === it) { oxSpinStop(); } else { pushHist(); oxSpin.item = it; if (!oxSpin.raf) oxSpin.raf = requestAnimationFrame(oxSpinTick); }
-    updateSelBar();
+    if (state.oxyzRot === it) { state.oxyzRot = null; toast("Đã tắt xoay 3D."); }
+    else { state.oxyzRot = it; if (it.scene && it.scene.camera) { it.scene.camera.view = "3d"; if (it.scene.display) it.scene.display.auto = false; } toast("Kéo trên hình để xoay mọi phía; bấm Xoay 3D lần nữa để thôi."); }
+    redraw(); updateSelBar();
   };
   // Menu chuột phải (menu ngữ cảnh) trên bảng
   function showMenuAt(m, x, y) {
