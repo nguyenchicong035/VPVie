@@ -584,6 +584,7 @@
     else if (kind === "score") window.VPClass.buildScore(body, data);
     else if (kind === "quizgame") window.VPQuiz2.buildPlayer(body, data);
     else if (kind === "crossword") window.VPQuiz2.buildCrossword(body, data);
+    else if (kind === "mindmap") { data._save = scheduleSave; window.VPMindmap.build(body, data); }
     else if (kind === "ptable") window.VPScience.buildPTable(body);
     else if (kind === "chem") window.VPScience.buildChem(body);
     else if (kind === "circuit" || kind === "force" || kind === "pedigree" || kind === "dna") { data._save = scheduleSave; window.VPDiagram.build(body, kind, data); }
@@ -669,7 +670,7 @@
     if (rz) rz.addEventListener("pointerup", function () { resizing = false; scheduleSave(); });
     // Kéo thân -> di chuyển
     el.addEventListener("pointerdown", function (e) {
-      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors, .text-edit, .ov-resize")) { if (!e.target.closest(".ov-resize")) selectOverlay(el); return; }
+      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors, .text-edit, .mm-node, .ov-resize")) { if (!e.target.closest(".ov-resize")) selectOverlay(el); return; }
       moving = true; sx = e.clientX; sy = e.clientY;
       ox = parseFloat(el.style.left); oy = parseFloat(el.style.top);
       el.setPointerCapture(e.pointerId); el.classList.add("dragging"); selectOverlay(el);
@@ -817,6 +818,7 @@
   function insertGroups(x, y) { addOverlayData("groups", { groups: 4 }, x, y); }
   function insertAttend(x, y) { addOverlayData("attend", {}, x, y); }
   function insertScore(x, y) { addOverlayData("score", {}, x, y); }
+  function insertMindmap(x, y) { addOverlayData("mindmap", {}, x != null ? x : 80, y != null ? y : 70); }
   var quizNo = 0;
   function insertQuiz(data, kind, x, y) {
     quizNo += 1; data.no = quizNo; data.sub = kind;
@@ -1085,6 +1087,7 @@
     curtain: function () { startTeach("curtain"); },
     spotlight: function () { startTeach("spotlight"); },
     history: function () { openHistory(); },
+    mindmap: function () { insertMindmap(); },
     open: function () { openBookFile(); },
     save: function () { saveLocal(); toast("Đã lưu sổ (trên máy này)."); },
     saveas: function () { downloadBook(); },
