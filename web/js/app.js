@@ -2270,8 +2270,11 @@
     setDocTitle();
     return id;
   }
+  function pinHash(s) { var h = 5381; s = "vpv" + (s || ""); for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36); }
   function openBook(id) {
     if (id === lib.current) { closeLibrary(); return; }
+    var m = lib.books.filter(function (b) { return b.id === id; })[0];
+    if (m && m.pin) { var ent = prompt("Nhập mã PIN để mở sổ “" + m.name + "”:"); if (ent == null) return; if (pinHash(ent) !== m.pin) { toast("Mã PIN không đúng."); return; } }
     persistCurrent();
     lib.current = id; libSave();
     loadCurrentContent(); updatePageLabel(); resetHist();
@@ -2354,7 +2357,7 @@
     grid.appendChild(add);
     list.forEach(function (m) {
       var card = document.createElement("div"); card.className = "lib-card" + (m.id === lib.current ? " current" : ""); card.dataset.id = m.id;
-      var cover = '<div class="lib-cover">' + (m.cover ? '<img src="' + m.cover + '">' : '<div class="lib-ph">Sổ trống</div>') + (m.id === lib.current ? '<span class="lib-badge">Đang mở</span>' : '') + '<input type="checkbox" class="lib-chk"><button class="lib-del" title="Xóa">🗑</button></div>';
+      var cover = '<div class="lib-cover">' + (m.cover ? '<img src="' + m.cover + '">' : '<div class="lib-ph">Sổ trống</div>') + (m.id === lib.current ? '<span class="lib-badge">Đang mở</span>' : '') + (m.pin ? '<span class="lib-lock" title="Sổ có khóa PIN">🔒</span>' : '') + '<input type="checkbox" class="lib-chk"><button class="lib-del" title="Xóa">🗑</button></div>';
       card.innerHTML = cover + '<div class="lib-name"><span class="nm"></span><button class="lib-more" title="Tùy chọn">⋯</button></div><div class="lib-date">' + fmtDate(m.updated || m.created) + '</div>';
       card.querySelector(".nm").textContent = m.name;
       card.onclick = function (e) {
@@ -2381,6 +2384,16 @@
     function item(label, fn, danger) { var b = document.createElement("button"); b.textContent = label; if (danger) b.className = "danger"; b.onclick = function () { menu.hidden = true; fn(); }; menu.appendChild(b); }
     item("Đổi tên", function () { renameBook(m.id); });
     item("Nhân bản", function () { duplicateBook(m.id); });
+    item(m.pin ? "🔒 Đổi / bỏ mã PIN" : "🔒 Đặt mã PIN (khóa nhẹ)", function () {
+      if (m.pin) {
+        var cur = prompt("Mã PIN hiện tại (để trống để bỏ khóa):"); if (cur == null) return;
+        if (pinHash(cur) !== m.pin) { toast("Mã PIN hiện tại không đúng."); return; }
+        if (cur === "" || !cur) { delete m.pin; libSave(); renderLibrary(); toast("Đã bỏ khóa sổ."); return; }
+      }
+      var np = prompt("Đặt mã PIN mới (vài chữ số). Lưu ý: chỉ là khóa nhẹ chống xem nhầm, KHÔNG mã hoá dữ liệu:"); if (np == null) return;
+      np = np.trim(); if (!np) { if (m.pin) { delete m.pin; libSave(); renderLibrary(); toast("Đã bỏ khóa sổ."); } return; }
+      m.pin = pinHash(np); libSave(); renderLibrary(); toast("Đã đặt mã PIN cho sổ.");
+    });
     if (lib.projects.length) {
       item(m.project ? "Bỏ khỏi project" : "Thêm vào project…", function () {
         if (m.project) { moveBookToProject(m.id, null); return; }
