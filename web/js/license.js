@@ -120,18 +120,17 @@
   async function activate(keyStr) {
     var mid = await computeMachineId();
     var local = await verifyKey(keyStr, mid);
-    var isMulti = local.ok && local.data && local.data.id;   // key nhiều máy
-    // Thử kích hoạt qua máy chủ trước
+    // Thử kích hoạt qua máy chủ trước (nếu có) để đếm số máy với key nhiều máy
     var on = await activateOnline(keyStr, mid);
     if (on.ok) {
       try { localStorage.setItem(STORE, keyStr.trim()); } catch (e) {}
       _status = { active: true, plan: on.plan || (local.data && local.data.p) || "pro", expiry: on.expiry || (local.data && local.data.e) || 0, note: (local.data && local.data.n) || "", mid: mid, used: on.used, maxm: on.maxm };
       return { ok: true, data: local.data || {}, used: on.used, maxm: on.maxm };
     }
-    if (on.server) return { ok: false, reason: on.reason };   // máy chủ từ chối (vượt số máy, thu hồi…)
-    // Máy chủ không phản hồi: key nhiều máy BẮT BUỘC online; key gắn-máy thì kiểm cục bộ
-    if (isMulti) return { ok: false, reason: "Key này cần máy chủ để kích hoạt (hiện không kết nối được)." };
-    if (!local.ok) return local;
+    if (on.server) return { ok: false, reason: on.reason };   // máy chủ TỪ CHỐI (vượt số máy, thu hồi…)
+    // Máy chủ không kết nối được (bản NGOẠI TUYẾN): chấp nhận MỌI key có chữ ký hợp lệ,
+    // gồm cả key "Nhiều máy" (khi offline không đếm được số máy nên bỏ qua giới hạn).
+    if (!local.ok) return local;   // sai chữ ký / sai máy / hết hạn → trả lý do rõ ràng
     try { localStorage.setItem(STORE, keyStr.trim()); } catch (e) {}
     _status = { active: true, plan: local.data.p || "pro", expiry: local.data.e || 0, note: local.data.n || "", mid: mid };
     return { ok: true, data: local.data };
