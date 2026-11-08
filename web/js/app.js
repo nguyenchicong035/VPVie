@@ -1084,6 +1084,7 @@
     present: function () { var s = $("nr-side"); if (s) s.classList.add("hidden"); toggleFull(); },
     curtain: function () { startTeach("curtain"); },
     spotlight: function () { startTeach("spotlight"); },
+    history: function () { openHistory(); },
     open: function () { openBookFile(); },
     save: function () { saveLocal(); toast("Đã lưu sổ (trên máy này)."); },
     saveas: function () { downloadBook(); },
@@ -2055,7 +2056,48 @@
     snapshotThumb();
     try { if (lib.current) localStorage.setItem(bookKey(lib.current), serialize()); } catch (e) {}
     updateCurrentMeta();
+    pushHistorySnapshot(false);
     if ($("thumbs") && $("thumbs").children[cur]) { var im = $("thumbs").children[cur].querySelector("img"); if (im && pages[cur].thumb) im.src = pages[cur].thumb; }
+  }
+  // ----- Lịch sử phiên bản (tự lưu mốc, khôi phục được) -----
+  var lastSnapAt = 0;
+  function histKey(id) { return "vpvie.hist." + id; }
+  function loadHist(id) { try { return JSON.parse(localStorage.getItem(histKey(id)) || "[]"); } catch (e) { return []; } }
+  function saveHist(id, arr) { try { localStorage.setItem(histKey(id), JSON.stringify(arr)); } catch (e) {} }
+  function pushHistorySnapshot(force) {
+    if (!lib.current) return;
+    var now = Date.now();
+    if (!force && now - lastSnapAt < 120000) return;   // tối đa 2 phút/mốc
+    var content; try { content = serialize(); } catch (e) { return; }
+    var arr = loadHist(lib.current);
+    if (arr.length && arr[arr.length - 1].data === content) { lastSnapAt = now; return; } // không đổi -> bỏ
+    lastSnapAt = now;
+    arr.push({ t: now, data: content, pages: pages.length });
+    while (arr.length > 20) arr.shift();
+    saveHist(lib.current, arr);
+  }
+  function restoreVersion(idx) {
+    var arr = loadHist(lib.current), v = arr[idx]; if (!v) return;
+    pushHistorySnapshot(true);                 // lưu hiện trạng trước khi khôi phục
+    try { loadBook(JSON.parse(v.data)); try { localStorage.setItem(bookKey(lib.current), v.data); } catch (e) {} updateCurrentMeta(); resetHist(); updatePageLabel(); hideDialog("dlg-history"); toast("Đã khôi phục phiên bản " + new Date(v.t).toLocaleString("vi-VN") + "."); }
+    catch (e) { toast("Không khôi phục được phiên bản này."); }
+  }
+  function openHistory() {
+    pushHistorySnapshot(true);
+    var list = $("hist-list"); if (!list) return; list.innerHTML = "";
+    var arr = loadHist(lib.current);
+    if (!arr.length) { list.innerHTML = '<div class="hint">Chưa có mốc nào được lưu.</div>'; showDialog("dlg-history"); return; }
+    for (var i = arr.length - 1; i >= 0; i--) {
+      (function (idx, v, latest) {
+        var row = document.createElement("div"); row.className = "hist-row" + (latest ? " latest" : "");
+        var info = document.createElement("div"); info.className = "hist-info";
+        info.innerHTML = '<b>' + new Date(v.t).toLocaleString("vi-VN") + '</b><span>' + (v.pages || 1) + ' trang' + (latest ? ' · hiện tại' : '') + '</span>';
+        var b = document.createElement("button"); b.className = "hist-restore"; b.textContent = latest ? "Đang dùng" : "Khôi phục"; b.disabled = latest;
+        b.onclick = function () { if (confirm("Khôi phục về phiên bản " + new Date(v.t).toLocaleString("vi-VN") + "?")) restoreVersion(idx); };
+        row.appendChild(info); row.appendChild(b); list.appendChild(row);
+      })(i, arr[i], i === arr.length - 1);
+    }
+    showDialog("dlg-history");
   }
   function loadBook(obj) {
     if (!obj || !obj.pages || !obj.pages.length) return;
