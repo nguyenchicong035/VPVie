@@ -384,7 +384,7 @@
   function selUnionBox() { var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity; state.selected.forEach(function (i) { var it = state.items[i]; if (!it) return; var b = itemBox(it); if (b.minx < mnx) mnx = b.minx; if (b.miny < mny) mny = b.miny; if (b.maxx > mxx) mxx = b.maxx; if (b.maxy > mxy) mxy = b.maxy; }); return { minx: mnx, miny: mny, maxx: mxx, maxy: mxy }; }
   function updateSelBar() {
     var bar = document.getElementById("sel-bar"); if (!bar) return;
-    if (state.tool === "select" && state.selected && state.selected.length && !state.selBox) { var b = selUnionBox(); bar.style.left = Math.max(2, b.minx - 4) + "px"; bar.style.top = Math.max(2, b.miny - 40) + "px"; bar.classList.add("show"); }
+    if (state.tool === "select" && state.selected && state.selected.length && !state.selBox) { var b = selUnionBox(); bar.style.left = Math.max(2, b.minx - 4) + "px"; bar.style.top = Math.max(2, b.miny - 66) + "px"; bar.classList.add("show"); }
     else bar.classList.remove("show");
   }
   function fillAt(pt) {
