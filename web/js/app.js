@@ -1126,6 +1126,7 @@
     "import": function () { if ($("imp-img")) $("imp-img").click(); },
     png: function () { $("btn-png").click(); },
     pdf: function () { $("btn-pdf").click(); },
+    print: async function () { try { toast("Đang chuẩn bị in…"); var ok = await window.VPExport.print(board); if (!ok) toast("Trình duyệt chặn cửa sổ in. Hãy cho phép cửa sổ bật lên."); } catch (e) { toast("Lỗi khi in."); } },
     addpage: function () { addPage(); },
     delpage: function () { delPage(); },
     toolbar: function () { document.querySelectorAll(".nr-row-tools, .nr-row-tools2").forEach(function (r) { r.classList.toggle("hidden"); }); },
