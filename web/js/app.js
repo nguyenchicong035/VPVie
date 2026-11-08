@@ -1195,6 +1195,7 @@
     document.querySelectorAll("#app-menu [data-theme]").forEach(function (b) { b.classList.toggle("on", b.dataset.theme === t); });
   }
   (function () { var t = "light"; try { t = localStorage.getItem("vpvie.theme") || "light"; } catch (e) {} applyTheme(t); })();
+  (function () { try { if (localStorage.getItem("vpvie.hideSheets") === "1") { var s = document.querySelector(".nr-sheets"); if (s) s.classList.add("hidden"); } } catch (e) {} })();
   var AM = {
     library: function () { openLibrary(); },
     "new": newBook,
@@ -1222,6 +1223,7 @@
     addpage: function () { addPage(); },
     delpage: function () { delPage(); },
     toolbar: function () { document.querySelectorAll(".nr-row-tools, .nr-row-tools2").forEach(function (r) { r.classList.toggle("hidden"); }); },
+    sheetbar: function () { var s = document.querySelector(".nr-sheets"); if (!s) return; var hide = !s.classList.contains("hidden"); s.classList.toggle("hidden", hide); try { localStorage.setItem("vpvie.hideSheets", hide ? "1" : "0"); } catch (e) {} toast(hide ? "Đã ẩn thanh Sheet." : "Đã hiện thanh Sheet."); },
     license: function () { if ($("btn-license")) $("btn-license").click(); },
     update: function () {
       if (window.VPDesktop && window.VPDesktop.isApp && window.VPDesktop.checkUpdate) {

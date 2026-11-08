@@ -226,6 +226,7 @@ table.tf td{border:1px solid var(--line);padding:7px 10px}
 .nr-main{flex:1 1 auto;display:flex;min-height:0;overflow:hidden}
 .nr-side{width:150px;flex:0 0 auto;background:#FafbFc;border-right:1px solid var(--nrline);display:flex;flex-direction:column;overflow:hidden}
 .nr-side.hidden{display:none}
+.nr-sheets.hidden{display:none}
 .thumbs{flex:1 1 auto;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:10px}
 .thumb{border:2px solid var(--nrline);border-radius:6px;background:#fff;cursor:pointer;overflow:hidden;position:relative}
 .thumb.sel{border-color:var(--maroon)}
