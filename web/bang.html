@@ -772,6 +772,12 @@
     </div>
   </div>
 
+  <!-- Ghi chú riêng của giáo viên (ẩn khi trình chiếu) -->
+  <div id="teacher-note" class="tn-panel" hidden>
+    <div class="tn-bar"><span class="tn-ttl">📝 Ghi chú (chỉ giáo viên thấy)</span><button id="tn-close" class="tn-x">✕</button></div>
+    <textarea id="tn-text" class="tn-ta" placeholder="Ghi chú cho trang này: ý chính, câu hỏi gợi mở, lưu ý… Không hiện khi trình chiếu."></textarea>
+  </div>
+
   <!-- Xem tổng thể các trang -->
   <div id="page-grid" class="pg-overlay" hidden>
     <div class="pg-top"><h2 class="pg-h">Tất cả trang</h2><span id="pg-count" class="pg-count"></span><button id="pg-close" class="pg-close">✕ Đóng</button></div>
@@ -834,6 +840,7 @@
     <hr/>
     <div class="am-row"><span>Đến trang</span><input id="am-page" type="number" min="1" value="1"/><span>/ <b id="am-total">1</b></span><button id="am-goto" class="am-go">Áp dụng</button></div>
     <button class="am-item" data-am="pagegrid">Xem tổng thể trang</button>
+    <button class="am-item" data-am="notes">Ghi chú giáo viên (ẩn khi chiếu)</button>
     <button class="am-item" data-am="addpage">Thêm trang</button>
     <button class="am-item" data-am="delpage">Xóa trang</button>
     <button class="am-item" data-am="toolbar">Ẩn/hiện thanh công cụ</button>

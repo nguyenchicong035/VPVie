@@ -1108,11 +1108,12 @@
     "new": newBook,
     newwin: function () { try { window.open(location.href, "_blank"); } catch (e) {} },
     fullscreen: toggleFull,
-    present: function () { var s = $("nr-side"); if (s) s.classList.add("hidden"); toggleFull(); },
+    present: function () { var s = $("nr-side"); if (s) s.classList.add("hidden"); if (typeof hideNote === "function") hideNote(); toggleFull(); },
     curtain: function () { startTeach("curtain"); },
     spotlight: function () { startTeach("spotlight"); },
     history: function () { openHistory(); },
     pagegrid: function () { openPageGrid(); },
+    notes: function () { toggleNote(); },
     mindmap: function () { insertMindmap(); },
     chart: function () { insertChart(); },
     flash: function () { insertFlash(); },
@@ -2038,13 +2039,14 @@
 
   // ----- Trang & sổ bài giảng (lưu/mở)
   var pages = [blankPage()], cur = 0, saveTimer = null;
-  function blankPage() { return { items: [], geo: { points: [], shapes: [] }, overlays: [], bg: null }; }
-  function capture() { pages[cur] = { items: state.items, geo: { points: window.VPGeo.points, shapes: window.VPGeo.shapes }, overlays: state.overlays, bg: pages[cur] ? pages[cur].bg : null, thumb: pages[cur] ? pages[cur].thumb : null }; }
+  function blankPage() { return { items: [], geo: { points: [], shapes: [] }, overlays: [], bg: null, note: "" }; }
+  function capture() { pages[cur] = { items: state.items, geo: { points: window.VPGeo.points, shapes: window.VPGeo.shapes }, overlays: state.overlays, bg: pages[cur] ? pages[cur].bg : null, thumb: pages[cur] ? pages[cur].thumb : null, note: pages[cur] ? pages[cur].note : "" }; }
   function restore() {
     var pg = pages[cur] || blankPage();
     state.items = pg.items; state.overlays = pg.overlays; state.pageBg = pg.bg || null; state.selected = []; resetHist();
     window.VPGeo.points = pg.geo.points; window.VPGeo.shapes = pg.geo.shapes; window.VPGeo.sel = [];
     renderOverlays(); redraw(); updatePageLabel();
+    if (typeof refreshNote === "function") refreshNote();
   }
   function updatePageLabel() { var el = $("page-label"); if (el) el.textContent = (cur + 1) + " / " + pages.length; }
   function snapshotThumb() { try { var sm = document.createElement("canvas"); sm.width = 130; sm.height = Math.round(130 * canvas.clientHeight / canvas.clientWidth); sm.getContext("2d").drawImage(canvas, 0, 0, sm.width, sm.height); pages[cur].thumb = sm.toDataURL("image/jpeg", 0.5); } catch (e) {} }
@@ -2082,6 +2084,12 @@
   }
   function closePageGrid() { if ($("page-grid")) $("page-grid").hidden = true; }
   if ($("pg-close")) $("pg-close").onclick = closePageGrid;
+  // ----- Ghi chú riêng của giáo viên (theo trang, ẩn khi trình chiếu) -----
+  function refreshNote() { var ta = $("tn-text"); if (ta && pages[cur]) ta.value = pages[cur].note || ""; }
+  function toggleNote() { var panel = $("teacher-note"); if (!panel) return; panel.hidden = !panel.hidden; if (!panel.hidden) { refreshNote(); var ta = $("tn-text"); if (ta) ta.focus(); } }
+  function hideNote() { if ($("teacher-note")) $("teacher-note").hidden = true; }
+  if ($("tn-close")) $("tn-close").onclick = hideNote;
+  if ($("tn-text")) $("tn-text").addEventListener("input", function () { if (pages[cur]) { pages[cur].note = this.value; scheduleSave(); } });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && $("page-grid") && !$("page-grid").hidden) closePageGrid(); });
   function addPage() { capture(); snapshotThumb(); pages.splice(cur + 1, 0, blankPage()); cur++; restore(); makeThumbs(); scheduleSave(); }
   function delPage() { deletePageAt(cur); }
@@ -2166,7 +2174,7 @@
   }
   function loadBook(obj) {
     if (!obj || !obj.pages || !obj.pages.length) return;
-    pages = obj.pages.map(function (pg) { return { items: pg.items || [], geo: { points: (pg.geo && pg.geo.points) || [], shapes: (pg.geo && pg.geo.shapes) || [] }, overlays: pg.overlays || [], thumb: pg.thumb, bg: pg.bg || null }; });
+    pages = obj.pages.map(function (pg) { return { items: pg.items || [], geo: { points: (pg.geo && pg.geo.points) || [], shapes: (pg.geo && pg.geo.shapes) || [] }, overlays: pg.overlays || [], thumb: pg.thumb, bg: pg.bg || null, note: pg.note || "" }; });
     cur = Math.min(obj.cur || 0, pages.length - 1); restore(); makeThumbs();
   }
 

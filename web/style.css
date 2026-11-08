@@ -1026,3 +1026,16 @@ body.theme-dark .pg-h{color:#f0c7cf}
 body.theme-dark .pg-thumb{background:#23262e;border-color:#353a45}
 body.theme-dark .pg-no{color:#e6e8ee}
 body.theme-dark .pg-close{background:#2a2e38;color:#cdd2db}
+
+/* ===== Ghi chú riêng của giáo viên ===== */
+.tn-panel{position:fixed;left:14px;bottom:52px;z-index:60;width:300px;max-width:72vw;background:#fffdf4;border:1px solid #ecdca8;border-radius:12px;box-shadow:0 10px 30px rgba(20,24,40,.2);display:flex;flex-direction:column;overflow:hidden}
+.tn-panel[hidden]{display:none!important}
+.tn-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8efc8;border-bottom:1px solid #ecdca8}
+.tn-ttl{flex:1;font-size:12.5px;font-weight:700;color:#7a5a16}
+.tn-x{border:none;background:transparent;cursor:pointer;color:#8a7a48;font-size:14px;border-radius:6px;width:24px;height:24px}
+.tn-x:hover{background:#efe3bf}
+.tn-ta{border:none;outline:none;resize:vertical;min-height:120px;padding:10px 12px;font-size:14px;font-family:'Segoe UI',system-ui,sans-serif;background:#fffdf4;color:#5a4a1e;line-height:1.45}
+body.theme-dark .tn-panel{background:#2b2920;border-color:#4a442e}
+body.theme-dark .tn-bar{background:#332f1f}
+body.theme-dark .tn-ttl{color:#e8d9a0}
+body.theme-dark .tn-ta{background:#2b2920;color:#e8dcb0}
