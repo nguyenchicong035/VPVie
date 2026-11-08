@@ -861,3 +861,16 @@ body.theme-dark .cw-cell{background:#23262e;border-color:#3a404c;color:#e6e8ee}
 .pk-bag-burst{position:absolute;font-size:30px;color:#ffd23b;animation:pkburst .6s ease-out;pointer-events:none;text-shadow:0 0 8px #ffd23b}
 @keyframes pkburst{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.4);opacity:0}}
 .pk-confetti{border-radius:12px}
+
+/* ===== Xé túi mù: bảng kẹo "XÉ TÚI MÙ" ===== */
+.pk-bagboard{background:repeating-linear-gradient(#eef3fb 0 28px,#e3ebf6 28px 29px),repeating-linear-gradient(90deg,#eef3fb 0 28px,#e3ebf6 28px 29px);background-color:#eef3fb;border-radius:12px;padding:10px 12px 12px}
+.pk-bag-title{text-align:center;font-weight:900;font-size:22px;letter-spacing:2px;color:#d32f2f;text-shadow:1px 1px 0 #fff,2px 2px 0 rgba(0,0,0,.08);margin:2px 0 10px;font-family:'Segoe UI',system-ui,sans-serif}
+.pk-bags{grid-template-columns:repeat(3,1fr)}
+.pk-bag{aspect-ratio:1.5/1;border-radius:14px}
+.pk-bag-crimp{position:absolute;top:50%;width:11px;height:70%;transform:translateY(-50%);background:inherit;filter:brightness(.9)}
+.pk-bag-crimp.l{left:-6px;border-radius:40% 0 0 40%;clip-path:polygon(0 15%,100% 0,100% 100%,0 85%)}
+.pk-bag-crimp.r{right:-6px;border-radius:0 40% 40% 0;clip-path:polygon(0 0,100% 15%,100% 85%,0 100%)}
+.pk-bag-heart{position:absolute;font-size:30px;color:rgba(255,255,255,.92);line-height:1}
+.pk-bag .pk-bag-q{position:relative;z-index:2;color:#d32f2f;font-size:18px;text-shadow:0 1px 1px rgba(0,0,0,.15)}
+.pk-bag.open .pk-bag-heart{display:none}
+.pk-bag-nm{position:relative;z-index:2}
