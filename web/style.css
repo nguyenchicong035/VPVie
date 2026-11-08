@@ -966,3 +966,23 @@ body.theme-dark .mt-hdr{background:#2f343f;color:#cdd2db}
 body.theme-dark .mt-cell{background:#23262e;color:#51606c}
 body.theme-dark .mt-cell.on{background:#243126;color:#e6e8ee}
 body.theme-dark .mt-toggle{background:#2b2f37;color:#f0c7cf}
+
+/* ===== Chèn video ===== */
+.ov-video .ov-body{min-width:300px}
+.vd-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.vd-title{flex:1;font-weight:800;font-size:15px;color:#7a1020}
+.vd-mini{border:1px solid var(--line);background:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px}
+.vd-mini:hover{background:#f4f5f8}
+.vd-stage{width:360px;max-width:72vw}
+.vd-video,.vd-frame{display:block;width:100%;aspect-ratio:16/9;border:none;border-radius:10px;background:#000}
+.vd-note{font-size:12px;color:#98a1ae;margin-top:5px}
+.vd-form{display:flex;flex-direction:column;gap:8px;padding:6px 0}
+.vd-lab{font-size:13px;color:#51606c}
+.vd-inp,.vd-tin{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px}
+.vd-trim{display:flex;gap:8px}
+.vd-trim .vd-tin{flex:1;min-width:0}
+.vd-row{display:flex;gap:8px}
+.vd-btn{border:none;background:var(--maroon);color:#fff;border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:600;cursor:pointer}
+.vd-btn.ghost{background:#fff;color:#3a4150;border:1px solid var(--line)}
+.vd-btn:hover{filter:brightness(1.08)}
+body.theme-dark .vd-mini,body.theme-dark .vd-inp,body.theme-dark .vd-tin,body.theme-dark .vd-btn.ghost{background:#23262e;border-color:#353a45;color:#e6e8ee}
