@@ -772,6 +772,12 @@
     </div>
   </div>
 
+  <!-- Xem tổng thể các trang -->
+  <div id="page-grid" class="pg-overlay" hidden>
+    <div class="pg-top"><h2 class="pg-h">Tất cả trang</h2><span id="pg-count" class="pg-count"></span><button id="pg-close" class="pg-close">✕ Đóng</button></div>
+    <div id="pg-grid" class="pg-grid"></div>
+  </div>
+
   <!-- Thư viện sổ (màn hình đầu khi mở app) -->
   <div id="library" class="lib" hidden>
     <header class="lib-top">
@@ -827,6 +833,7 @@
     <button class="am-item" data-am="pdf">Xuất PDF</button>
     <hr/>
     <div class="am-row"><span>Đến trang</span><input id="am-page" type="number" min="1" value="1"/><span>/ <b id="am-total">1</b></span><button id="am-goto" class="am-go">Áp dụng</button></div>
+    <button class="am-item" data-am="pagegrid">Xem tổng thể trang</button>
     <button class="am-item" data-am="addpage">Thêm trang</button>
     <button class="am-item" data-am="delpage">Xóa trang</button>
     <button class="am-item" data-am="toolbar">Ẩn/hiện thanh công cụ</button>

@@ -1112,6 +1112,7 @@
     curtain: function () { startTeach("curtain"); },
     spotlight: function () { startTeach("spotlight"); },
     history: function () { openHistory(); },
+    pagegrid: function () { openPageGrid(); },
     mindmap: function () { insertMindmap(); },
     chart: function () { insertChart(); },
     flash: function () { insertFlash(); },
@@ -2063,6 +2064,25 @@
     });
   }
   function gotoPage(i) { capture(); snapshotThumb(); cur = Math.max(0, Math.min(pages.length - 1, i)); restore(); makeThumbs(); scheduleSave(); }
+  // ----- Xem tổng thể các trang (lưới) -----
+  function openPageGrid() {
+    capture(); snapshotThumb();
+    var grid = $("pg-grid"); if (!grid) return; grid.innerHTML = "";
+    if ($("pg-count")) $("pg-count").textContent = pages.length + " trang";
+    pages.forEach(function (pg, i) {
+      var card = document.createElement("div"); card.className = "pg-card" + (i === cur ? " current" : "");
+      var th = document.createElement("div"); th.className = "pg-thumb";
+      if (pg.thumb) { var im = document.createElement("img"); im.src = pg.thumb; th.appendChild(im); } else { th.classList.add("empty"); th.textContent = "Trống"; }
+      var no = document.createElement("div"); no.className = "pg-no"; no.textContent = "Trang " + (i + 1) + (i === cur ? " · đang xem" : "");
+      card.appendChild(th); card.appendChild(no);
+      card.onclick = function () { gotoPage(i); closePageGrid(); };
+      grid.appendChild(card);
+    });
+    $("page-grid").hidden = false;
+  }
+  function closePageGrid() { if ($("page-grid")) $("page-grid").hidden = true; }
+  if ($("pg-close")) $("pg-close").onclick = closePageGrid;
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && $("page-grid") && !$("page-grid").hidden) closePageGrid(); });
   function addPage() { capture(); snapshotThumb(); pages.splice(cur + 1, 0, blankPage()); cur++; restore(); makeThumbs(); scheduleSave(); }
   function delPage() { deletePageAt(cur); }
   function insertPageAt(i, after) { capture(); snapshotThumb(); var at = after ? i + 1 : i; pages.splice(at, 0, blankPage()); cur = at; restore(); makeThumbs(); scheduleSave(); }

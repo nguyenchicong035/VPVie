@@ -1003,3 +1003,26 @@ body.theme-dark .vd-mini,body.theme-dark .vd-inp,body.theme-dark .vd-tin,body.th
 body.theme-dark .al-cell,body.theme-dark .al-toggle{background:#23262e;border-color:#353a45;color:#e6e8ee}
 body.theme-dark .al-cell.on{background:#8a2436}
 body.theme-dark .al-big{background:#2b2630}
+
+/* ===== Xem tổng thể các trang ===== */
+.pg-overlay{position:fixed;inset:0;z-index:190;background:rgba(20,28,40,.5);display:flex;flex-direction:column}
+.pg-overlay[hidden]{display:none!important}
+.pg-top{display:flex;align-items:center;gap:14px;padding:16px 26px;background:#fff;border-bottom:1px solid #eef0f4}
+.pg-h{font-size:20px;font-weight:800;margin:0;color:#7a1020}
+.pg-count{color:#98a1ae;font-size:14px;flex:1}
+.pg-close{border:none;background:#f3f4f7;border-radius:20px;padding:8px 16px;font-size:14px;color:#3a4150;cursor:pointer;font-weight:600}
+.pg-close:hover{background:#e9ebf0}
+.pg-grid{flex:1;overflow:auto;padding:22px 26px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px;align-content:start;background:#fff}
+.pg-card{cursor:pointer}
+.pg-thumb{aspect-ratio:4/3;border:1.5px solid #e3e6ec;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(20,24,40,.06);display:flex;align-items:center;justify-content:center}
+.pg-thumb.empty{color:#c2c8d2;font-size:14px;background:#fafbfc}
+.pg-thumb img{width:100%;height:100%;object-fit:cover;object-position:top}
+.pg-card:hover .pg-thumb{border-color:#c7b2b8;box-shadow:0 6px 18px rgba(20,24,40,.14)}
+.pg-card.current .pg-thumb{border-color:#7a1020;box-shadow:0 0 0 2px #7a102033}
+.pg-no{margin-top:7px;font-size:13.5px;font-weight:600;color:#2b3340;text-align:center}
+.pg-card.current .pg-no{color:#7a1020}
+body.theme-dark .pg-top,body.theme-dark .pg-grid{background:#1d2027}
+body.theme-dark .pg-h{color:#f0c7cf}
+body.theme-dark .pg-thumb{background:#23262e;border-color:#353a45}
+body.theme-dark .pg-no{color:#e6e8ee}
+body.theme-dark .pg-close{background:#2a2e38;color:#cdd2db}
