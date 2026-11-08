@@ -926,3 +926,24 @@ body.theme-dark .ch-title{color:#e6e8ee}
 body.theme-dark .ch-canvas{background:#23262e;border-color:#353a45}
 body.theme-dark .ch-seg{background:#2f343f}
 body.theme-dark .ch-data{background:#23262e;border-color:#353a45;color:#e6e8ee}
+
+/* ===== Flashcard từ vựng ===== */
+.ov-flashcard .ov-body{min-width:260px}
+.fc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.fc-title{flex:1;font-weight:800;font-size:15px;color:#7a1020}
+.fc-mini{border:1px solid var(--line);background:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px}
+.fc-mini:hover{background:#f4f5f8}
+.fc-card{perspective:900px;cursor:pointer;margin:0 auto 10px;width:260px;height:150px}
+.fc-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.fc-card.flip .fc-inner{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;font-size:24px;font-weight:700;box-shadow:0 4px 16px rgba(20,24,40,.15)}
+.fc-front{background:linear-gradient(135deg,#eaf1ff,#dcebff);color:#1f3b66}
+.fc-back{background:linear-gradient(135deg,#fff0e0,#ffe6d0);color:#7a3b10;transform:rotateY(180deg)}
+.fc-nav{display:flex;align-items:center;justify-content:center;gap:10px}
+.fc-nb{border:1px solid var(--line);background:#fff;border-radius:9px;min-width:38px;height:34px;cursor:pointer;font-size:15px}
+.fc-nb:hover{background:#f4f5f8}
+.fc-cnt{font-weight:700;color:#51606c;min-width:48px;text-align:center}
+.fc-data{width:100%;margin-top:9px;min-height:60px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;resize:vertical}
+body.theme-dark .fc-mini,body.theme-dark .fc-nb,body.theme-dark .fc-data{background:#23262e;border-color:#353a45;color:#e6e8ee}
+body.theme-dark .fc-front{background:#243247;color:#cfe0ff}
+body.theme-dark .fc-back{background:#3a2a1e;color:#ffd9b0}
