@@ -351,6 +351,13 @@ table.ov-table td{border:1px solid #7a8792;min-width:46px;height:30px;padding:4p
 .sel-bar button{border:none;background:#fff;border-radius:6px;padding:5px 9px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink);white-space:nowrap}
 .sel-bar button:hover{background:#F0F2F4}
 .sel-bar button[data-act="del"]:hover{background:#fde8ea;color:var(--maroon)}
+.sel-bar .sb-oxyz{display:inline-flex;align-items:center;gap:3px}
+.sel-bar .sb-gnlabel{font-size:12px;color:#8a8f98;padding:0 4px 0 2px;font-weight:600}
+.sel-bar .sb-oxyz button{padding:5px 8px;font-weight:500}
+.sel-bar .sb-oxyz button.on{background:var(--maroon);color:#fff}
+.sel-bar .sb-div{width:1px;align-self:stretch;background:var(--nrline);margin:2px 4px}
+body.theme-dark .sel-bar{background:#23272e;border-color:#3a3f47}
+body.theme-dark .sel-bar button{background:#23272e;color:#e6e8eb}
 
 /* Thu gọn thanh công cụ */
 .nr-row{gap:2px;padding:3px 8px}

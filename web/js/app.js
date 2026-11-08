@@ -392,7 +392,18 @@
   function selUnionBox() { var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity; state.selected.forEach(function (i) { var it = state.items[i]; if (!it) return; var b = itemBox(it); if (b.minx < mnx) mnx = b.minx; if (b.miny < mny) mny = b.miny; if (b.maxx > mxx) mxx = b.maxx; if (b.maxy > mxy) mxy = b.maxy; }); return { minx: mnx, miny: mny, maxx: mxx, maxy: mxy }; }
   function updateSelBar() {
     var bar = document.getElementById("sel-bar"); if (!bar) return;
-    if (state.tool === "select" && state.selected && state.selected.length && !state.selBox) { var b = selUnionBox(); bar.style.left = Math.max(2, b.minx - 4) + "px"; bar.style.top = Math.max(2, b.miny - 66) + "px"; bar.classList.add("show"); var eb = bar.querySelector(".sb-edit"); if (eb) eb.hidden = !selEditable(); }
+    if (state.tool === "select" && state.selected && state.selected.length && !state.selBox) {
+      var b = selUnionBox(); bar.style.left = Math.max(2, b.minx - 4) + "px"; bar.style.top = Math.max(2, b.miny - 66) + "px"; bar.classList.add("show");
+      var isOxyz = selOxyzItem(); var eb = bar.querySelector(".sb-edit"); if (eb) eb.hidden = !selEditable();
+      var ox = bar.querySelector(".sb-oxyz"); if (ox) ox.hidden = !isOxyz;
+      bar.querySelectorAll('button[data-act="fill"],button[data-act="stroke"]').forEach(function (x) { x.hidden = !!isOxyz; });
+      if (isOxyz) {
+        var cv = (isOxyz.scene && isOxyz.scene.camera && isOxyz.scene.camera.view) || "3d";
+        bar.querySelectorAll(".sb-oxyz [data-oxv]").forEach(function (x) { x.classList.toggle("on", x.dataset.oxv === cv); });
+        var axb = bar.querySelector(".sb-oxyz [data-oxaxes]"); if (axb) axb.textContent = (isOxyz.scene && isOxyz.scene.display && isOxyz.scene.display.axes === false) ? "⊹ Hiện trục" : "⊹ Ẩn trục";
+        var spb = bar.querySelector(".sb-oxyz [data-oxspin]"); if (spb) spb.classList.toggle("on", oxSpin.item === isOxyz);
+      }
+    }
     else bar.classList.remove("show");
   }
   function hexToRgba(hex, a) {
@@ -1356,10 +1367,31 @@
     }
   };
   function selEditable() { return state.selected.length === 1 && state.items[state.selected[0]] && state.items[state.selected[0]].type === "oxyz"; }
+  function selOxyzItem() { if (state.selected.length !== 1) return null; var it = state.items[state.selected[0]]; return (it && it.type === "oxyz") ? it : null; }
   function runAct(act) { if (!selActions[act]) return; selActions[act](); redraw(); scheduleSave(); }
-  document.querySelectorAll("#sel-bar button").forEach(function (b) {
-    b.onclick = function (e) { e.stopPropagation(); runAct(b.dataset.act); };
+  // ===== Thanh công cụ Oxyz (góc nhìn / xoay 3D / ẩn trục) =====
+  var oxSpin = { item: null, raf: 0 };
+  function oxSpinStop() { if (oxSpin.raf) cancelAnimationFrame(oxSpin.raf); oxSpin.raf = 0; oxSpin.item = null; }
+  function oxSpinTick() {
+    var it = oxSpin.item;
+    if (!it || !it.scene || selOxyzItem() !== it) { oxSpinStop(); if (typeof redraw === "function") redraw(); return; }
+    if (it.scene.camera) { it.scene.camera.view = "3d"; it.scene.camera.yaw = (it.scene.camera.yaw || 0) + 0.02; }
+    redraw(); oxSpin.raf = requestAnimationFrame(oxSpinTick);
+  }
+  document.querySelectorAll("#sel-bar button[data-act]").forEach(function (b) {
+    b.onclick = function (e) { e.stopPropagation(); if (b.dataset.act === "edit") oxSpinStop(); runAct(b.dataset.act); };
   });
+  document.querySelectorAll("#sel-bar [data-oxv]").forEach(function (b) {
+    b.onclick = function (e) { e.stopPropagation(); var it = selOxyzItem(); if (!it || !window.VPOxyz) return; oxSpinStop(); pushHist(); it.scene.camera = Object.assign(window.VPOxyz.defaults().camera, { view: b.dataset.oxv }); if (it.scene.display) it.scene.display.auto = false; redraw(); scheduleSave(); updateSelBar(); };
+  });
+  var oxAxesBtn = document.querySelector("#sel-bar [data-oxaxes]");
+  if (oxAxesBtn) oxAxesBtn.onclick = function (e) { e.stopPropagation(); var it = selOxyzItem(); if (!it) return; pushHist(); it.scene.display = it.scene.display || {}; it.scene.display.axes = !(it.scene.display.axes !== false); redraw(); scheduleSave(); updateSelBar(); };
+  var oxSpinBtn = document.querySelector("#sel-bar [data-oxspin]");
+  if (oxSpinBtn) oxSpinBtn.onclick = function (e) {
+    e.stopPropagation(); var it = selOxyzItem(); if (!it) return;
+    if (oxSpin.item === it) { oxSpinStop(); } else { pushHist(); oxSpin.item = it; if (!oxSpin.raf) oxSpin.raf = requestAnimationFrame(oxSpinTick); }
+    updateSelBar();
+  };
   // Menu chuột phải (menu ngữ cảnh) trên bảng
   function showMenuAt(m, x, y) {
     document.querySelectorAll(".nr-menu.show").forEach(function (o) { if (o !== m) o.classList.remove("show"); });
