@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>VPVie Key Tool — Cấp key (offline)</title>
+<style>
+  :root{--maroon:#7a1020;--ink:#2B3138;--line:#E4E8EC;--bg:#f3f5f7}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Be Vietnam Pro',system-ui,Segoe UI,Arial,sans-serif;line-height:1.45}
+  .wrap{max-width:760px;margin:0 auto;padding:18px 16px 60px}
+  h1{color:var(--maroon);font-size:21px;margin:8px 0 2px}
+  .sub{color:#7a828b;font-size:13px;margin-bottom:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+  .card h2{font-size:15px;margin:0 0 10px;color:var(--maroon)}
+  label{display:block;font-size:13px;color:#55606b;margin:8px 0 3px}
+  input,select,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:14px;font-family:inherit;background:#fff}
+  textarea{resize:vertical;min-height:52px;word-break:break-all}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:120px}
+  button{border:none;border-radius:8px;padding:9px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .pri{background:var(--maroon);color:#fff}.pri:hover{background:#5e0c18}
+  .gh{background:#fff;border:1px solid var(--line);color:var(--ink)}.gh:hover{background:#f0f2f4}
+  .seg{display:flex;gap:6px;margin-bottom:10px}
+  .seg button{flex:1;background:#fff;border:1px solid var(--line);color:#55606b}
+  .seg button.on{background:#fbeef0;border-color:var(--maroon);color:var(--maroon)}
+  .out{background:#f7f8fa;border:1px dashed var(--line);border-radius:8px;padding:10px;font-size:12.5px;word-break:break-all;min-height:20px}
+  .mono{font-family:ui-monospace,Consolas,monospace}
+  .st{font-size:13px;padding:4px 10px;border-radius:20px;display:inline-block}
+  .st.ok{background:#e7f6ec;color:#1a7f37}.st.no{background:#fbeef0;color:var(--maroon)}
+  .hint{font-size:12px;color:#8a919a;margin-top:8px;line-height:1.5}
+  .logrow{font-size:12px;border-top:1px solid var(--line);padding:7px 0;display:flex;justify-content:space-between;gap:10px}
+  .logrow .k{color:#8a919a}
+  .hidden{display:none}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1f2937;color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head><body>
+<div class="wrap">
+  <h1>△ VPVie Key Tool</h1>
+  <div class="sub">Cấp key bản quyền <b>offline</b> — chỉ cần mở tệp này bằng trình duyệt, không cần cài đặt, không cần mạng.</div>
+
+  <div class="card">
+    <h2>1 · Khoá riêng</h2>
+    <div id="keyst" class="st no">Chưa có khoá</div>
+    <div class="row" style="margin-top:10px">
+      <button id="btn-gen" class="gh">✦ Tạo khoá mới</button>
+      <button id="btn-imp" class="gh">📥 Nhập khoá…</button>
+      <button id="btn-exp" class="gh">💾 Xuất khoá (sao lưu)</button>
+      <button id="btn-pub" class="gh">👁 Xem khoá công khai</button>
+    </div>
+    <input id="imp-file" type="file" accept=".b64,.txt,text/plain" class="hidden"/>
+    <div id="impbox" class="hidden" style="margin-top:10px">
+      <label>Dán khoá riêng (PKCS8 base64)</label>
+      <textarea id="imp-text" placeholder="MIGHAgEAMBMG..."></textarea>
+      <div class="row" style="margin-top:8px"><button id="imp-ok" class="pri">Nhập</button><button id="imp-cancel" class="gh">Hủy</button></div>
+    </div>
+    <div id="pubbox" class="hidden" style="margin-top:10px">
+      <label>⚠ Khoá công khai — dán vào <span class="mono">web/js/license.js</span> và <span class="mono">vpvie/license.py</span> rồi build lại app:</label>
+      <div id="pub" class="out mono"></div>
+      <button id="btn-copypub" class="gh" style="margin-top:8px">⧉ Chép khoá công khai</button>
+    </div>
+    <div class="hint">Khoá riêng lưu ngay trong trình duyệt này (localStorage) — nhớ cho lần sau. Hãy <b>Xuất khoá</b> để sao lưu nơi an toàn; ai có khoá riêng mới cấp được key.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Cấp key</h2>
+    <div class="seg">
+      <button data-tab="single" class="on">Gắn 1 máy</button>
+      <button data-tab="multi">Nhiều máy</button>
+    </div>
+    <div id="pane-single">
+      <label>Mã máy của người dùng (hiện ở màn hình Kích hoạt)</label>
+      <input id="s-mid" placeholder="VPV-XXXX-XXXX-XXXX" autocomplete="off"/>
+    </div>
+    <div id="pane-multi" class="hidden">
+      <label>Số máy tối đa</label>
+      <input id="m-max" type="number" min="1" value="5"/>
+      <div class="hint">Key nhiều máy: khi ngoại tuyến app chấp nhận nếu chữ ký hợp lệ (không đếm được số máy). Muốn giới hạn chặt số máy thì cần máy chủ.</div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>Gói</label><select id="k-plan"><option value="pro">pro</option><option value="edu">edu</option><option value="trial">trial</option></select></div>
+      <div><label>Số ngày (0 = vĩnh viễn)</label><input id="k-days" type="number" min="0" value="0"/></div>
+    </div>
+    <label>Ghi chú (tuỳ chọn)</label>
+    <input id="k-note" placeholder="VD: Thầy A - trường B"/>
+    <button id="btn-issue" class="pri" style="margin-top:12px;width:100%">🔑 Cấp key</button>
+    <div id="keyout" class="out mono" style="margin-top:10px">Key cấp ra sẽ hiện ở đây…</div>
+    <button id="btn-copykey" class="gh hidden" style="margin-top:8px">⧉ Chép key gửi người dùng</button>
+  </div>
+
+  <div class="card">
+    <h2>3 · Nhật ký key đã cấp</h2>
+    <div id="log"></div>
+    <button id="btn-clearlog" class="gh" style="margin-top:10px">🗑 Xoá nhật ký</button>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+// Khoá riêng nạp sẵn (chỉ có trong bản gửi riêng cho người phát hành; bản mã nguồn để trống).
+var SEEDED_PRIV = "";
+
+var LS_PRIV="vpvie.kt.priv", LS_LOG="vpvie.kt.log";
+var privKey=null, pubB64=null;
+function $(id){return document.getElementById(id);}
+function toast(t){var el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show");},1600);}
+function b64urlFromBytes(a){var s="";for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+function b64ToBytes(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";var bin=atob(s),a=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
+function utf8(s){return new TextEncoder().encode(s);}
+
+async function importPriv(pkcs8b64){
+  var der=b64ToBytes(pkcs8b64);
+  var k=await crypto.subtle.importKey("pkcs8",der,{name:"ECDSA",namedCurve:"P-256"},true,["sign"]);
+  return k;
+}
+async function pubFromPriv(k){
+  var jwk=await crypto.subtle.exportKey("jwk",k);
+  var pj={kty:"EC",crv:"P-256",x:jwk.x,y:jwk.y,ext:true};
+  var pub=await crypto.subtle.importKey("jwk",pj,{name:"ECDSA",namedCurve:"P-256"},true,["verify"]);
+  var spki=new Uint8Array(await crypto.subtle.exportKey("spki",pub));
+  return b64urlFromBytes(spki);
+}
+async function setPrivFromB64(pkcs8b64){
+  privKey=await importPriv(pkcs8b64);
+  pubB64=await pubFromPriv(privKey);
+  try{localStorage.setItem(LS_PRIV,pkcs8b64);}catch(e){}
+  refreshKeyUI();
+}
+function refreshKeyUI(){
+  var has=!!privKey;
+  $("keyst").className="st "+(has?"ok":"no");
+  $("keyst").textContent=has?"✓ Đã có khoá riêng — sẵn sàng cấp key":"Chưa có khoá";
+  $("btn-exp").disabled=!has;$("btn-pub").disabled=!has;
+}
+
+$("btn-gen").onclick=async function(){
+  if(privKey && !confirm("Tạo khoá MỚI sẽ thay khoá hiện tại. Key đã cấp bằng khoá cũ sẽ không còn kích hoạt được (trừ khi bạn giữ khoá cũ). Tiếp tục?"))return;
+  var kp=await crypto.subtle.generateKey({name:"ECDSA",namedCurve:"P-256"},true,["sign","verify"]);
+  var pkcs8=new Uint8Array(await crypto.subtle.exportKey("pkcs8",kp.privateKey));
+  await setPrivFromB64(btoa(String.fromCharCode.apply(null,pkcs8)));
+  $("pubbox").classList.remove("hidden");$("pub").textContent=pubB64;
+  toast("Đã tạo khoá mới. Nhớ dán khoá công khai vào app!");
+};
+$("btn-imp").onclick=function(){$("impbox").classList.toggle("hidden");};
+$("imp-cancel").onclick=function(){$("impbox").classList.add("hidden");};
+$("imp-ok").onclick=async function(){
+  var v=$("imp-text").value.trim();if(!v)return;
+  try{await setPrivFromB64(v);$("impbox").classList.add("hidden");$("imp-text").value="";toast("Đã nhập khoá.");}
+  catch(e){toast("Khoá không hợp lệ.");}
+};
+$("imp-file").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){$("imp-text").value=(r.result||"").trim();$("impbox").classList.remove("hidden");};r.readAsText(f);};
+$("btn-exp").onclick=function(){
+  var v="";try{v=localStorage.getItem(LS_PRIV)||"";}catch(e){}
+  if(!v){toast("Chưa có khoá.");return;}
+  var blob=new Blob([v],{type:"text/plain"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="vpvie-private-key.b64";a.click();
+  toast("Đã tải tệp sao lưu khoá riêng.");
+};
+$("btn-pub").onclick=function(){if(!pubB64){toast("Chưa có khoá.");return;}$("pubbox").classList.remove("hidden");$("pub").textContent=pubB64;};
+$("btn-copypub").onclick=function(){navigator.clipboard&&navigator.clipboard.writeText(pubB64);toast("Đã chép khoá công khai.");};
+
+// Tabs
+var tab="single";
+document.querySelectorAll(".seg button").forEach(function(b){b.onclick=function(){tab=b.dataset.tab;document.querySelectorAll(".seg button").forEach(function(x){x.classList.toggle("on",x===b);});$("pane-single").classList.toggle("hidden",tab!=="single");$("pane-multi").classList.toggle("hidden",tab!=="multi");};});
+
+function randHex(n){var s="";var a=crypto.getRandomValues(new Uint8Array(n));for(var i=0;i<n;i++)s+=a[i].toString(16).padStart(2,"0");return s;}
+async function sign(payloadObj){
+  var bytes=utf8(JSON.stringify(payloadObj));
+  var sig=new Uint8Array(await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},privKey,bytes));
+  return "VPL1."+b64urlFromBytes(bytes)+"."+b64urlFromBytes(sig);
+}
+$("btn-issue").onclick=async function(){
+  if(!privKey){toast("Chưa có khoá riêng. Hãy Tạo/Nhập khoá trước.");return;}
+  var days=parseInt($("k-days").value,10)||0, plan=$("k-plan").value, note=$("k-note").value.trim();
+  var e=days>0?Math.floor(Date.now()/1000)+days*86400:0;
+  var payload, kind, who;
+  if(tab==="single"){
+    var mid=($("s-mid").value||"").trim().toUpperCase();
+    if(!/^VPV-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(mid)){toast("Mã máy chưa đúng dạng VPV-XXXX-XXXX-XXXX.");return;}
+    payload={m:mid,p:plan,e:e};kind="1 máy";who=mid;
+  }else{
+    var maxm=parseInt($("m-max").value,10)||1;
+    payload={id:randHex(8),p:plan,e:e,maxm:maxm};kind=maxm+" máy";who="id:"+payload.id;
+  }
+  if(note)payload.n=note;
+  var key=await sign(payload);
+  $("keyout").textContent=key;$("btn-copykey").classList.remove("hidden");
+  addLog({t:Date.now(),kind:kind,who:who,plan:plan,e:e,key:key});
+  toast("Đã cấp key. Bấm Chép để gửi người dùng.");
+};
+$("btn-copykey").onclick=function(){navigator.clipboard&&navigator.clipboard.writeText($("keyout").textContent);toast("Đã chép key.");};
+
+// Log
+function loadLog(){try{return JSON.parse(localStorage.getItem(LS_LOG)||"[]");}catch(e){return[];}}
+function saveLog(a){try{localStorage.setItem(LS_LOG,JSON.stringify(a.slice(-200)));}catch(e){}}
+function addLog(rec){var a=loadLog();a.push(rec);saveLog(a);renderLog();}
+function renderLog(){
+  var a=loadLog().slice().reverse(),h="";
+  if(!a.length)h='<div class="hint">Chưa cấp key nào.</div>';
+  a.forEach(function(r){var d=new Date(r.t);var exp=r.e?new Date(r.e*1000).toLocaleDateString("vi"):"vĩnh viễn";
+    h+='<div class="logrow"><span><b>'+r.kind+'</b> · '+r.who+' <span class="k">('+r.plan+', '+exp+')</span></span><span class="k">'+d.toLocaleString("vi")+'</span></div>';});
+  $("log").innerHTML=h;
+}
+$("btn-clearlog").onclick=function(){if(confirm("Xoá toàn bộ nhật ký?")){saveLog([]);renderLog();}};
+
+// Khởi động
+(async function(){
+  var stored="";try{stored=localStorage.getItem(LS_PRIV)||"";}catch(e){}
+  var seed=(SEEDED_PRIV||"").trim();
+  if(!stored && seed){ try{await setPrivFromB64(seed);}catch(e){} }
+  else if(stored){ try{await setPrivFromB64(stored);}catch(e){} }
+  refreshKeyUI();renderLog();
+  if(!crypto||!crypto.subtle)toast("Trình duyệt không hỗ trợ mã hoá. Hãy mở bằng Chrome/Edge/Firefox/Safari mới.");
+})();
+$("imp-text") && ($("btn-imp").insertAdjacentElement("afterend",$("imp-file")));
+</script>
+</body></html>

@@ -23,7 +23,7 @@ from cryptography.exceptions import InvalidSignature
 # Khoá công khai (SPKI, base64url) — PHẢI trùng với PUBKEY_SPKI_B64URL trong web/js/license.js
 PUBKEY_SPKI_B64URL = os.environ.get(
     "VPVIE_PUBKEY",
-    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAESxiHdNT7DPa3mjwhc4DKeS7-LvWt2mtmiiBXCp07Ocfw6i_ldz4quXg1jGLM7vq1dQmQDGMAmyBgUihOxZD38w",
+    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEw-XYenjAgtS9dLMRDV0oG_OkMV9YIsUIXs2wFDn7reqlAe-Jbdme_08sjzEmc5wlyI46iXa8oj1x084G9CRZ6Q",
 )
 
 

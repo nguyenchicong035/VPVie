@@ -8,7 +8,7 @@
   "use strict";
 
   // === Khoá công khai của VPVie (SPKI, base64url). Thay bằng khoá của bạn khi tự phát hành. ===
-  var PUBKEY_SPKI_B64URL = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAESxiHdNT7DPa3mjwhc4DKeS7-LvWt2mtmiiBXCp07Ocfw6i_ldz4quXg1jGLM7vq1dQmQDGMAmyBgUihOxZD38w";
+  var PUBKEY_SPKI_B64URL = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEw-XYenjAgtS9dLMRDV0oG_OkMV9YIsUIXs2wFDn7reqlAe-Jbdme_08sjzEmc5wlyI46iXa8oj1x084G9CRZ6Q";
 
   var STORE = "vpvie.license";       // key đã kích hoạt (localStorage)
   var SALT = "VPVie-machine-v1";      // trộn vào vân tay
@@ -113,7 +113,12 @@
       });
       var d = {}; try { d = await res.json(); } catch (e) {}
       if (res.ok && d.ok) return { ok: true, used: d.used, maxm: d.maxm, plan: d.plan, expiry: d.expiry };
-      return { ok: false, reason: d.error || "Máy chủ từ chối kích hoạt", server: true, used: d.used, maxm: d.maxm };
+      // Máy chủ cấp phép CÓ TỒN TẠI và từ chối có lý do rõ ràng (vượt số máy, thu hồi…)
+      if ((res.status === 400 || res.status === 403 || res.status === 409) && d && d.error) {
+        return { ok: false, reason: d.error, server: true, used: d.used, maxm: d.maxm };
+      }
+      // Không có endpoint cấp phép (404/405/5xx hoặc không phải JSON) → coi như NGOẠI TUYẾN
+      return { ok: false, offline: true };
     } catch (e) { return { ok: false, offline: true }; }
   }
 

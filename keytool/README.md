@@ -23,3 +23,10 @@ npm run dist:win    # ra keytool/dist/VPVie Key Tool Setup.exe
 
 > Key do công cụ này cấp dùng chung cơ chế ký ECDSA P-256 với VPVie nên kích hoạt
 > được ngay (đã kiểm chứng verify khớp khoá công khai trong app).
+
+## Bản nhẹ: Key Tool chạy trên trình duyệt (keytool.html)
+Ngoài bản Electron, có **`keytool/keytool.html`** — mở bằng trình duyệt là dùng, **cấp key offline**, nhẹ vài chục KB, không cần cài đặt:
+- **Khoá riêng**: Tạo khoá mới / Nhập khoá (PKCS8 base64) / Xuất khoá sao lưu / Xem khoá công khai. Khoá lưu trong trình duyệt (localStorage).
+- **Cấp key**: *Gắn 1 máy* (nhập Mã máy) hoặc *Nhiều máy* (số máy tối đa) → ký ECDSA P-256 (Web Crypto, định dạng raw khớp bộ kiểm trong app) → key `VPL1...`.
+- Dùng cùng khoá công khai đã nhúng trong `web/js/license.js` + `vpvie/license.py`.
+> Lần đầu dùng bản mã nguồn: bấm **Tạo khoá mới**, chép **khoá công khai** dán vào 2 tệp trên rồi build lại app. (Người phát hành được gửi sẵn bản đã nạp khoá để dùng ngay.)
