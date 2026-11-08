@@ -2065,7 +2065,13 @@
       host.appendChild(wrap);
     });
   }
-  function gotoPage(i) { capture(); snapshotThumb(); cur = Math.max(0, Math.min(pages.length - 1, i)); restore(); makeThumbs(); scheduleSave(); }
+  function gotoPage(i) { var dir = i > cur ? "next" : (i < cur ? "prev" : null); capture(); snapshotThumb(); cur = Math.max(0, Math.min(pages.length - 1, i)); restore(); makeThumbs(); scheduleSave(); if (dir) pageAnim(dir); }
+  function pageAnim(dir) {
+    var b = document.getElementById("board"); if (!b || (state.opt && state.opt.pageAnim === false)) return;
+    b.classList.remove("pg-slide-next", "pg-slide-prev"); void b.offsetWidth;
+    b.classList.add(dir === "next" ? "pg-slide-next" : "pg-slide-prev");
+    setTimeout(function () { b.classList.remove("pg-slide-next", "pg-slide-prev"); }, 340);
+  }
   // ----- Xem tổng thể các trang (lưới) -----
   function openPageGrid() {
     capture(); snapshotThumb();

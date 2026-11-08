@@ -1039,3 +1039,9 @@ body.theme-dark .tn-panel{background:#2b2920;border-color:#4a442e}
 body.theme-dark .tn-bar{background:#332f1f}
 body.theme-dark .tn-ttl{color:#e8d9a0}
 body.theme-dark .tn-ta{background:#2b2920;color:#e8dcb0}
+
+/* ===== Hiệu ứng chuyển trang (nhẹ) ===== */
+.board.pg-slide-next{animation:pgNext .32s ease}
+.board.pg-slide-prev{animation:pgPrev .32s ease}
+@keyframes pgNext{0%{opacity:.35;transform:translateX(26px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes pgPrev{0%{opacity:.35;transform:translateX(-26px)}100%{opacity:1;transform:translateX(0)}}
