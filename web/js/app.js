@@ -604,6 +604,7 @@
     else if (kind === "flashcard") { data._save = scheduleSave; window.VPFlash.build(body, data); }
     else if (kind === "multab") { data._save = scheduleSave; window.VPMultab.build(body, data); }
     else if (kind === "video") { data._save = scheduleSave; window.VPVideo.build(body, data); }
+    else if (kind === "alpha") { data._save = scheduleSave; window.VPAlpha.build(body, data); }
     else if (kind === "ptable") window.VPScience.buildPTable(body);
     else if (kind === "chem") window.VPScience.buildChem(body);
     else if (kind === "circuit" || kind === "force" || kind === "pedigree" || kind === "dna") { data._save = scheduleSave; window.VPDiagram.build(body, kind, data); }
@@ -842,6 +843,7 @@
   function insertFlash(x, y) { addOverlayData("flashcard", {}, x != null ? x : 120, y != null ? y : 90); }
   function insertMultab(x, y) { addOverlayData("multab", {}, x != null ? x : 120, y != null ? y : 80); }
   function insertVideo(x, y) { addOverlayData("video", {}, x != null ? x : 130, y != null ? y : 90); }
+  function insertAlpha(x, y) { addOverlayData("alpha", {}, x != null ? x : 120, y != null ? y : 80); }
   var quizNo = 0;
   function insertQuiz(data, kind, x, y) {
     quizNo += 1; data.no = quizNo; data.sub = kind;
@@ -1115,6 +1117,7 @@
     flash: function () { insertFlash(); },
     multab: function () { insertMultab(); },
     video: function () { insertVideo(); },
+    alpha: function () { insertAlpha(); },
     open: function () { openBookFile(); },
     save: function () { saveLocal(); toast("Đã lưu sổ (trên máy này)."); },
     saveas: function () { downloadBook(); },

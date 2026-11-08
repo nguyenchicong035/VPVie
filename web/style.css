@@ -986,3 +986,20 @@ body.theme-dark .mt-toggle{background:#2b2f37;color:#f0c7cf}
 .vd-btn.ghost{background:#fff;color:#3a4150;border:1px solid var(--line)}
 .vd-btn:hover{filter:brightness(1.08)}
 body.theme-dark .vd-mini,body.theme-dark .vd-inp,body.theme-dark .vd-tin,body.theme-dark .vd-btn.ghost{background:#23262e;border-color:#353a45;color:#e6e8ee}
+
+/* ===== Bảng chữ cái tương tác ===== */
+.ov-alpha .ov-body{min-width:300px}
+.al-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.al-title{flex:1;font-weight:800;font-size:15px;color:#7a1020}
+.al-toggle{border:1px solid var(--maroon);background:#fff;color:var(--maroon);border-radius:8px;padding:5px 11px;font-size:13px;font-weight:600;cursor:pointer}
+.al-toggle:hover{background:var(--maroon);color:#fff}
+.al-big{display:flex;align-items:baseline;justify-content:center;gap:14px;background:linear-gradient(135deg,#fff4e0,#ffe6ef);border-radius:14px;padding:10px 6px;margin-bottom:10px}
+.al-big .al-up{font-size:64px;font-weight:800;color:#7a1020;font-family:'Patrick Hand','Be Vietnam Pro',cursive;line-height:1}
+.al-big .al-lo{font-size:64px;font-weight:700;color:#1f6fb0;font-family:'Patrick Hand','Be Vietnam Pro',cursive;line-height:1}
+.al-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.al-cell{border:1px solid var(--line);background:#fff;border-radius:9px;height:34px;font-size:17px;font-weight:700;cursor:pointer;color:#2b3340;font-family:'Patrick Hand','Be Vietnam Pro',cursive}
+.al-cell:hover{background:#eef4fb}
+.al-cell.on{background:#7a1020;color:#fff;border-color:#7a1020}
+body.theme-dark .al-cell,body.theme-dark .al-toggle{background:#23262e;border-color:#353a45;color:#e6e8ee}
+body.theme-dark .al-cell.on{background:#8a2436}
+body.theme-dark .al-big{background:#2b2630}
