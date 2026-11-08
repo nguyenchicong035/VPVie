@@ -70,7 +70,7 @@
   function render(el, latex) {
     el.innerHTML = "";
     if (state.mode === "text") { el.textContent = latex; }
-    else { try { global.katex.render(latex || "\\;", el, { throwOnError: false, displayMode: state.display }); } catch (e) { el.textContent = latex; } }
+    else { try { global.VPMathPlot.renderMath(el, latex || "\\;", state.display); } catch (e) { el.textContent = latex; } }
     el.style.color = state.color;
   }
 
@@ -100,7 +100,7 @@
       else { var c = CATS.filter(function (x) { return x.key === state.cat; })[0]; list = c ? c.items : []; }
       list.forEach(function (it) {
         var b = document.createElement("button"); b.className = "fsym"; b.title = it[1];
-        try { global.katex.render(it[1].replace(/\{\}/g, "{\\square}"), b, { throwOnError: false }); } catch (e) { b.textContent = it[0]; }
+        try { global.VPMathPlot.renderMath(b, it[1].replace(/\{\}/g, "{\\square}"), false); } catch (e) { b.textContent = it[0]; }
         b.onmousedown = function (e) { e.preventDefault(); };
         b.onclick = function () { insertSnippet(inp, it[1], preview); };
         grid.appendChild(b);
@@ -110,7 +110,7 @@
     quick.innerHTML = "";
     QUICK.forEach(function (it) {
       var b = document.createElement("button"); b.className = "fquick"; b.title = it[1];
-      try { global.katex.render(it[1].replace(/\{\}/g, "{\\square}"), b, { throwOnError: false }); } catch (e) { b.textContent = it[0]; }
+      try { global.VPMathPlot.renderMath(b, it[1].replace(/\{\}/g, "{\\square}"), false); } catch (e) { b.textContent = it[0]; }
       b.onmousedown = function (e) { e.preventDefault(); };
       b.onclick = function () { insertSnippet(inp, it[1], preview); };
       quick.appendChild(b);

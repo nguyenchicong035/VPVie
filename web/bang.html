@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>VPVie – Bảng dạy học</title>
   <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="oxyz.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#7a1020" />
@@ -80,6 +81,7 @@
     <button id="btn-solid" class="nr-ic" title="Hình không gian 3D"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="M4 7.5 12 12l8-4.5"/><path d="M12 12v9"/></svg></button>
     <button id="btn-plot" class="nr-ic" title="Đồ thị hàm số"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16"/><polyline points="6.5,15.5 10.5,11 13.5,13 20,5.5"/></svg></button>
     <button id="btn-table" class="nr-ic" title="Chèn bảng"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10h16M4 14.5h16M9.5 5v14M14.5 5v14"/></svg></button>
+    <button id="btn-oxyz" class="nr-ic" title="Hình học không gian Oxyz (3D)" aria-label="Hình học không gian Oxyz (3D)"><svg width="25" height="25" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V3m0 13h13M12 16l-8 8M9 6l3-3 3 3M22 13l3 3-3 3M4 20v4h4"/><circle cx="12" cy="16" r="2" fill="currentColor"/><path d="m17 7 4 4"/><circle cx="17" cy="7" r="1.5"/></svg></button>
     <button id="btn-var" class="nr-ic" title="Bảng biến thiên / xét dấu"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10.5h16M10 5v5.5"/><path d="M11 17 17.5 12m0 0h-3m3 0v3"/></svg></button>
     <button id="btn-math" class="nr-ic" title="Công thức Toán (LaTeX)"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 5H7l5.5 7L7 19h10"/></svg></button>
     <button id="btn-textbox" class="nr-ic" title="Khung văn bản"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="1.8"/><path d="M7.5 9.5h9M7.5 12.5h9M7.5 15.5h5.5"/></svg></button>
@@ -857,7 +859,6 @@
   <script src="js/tools-geo.js"></script>
   <script src="js/tools-quiz.js"></script>
   <script src="js/tools-class.js"></script>
-  <script src="js/tools-quiz.js"></script>
   <script src="js/tools-mindmap.js"></script>
   <script src="js/tools-chart.js"></script>
   <script src="js/tools-flash.js"></script>
@@ -866,6 +867,8 @@
   <script src="js/tools-diagram.js"></script>
   <script src="js/tools-formula.js"></script>
   <script src="js/tools-solid.js"></script>
+  <script src="js/oxyz-math.js"></script>
+  <script src="js/tools-oxyz.js"></script>
   <script src="js/tools-var.js"></script>
   <script src="js/tools-ruler.js"></script>
   <script src="js/tools-export.js"></script>

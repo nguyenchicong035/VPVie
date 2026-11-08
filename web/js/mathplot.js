@@ -4,7 +4,13 @@
 
   function renderMath(el, latex, displayMode) {
     try {
-      global.katex.render(latex, el, { throwOnError: false, displayMode: !!displayMode });
+      global.katex.render(latex, el, {
+        throwOnError: false,
+        displayMode: !!displayMode,
+        // KaTeX 0.16.11 does not provide \dddot. Keep the original LaTeX
+        // in saved books and expand it only when rendering, including nested bases.
+        macros: { "\\dddot": "\\overset{\\cdots}{#1}" }
+      });
       return true;
     } catch (e) {
       el.textContent = latex;
