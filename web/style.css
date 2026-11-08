@@ -912,3 +912,17 @@ body.theme-dark .hist-info b{color:#e6e8ee}
 body.theme-dark .mm{background:transparent}
 body.theme-dark .mm-node{background:#2a2e38}
 body.theme-dark .mm-txt{color:#e6e8ee}
+
+/* ===== Biểu đồ số liệu ===== */
+.ov-chart .ov-body{min-width:300px}
+.ch-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ch-title{flex:1;font-weight:800;font-size:15px;color:#1f2733;outline:none;cursor:text;min-width:40px}
+.ch-seg{display:flex;background:#eef1f5;border-radius:16px;padding:2px}
+.ch-seg button{border:none;background:transparent;border-radius:14px;padding:4px 11px;font-size:12.5px;color:#51606c;cursor:pointer}
+.ch-seg button.on{background:#fff;color:#7a1020;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.ch-canvas{display:block;width:100%;max-width:380px;background:#fff;border:1px solid #eef1f5;border-radius:8px}
+.ch-data{width:100%;margin-top:8px;min-height:60px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;font-family:Consolas,monospace;resize:vertical}
+body.theme-dark .ch-title{color:#e6e8ee}
+body.theme-dark .ch-canvas{background:#23262e;border-color:#353a45}
+body.theme-dark .ch-seg{background:#2f343f}
+body.theme-dark .ch-data{background:#23262e;border-color:#353a45;color:#e6e8ee}

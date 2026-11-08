@@ -585,6 +585,7 @@
     else if (kind === "quizgame") window.VPQuiz2.buildPlayer(body, data);
     else if (kind === "crossword") window.VPQuiz2.buildCrossword(body, data);
     else if (kind === "mindmap") { data._save = scheduleSave; window.VPMindmap.build(body, data); }
+    else if (kind === "chart") { data._save = scheduleSave; window.VPChart.build(body, data); }
     else if (kind === "ptable") window.VPScience.buildPTable(body);
     else if (kind === "chem") window.VPScience.buildChem(body);
     else if (kind === "circuit" || kind === "force" || kind === "pedigree" || kind === "dna") { data._save = scheduleSave; window.VPDiagram.build(body, kind, data); }
@@ -819,6 +820,7 @@
   function insertAttend(x, y) { addOverlayData("attend", {}, x, y); }
   function insertScore(x, y) { addOverlayData("score", {}, x, y); }
   function insertMindmap(x, y) { addOverlayData("mindmap", {}, x != null ? x : 80, y != null ? y : 70); }
+  function insertChart(x, y) { addOverlayData("chart", {}, x != null ? x : 110, y != null ? y : 80); }
   var quizNo = 0;
   function insertQuiz(data, kind, x, y) {
     quizNo += 1; data.no = quizNo; data.sub = kind;
@@ -1088,6 +1090,7 @@
     spotlight: function () { startTeach("spotlight"); },
     history: function () { openHistory(); },
     mindmap: function () { insertMindmap(); },
+    chart: function () { insertChart(); },
     open: function () { openBookFile(); },
     save: function () { saveLocal(); toast("Đã lưu sổ (trên máy này)."); },
     saveas: function () { downloadBook(); },
