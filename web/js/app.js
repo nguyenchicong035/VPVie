@@ -1050,7 +1050,10 @@
   };
   if ($("ai-opts")) $("ai-opts").addEventListener("click", function (e) { e.stopPropagation(); });
   // Thước kẻ / đo góc
-  if ($("btn-ruler")) $("btn-ruler").onclick = function () { var on = window.VPRuler.toggle(board); this.classList.toggle("active", on); };
+  if ($("btn-ruler")) $("btn-ruler").onclick = function (e) { var r = this.getBoundingClientRect(); showMenuAt($("ruler-menu"), r.left, r.bottom + 4); e.stopPropagation(); };
+  document.querySelectorAll("#ruler-menu [data-ruler]").forEach(function (b) {
+    b.onclick = function () { $("ruler-menu").classList.remove("show"); var on = window.VPRuler.show(board, b.dataset.ruler); if ($("btn-ruler")) $("btn-ruler").classList.toggle("active", on); };
+  });
   // Hiện/ẩn danh sách trang
   if ($("btn-sidebar")) $("btn-sidebar").onclick = function () { var s = $("nr-side"); s.classList.toggle("hidden"); this.classList.toggle("active", !s.classList.contains("hidden")); };
   // ===== Menu ứng dụng (nút ☰) =====

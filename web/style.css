@@ -874,3 +874,10 @@ body.theme-dark .cw-cell{background:#23262e;border-color:#3a404c;color:#e6e8ee}
 .pk-bag .pk-bag-q{position:relative;z-index:2;color:#d32f2f;font-size:18px;text-shadow:0 1px 1px rgba(0,0,0,.15)}
 .pk-bag.open .pk-bag-heart{display:none}
 .pk-bag-nm{position:relative;z-index:2}
+
+/* ===== Êke / Thước đo góc / Compa: thân trong suốt, chỉ hiện hình vẽ ===== */
+.nr-proto .rl-body,.nr-square .rl-body,.nr-compass .rl-body{background:transparent;border:none;box-shadow:none}
+.nr-proto .rl-ticks,.nr-square .rl-ticks,.nr-compass .rl-ticks{filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
+.nr-proto .rl-ang,.nr-square .rl-ang{bottom:auto;top:2px;left:auto;right:36px;color:#7a1020}
+.nr-proto .rl-rot,.nr-square .rl-rot{right:4px;top:4px;transform:none;width:26px;height:26px;font-size:13px}
+.nr-compass .rl-size{transform:none}
