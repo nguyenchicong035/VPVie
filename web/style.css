@@ -947,3 +947,24 @@ body.theme-dark .ch-data{background:#23262e;border-color:#353a45;color:#e6e8ee}
 body.theme-dark .fc-mini,body.theme-dark .fc-nb,body.theme-dark .fc-data{background:#23262e;border-color:#353a45;color:#e6e8ee}
 body.theme-dark .fc-front{background:#243247;color:#cfe0ff}
 body.theme-dark .fc-back{background:#3a2a1e;color:#ffd9b0}
+
+/* ===== Bảng cửu chương tương tác ===== */
+.ov-multab .ov-body{min-width:300px}
+.mt-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mt-title{flex:1;font-weight:800;font-size:15px;color:#7a1020}
+.mt-toggle{border:1px solid var(--maroon);background:#fff;color:var(--maroon);border-radius:8px;padding:5px 11px;font-size:13px;font-weight:600;cursor:pointer}
+.mt-toggle:hover{background:var(--maroon);color:#fff}
+.mt-tbl{border-collapse:collapse;margin:0 auto}
+.mt-tbl td{width:30px;height:28px;text-align:center;font-size:13px;border:1px solid #e3e7ee;user-select:none}
+.mt-corner{background:#7a1020;color:#fff;font-weight:800;border-radius:6px 0 0 0}
+.mt-hdr{background:#f1f2f6;color:#51606c;font-weight:800}
+.mt-hdr.hl{background:#ffe08a;color:#7a4a00}
+.mt-cell{cursor:pointer;color:#cdd3dc;background:#fff}
+.mt-cell.on{color:#1f2733;font-weight:700;background:#f6faf7}
+.mt-cell.hl{background:#fff2c2!important;color:#7a1020;font-weight:800;outline:2px solid #e3b64a}
+.mt-cell:hover{background:#eef4fb}
+body.theme-dark .mt-tbl td{border-color:#353a45}
+body.theme-dark .mt-hdr{background:#2f343f;color:#cdd2db}
+body.theme-dark .mt-cell{background:#23262e;color:#51606c}
+body.theme-dark .mt-cell.on{background:#243126;color:#e6e8ee}
+body.theme-dark .mt-toggle{background:#2b2f37;color:#f0c7cf}
