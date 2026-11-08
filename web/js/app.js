@@ -1190,6 +1190,38 @@
   if ($("lib-search")) $("lib-search").oninput = function () { renderLibrary(); };
   if ($("lib-proj-new")) $("lib-proj-new").onclick = function () { newProject(); };
   if ($("lib-openstart")) $("lib-openstart").onchange = function () { lib.openOnStart = this.checked; libSave(); };
+  // ----- Sao lưu / khôi phục toàn bộ thư viện -----
+  function exportBackup() {
+    persistCurrent();
+    var books = {}; (lib.books || []).forEach(function (m) { try { books[m.id] = localStorage.getItem(bookKey(m.id)) || ""; } catch (e) {} });
+    var pack = { v: 1, type: "vpvie-backup", date: new Date().toISOString(), lib: lib, books: books };
+    try { pack.classes = JSON.parse(localStorage.getItem("vpvie.classes") || "null"); } catch (e) {}
+    try { pack.quizzes = JSON.parse(localStorage.getItem("vpvie.quizzes") || "null"); } catch (e) {}
+    var json = JSON.stringify(pack), name = "vpvie-sao-luu-" + new Date().toISOString().slice(0, 10) + ".json";
+    if (window.VPDesktop && window.VPDesktop.isApp && folders.books) { window.VPDesktop.saveFile(folders.books, name, json, false).then(function (r) { toast(r.ok ? "Đã lưu sao lưu: " + r.path : "Lỗi lưu."); }); return; }
+    var blob = new Blob([json], { type: "application/json" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    toast("Đã tải file sao lưu (" + lib.books.length + " sổ).");
+  }
+  function importBackup(obj) {
+    if (!obj || obj.type !== "vpvie-backup" || !obj.lib) { toast("File sao lưu không hợp lệ."); return; }
+    persistCurrent();
+    var added = 0;
+    (obj.lib.books || []).forEach(function (m) {
+      var nid = genId(), content = (obj.books || {})[m.id] || "";
+      lib.books.unshift({ id: nid, name: (m.name || "Sổ") + "", created: m.created || Date.now(), updated: m.updated || Date.now(), project: null, cover: m.cover || null });
+      try { localStorage.setItem(bookKey(nid), content); } catch (e) {} added++;
+    });
+    try { if (obj.classes && obj.classes.list) { var c = JSON.parse(localStorage.getItem("vpvie.classes") || "null") || { current: "", list: {} }; Object.keys(obj.classes.list).forEach(function (nm) { if (c.list[nm] == null) c.list[nm] = obj.classes.list[nm]; }); if (!c.current) c.current = obj.classes.current || Object.keys(c.list)[0] || ""; localStorage.setItem("vpvie.classes", JSON.stringify(c)); } } catch (e) {}
+    try { if (obj.quizzes && obj.quizzes.list) { var q = JSON.parse(localStorage.getItem("vpvie.quizzes") || "null") || { current: "", list: {} }; Object.keys(obj.quizzes.list).forEach(function (nm) { if (q.list[nm] == null) q.list[nm] = obj.quizzes.list[nm]; }); localStorage.setItem("vpvie.quizzes", JSON.stringify(q)); } } catch (e) {}
+    libSave(); renderLibrary();
+    toast("Đã khôi phục " + added + " sổ từ file sao lưu. (Lớp/câu đố sẽ áp dụng khi mở lại.)");
+  }
+  if ($("lib-export")) $("lib-export").onclick = exportBackup;
+  if ($("lib-import")) $("lib-import").onclick = function () {
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+    inp.onchange = function () { var f = inp.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { try { importBackup(JSON.parse(rd.result)); } catch (e) { toast("File không đọc được."); } }; rd.readAsText(f); };
+    inp.click();
+  };
   if ($("lib-multi")) $("lib-multi").onclick = function () {
     var lb = $("library"); var on = lb.classList.toggle("multi"); this.classList.toggle("on", on);
     this.lastChild.textContent = on ? " Xong" : " Chọn nhiều";
