@@ -1,8 +1,8 @@
-// VPVie Service Worker — cho phép cài PWA & chạy ngoại tuyến (iPad/Android/máy tính).
-// Chiến lược: cache-first cho tài nguyên cùng nguồn (GET); bỏ qua /api (động).
-const CACHE = 'vpvie-v4-merged';
-// Đường dẫn TƯƠNG ĐỐI (hợp với bang.html) để chạy đúng cả khi deploy ở thư mục con
-// (GitHub Pages /VPVie/) lẫn ở gốc (Electron). Các tệp khác được cache khi tải lần đầu.
+// VPVie Service Worker — cài PWA & chạy ngoại tuyến (iPad/Android/máy tính).
+// Chiến lược: NETWORK-FIRST cho tài nguyên cùng nguồn (GET) — luôn lấy bản mới
+// nhất (quan trọng cho bản desktop chạy máy chủ nội bộ, tránh phục vụ file cũ đã
+// cache sau khi cập nhật ứng dụng); offline thì mới lấy từ cache. Bỏ qua /api (động).
+const CACHE = 'vpvie-v5';
 const CORE = [
   'bang.html', 'style.css', 'oxyz.css', 'manifest.webmanifest',
   'js/oxyz-math.js', 'js/tools-oxyz.js',
@@ -23,12 +23,13 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;         // bỏ qua nguồn ngoài
   if (url.pathname.startsWith('/api/')) return;        // API động: để mạng xử lý
+  // NETWORK-FIRST: ưu tiên bản mới từ mạng/máy chủ nội bộ, lỗi mới dùng cache.
   e.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+    fetch(req).then((res) => {
       if (res && res.status === 200 && res.type === 'basic') {
         const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy));
       }
       return res;
-    }).catch(() => hit))
+    }).catch(() => caches.match(req))
   );
 });
