@@ -841,3 +841,23 @@ body.theme-dark .cw-cell{background:#23262e;border-color:#3a404c;color:#e6e8ee}
 /* Khung câu hỏi nổi trên nền */
 .qz-th-candy .qz-q,.qz-th-rainbow .qz-q,.qz-th-jungle .qz-q,.qz-th-ocean .qz-q{background:rgba(255,255,255,.55);border-radius:10px;padding:8px 11px}
 .qz-th-space .qz-q{background:rgba(255,255,255,.1);border-radius:10px;padding:8px 11px}
+
+/* ===== Nâng cấp giao diện trò chơi gọi tên ===== */
+.ov-picker .ov-body{min-width:330px}
+.pk-arena{position:relative;border-radius:12px;overflow:hidden}
+.pk-cv{border:none;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.ov-picker .cl-name{font-size:28px;background:linear-gradient(135deg,#fff3d6,#ffe0ec);border-radius:12px;padding:8px 4px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);color:#7a1020;min-height:30px}
+.ov-picker .cl-name.pop{animation:pkwin .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pkwin{0%{transform:scale(.3) rotate(-8deg);opacity:0}60%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+/* Túi mù đẹp hơn */
+.pk-bag{overflow:hidden}
+.pk-bag-shine{position:absolute;top:-40%;left:-30%;width:50%;height:180%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:rotate(18deg)}
+.pk-bag-ribbon{position:absolute;left:0;right:0;top:50%;height:7px;transform:translateY(-50%);background:rgba(255,255,255,.55)}
+.pk-bag-ribbon:after{content:"";position:absolute;left:50%;top:50%;width:7px;height:100%;transform:translate(-50%,-50%) scaleY(5);background:rgba(255,255,255,.55)}
+.pk-bag.shaking{animation:pkshake .16s linear 0s 4}
+@keyframes pkshake{0%,100%{transform:rotate(0)}25%{transform:rotate(-7deg) scale(1.04)}75%{transform:rotate(7deg) scale(1.04)}}
+.pk-bag.open{animation:pkpopbag .4s cubic-bezier(.2,1.5,.4,1)}
+@keyframes pkpopbag{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.pk-bag-burst{position:absolute;font-size:30px;color:#ffd23b;animation:pkburst .6s ease-out;pointer-events:none;text-shadow:0 0 8px #ffd23b}
+@keyframes pkburst{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.4);opacity:0}}
+.pk-confetti{border-radius:12px}
