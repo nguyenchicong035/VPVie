@@ -34,6 +34,7 @@ const {generateKeyPairSync,sign}=require('node:crypto');
   await require('./document-flows.cjs').verifyDocumentFlows(page);
   await require('./table-resize-flows.cjs').verifyTableResize(page);
   await require('./pdf-fit-flows.cjs').verifyPdfFit(page);
+  await require('./pdf-quality-flows.cjs').verifyPdfQuality(page);
   await app.evaluate(({Menu})=>{const view=Menu.getApplicationMenu().items.find(i=>i.label==='Hiển thị');view.submenu.items.find(i=>i.label==='Phóng to trang').click();});
   await page.waitForFunction(()=>window.VPViewport.getState().zoom===1.25);
   await page.locator('#page-zoom-reset').click();

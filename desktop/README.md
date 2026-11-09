@@ -134,3 +134,19 @@ thu phóng nội dung trang, giữ nguyên thanh công cụ. PNG/PDF/in vẫn xu
 bộ trang gốc, không phụ thuộc mức thu phóng hay vị trí đang xem.
 
 Kiểm thử: `node tests/zoom-browser.cjs` và `node tests/desktop-browser.cjs`.
+
+## Chất lượng PDF khi thu phóng (1.1.9)
+
+PDF gốc được lưu trong IndexedDB; khung vẽ tăng độ phân giải theo mức zoom và
+trang PDF được render lại sau khi thao tác thu phóng ổn định. Giới hạn khoảng
+12 triệu điểm ảnh cho mỗi khung giúp kiểm soát bộ nhớ trên iPad. Mức zoom và
+tọa độ nét viết không thay đổi dữ liệu trang.
+
+Lưu sổ ra tệp, sao lưu thư viện hoặc lưu Drive đều nhúng PDF gốc một lần cho
+các trang dùng chung nguồn. Sổ tự lưu chỉ giữ tham chiếu để tránh nhân bản PDF
+trong localStorage. Khi mở sổ trên thiết bị khác, PDF gốc được khôi phục vào
+IndexedDB. PDF nhập ở bản cũ chỉ có ảnh xem trước: nhập lại tệp gốc để đạt độ nét
+tốt nhất; các trang có ảnh xem trước trùng khớp sẽ được gắn nguồn mà giữ nét viết.
+Ảnh quét có độ phân giải thấp vẫn chịu giới hạn của tệp gốc.
+
+Kiểm thử: `node tests/pdf-quality-browser.cjs`, `node tests/desktop-browser.cjs`.
