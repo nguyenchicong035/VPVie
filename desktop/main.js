@@ -43,6 +43,32 @@ let backendProc = null;
 let staticServer = null;
 let win = null;
 
+function trustedSender(event) {
+  return !!win && event.sender === win.webContents &&
+    event.senderFrame === win.webContents.mainFrame &&
+    new URL(event.senderFrame.url).origin === `http://127.0.0.1:${PORT}`;
+}
+function licenseFile() { return path.join(app.getPath('userData'), 'activation.json'); }
+ipcMain.handle('license:read', (event) => {
+  if (!trustedSender(event)) throw new Error('Untrusted sender');
+  try { return JSON.parse(fs.readFileSync(licenseFile(), 'utf8')); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+});
+ipcMain.handle('license:write', (event, record) => {
+  if (!trustedSender(event)) throw new Error('Untrusted sender');
+  if (!record || !/^VPV-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(record.mid) ||
+      typeof record.key !== 'string' || record.key.length > 16384) throw new Error('Invalid activation');
+  const file = licenseFile();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file + '.tmp', JSON.stringify({ mid: record.mid, key: record.key }), { mode: 0o600 });
+  fs.renameSync(file + '.tmp', file);
+  return true;
+});
+
+function isWebUrl(value) {
+  try { return ['http:', 'https:'].includes(new URL(value).protocol); } catch { return false; }
+}
+
 function httpOk(url, timeoutMs) {
   return new Promise((resolve) => {
     const req = http.get(url, (res) => { res.resume(); resolve(res.statusCode >= 200 && res.statusCode < 500); });
@@ -102,7 +128,26 @@ async function createWindow() {
     width: 1360, height: 860, minWidth: 1024, minHeight: 680,
     title: 'VPVie – Bảng dạy học', backgroundColor: '#ffffff',
     icon: path.join(__dirname, 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false }
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, webviewTag: true }
+  });
+  // Remote pages are isolated guests: no Node, preload, or access to the app bridge.
+  win.webContents.on('will-attach-webview', (event, preferences, params) => {
+    if (!isWebUrl(params.src) || new URL(params.src).hostname === '127.0.0.1' || new URL(params.src).hostname === 'localhost') {
+      event.preventDefault(); return;
+    }
+    delete preferences.preload;
+    preferences.nodeIntegration = false;
+    preferences.nodeIntegrationInSubFrames = false;
+    preferences.contextIsolation = true;
+    preferences.sandbox = true;
+    preferences.webSecurity = true;
+  });
+  win.webContents.on('did-attach-webview', (_event, guest) => {
+    guest.setWindowOpenHandler(({ url }) => {
+      if (isWebUrl(url)) shell.openExternal(url);
+      return { action: 'deny' };
+    });
+    guest.on('will-navigate', (event, url) => { if (!isWebUrl(url)) event.preventDefault(); });
   });
   // mở liên kết ngoài bằng trình duyệt mặc định
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) { shell.openExternal(url); return { action: 'deny' }; } return { action: 'allow' }; });
@@ -116,7 +161,7 @@ async function createWindow() {
       }).catch(() => callback({}));
     }, { useSystemPicker: false });
     session.defaultSession.setPermissionRequestHandler((wc, permission, cb) => {
-      cb(true);  // ứng dụng cục bộ: cho phép micro/màn hình
+      cb(wc === win.webContents && ['media', 'display-capture'].includes(permission));
     });
   } catch (e) { /* phiên bản Electron cũ */ }
   buildMenu();

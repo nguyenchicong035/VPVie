@@ -204,7 +204,7 @@
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
     if (st === "dim") { // đoạn đo: vạch vuông góc 2 đầu
       ctx.beginPath(); ctx.moveTo(x1 + nx * 6, y1 + ny * 6); ctx.lineTo(x1 - nx * 6, y1 - ny * 6); ctx.moveTo(x2 + nx * 6, y2 + ny * 6); ctx.lineTo(x2 - nx * 6, y2 - ny * 6); ctx.stroke(); }
-    else { arrowHead(x2, y2, ang, hs); if (st === "darrow") arrowHead(x1, y1, ang + Math.PI, hs); }
+    else if (st !== "dash" && st !== "dot" && st !== "line") { arrowHead(x2, y2, ang, hs); if (st === "darrow") arrowHead(x1, y1, ang + Math.PI, hs); }
     ctx.restore();
   }
 
@@ -704,10 +704,26 @@
       var open = document.createElement("button"); open.className = "ov-webopen"; open.textContent = "↗ Mở ngoài"; open.title = "Mở bằng trình duyệt";
       open.onclick = function (e) { e.stopPropagation(); try { window.open(data.url, "_blank"); } catch (err) {} };
       bar.appendChild(cap); bar.appendChild(open);
-      var fr = document.createElement("iframe"); fr.className = "ov-web"; fr.src = embed; fr.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups allow-presentation");
-      fr.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
-      // Nhiều trang (YouTube, Google, Facebook…) CHẶN nhúng iframe → dùng nút "Mở ngoài".
-      body.appendChild(bar); body.appendChild(fr);
+      var nativeBrowser = window.VPDesktop && window.VPDesktop.embeddedBrowser;
+      var fr = document.createElement(nativeBrowser ? "webview" : "iframe"); fr.className = "ov-web";
+      var address;
+      try { address = new URL(data.url); if (!/^https?:$/.test(address.protocol)) throw new Error(); }
+      catch (e) { body.textContent = "Địa chỉ web không hợp lệ."; return; }
+      fr.src = nativeBrowser ? address.href : embed;
+      var status = document.createElement("div"); status.className = "ov-web-status";
+      if (nativeBrowser) {
+        fr.setAttribute("partition", "persist:vpvie-browser");
+        fr.addEventListener("did-fail-load", function (e) {
+          if (e.isMainFrame && e.errorCode !== -3) status.textContent = "Không tải được trang (" + e.errorDescription + "). Kiểm tra kết nối hoặc chọn Mở ngoài.";
+        });
+        fr.addEventListener("did-start-loading", function () { status.textContent = "Đang tải…"; });
+        fr.addEventListener("did-stop-loading", function () { if (status.textContent === "Đang tải…") status.textContent = ""; });
+      } else {
+        fr.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups allow-presentation");
+        fr.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+        status.textContent = "Nếu website chặn nhúng, chọn Mở ngoài để xem trong trình duyệt.";
+      }
+      body.appendChild(bar); body.appendChild(status); body.appendChild(fr);
     }
     else if (kind === "note") {
       var host = body.closest(".ov"); host.classList.add("ov-note");
@@ -987,7 +1003,7 @@
   });
   geoBtns.forEach(function (b) {
     b.onclick = function (e) {
-      if (b.dataset.geo === "line") { e.stopPropagation(); openGeoMenu(b); return; }   // ╱ mở bảng dựng hình động
+      if (b.dataset.geo === "line") { e.stopPropagation(); activateArrow("dash"); clearActive(); b.classList.add("active"); return; }   // ╱ mở bảng dựng hình động
       state.tool = "geo";
       window.VPGeo.setTool(b.dataset.geo);
       clearActive(); b.classList.add("active");
@@ -1063,7 +1079,7 @@
     if (t === "rotate") { var a = parseFloat(prompt("Góc quay (độ):", "90")); window.VPGeo.rotAngle = isNaN(a) ? 90 : a; }
     if (t === "homothety") { var k = parseFloat(prompt("Tỉ số vị tự k:", "2")); window.VPGeo.homoK = isNaN(k) ? 2 : k; }
     state.tool = "geo"; window.VPGeo.setTool(t); clearActive();
-    var gb = document.querySelector('[data-geo="line"]'); if (gb) gb.classList.add("active");
+    var gb = $("btn-solid"); if (gb) gb.classList.add("active");
     toast(GEO_HINT[t] || "Chọn điểm trên bảng.");
   }
   function buildGeoMenu() {
@@ -1376,7 +1392,17 @@
   if ($("btn-textbox")) $("btn-textbox").onclick = function () { insertTextBox(); };
   if ($("btn-text")) $("btn-text").onclick = function () { insertTextBox(); };
   // Trình duyệt web nhúng
-  if ($("btn-web")) $("btn-web").onclick = function () { var u = prompt("Địa chỉ trang web:", "https://"); if (u && u !== "https://") addOverlayData("web", { url: u }, 120, 110); };
+  if ($("btn-web")) $("btn-web").onclick = function () {
+    $("web-url").value = "https://"; showDialog("dlg-web"); $("web-url").focus();
+  };
+  if ($("web-add")) $("web-add").onclick = function () {
+    var u = $("web-url").value; if (!u || u === "https://") return;
+    u = u.trim(); if (!/^[a-z][a-z0-9+.-]*:/i.test(u)) u = "https://" + u;
+    try { var parsed = new URL(u); if (!/^https?:$/.test(parsed.protocol)) throw new Error(); u = parsed.href; }
+    catch (e) { toast("Hãy nhập địa chỉ HTTP hoặc HTTPS hợp lệ."); return; }
+    hideDialog("dlg-web"); addOverlayData("web", { url: u }, 120, 110);
+  };
+  if ($("web-url")) $("web-url").addEventListener("keydown", function (e) { if (e.key === "Enter") $("web-add").click(); });
   // Tô màu miền / Chọn vùng (đang phát triển)
   if ($("btn-fill")) $("btn-fill").onclick = function () { state.tool = "fill"; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Tô màu: bấm vào trong hình kín (bấm lại để bỏ tô)."); };
   if ($("btn-select")) $("btn-select").onclick = function () { state.tool = "select"; state.selected = []; if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active"); toast("Chọn vùng: khoanh để chọn, kéo để di chuyển, Delete để xoá."); };
@@ -1691,7 +1717,7 @@
     { id: "plot", ic: "📈", lb: "Đồ thị", run: function () { $("btn-plot").click(); } },
     { id: "var", ic: "▦", lb: "Bảng BT", run: function () { $("btn-var").click(); } },
     { id: "shapes", ic: "△", lb: "Hình 2D", run: function () { $("btn-shapes").click(); } },
-    { id: "solid", ic: "◳", lb: "Hình 3D", run: function () { $("btn-solid").click(); } },
+    { id: "solid", ic: "△", lb: "Dựng hình động", run: function () { $("btn-solid").click(); } },
     { id: "oxyz", ic: "⊹", lb: "Oxyz", run: function () { $("btn-oxyz").click(); } },
     { id: "table", ic: "⊞", lb: "Bảng", run: function () { $("btn-table").click(); } },
     { id: "ruler", ic: "📐", lb: "Thước", run: function () { var r = $("btn-ruler").getBoundingClientRect(); showMenuAt($("ruler-menu"), r.left, r.bottom + 4); } },
@@ -2127,7 +2153,10 @@
     ["rect", "Hình chữ nhật", "4"], ["para", "Hình bình hành"], ["rhombus", "Hình thoi"], ["trapezoid", "Hình thang"], ["__poly__", "Đa giác đều"], ["circle", "Đường tròn", "C"], ["arc", "Cung tròn"], ["semicircle", "Nửa đường tròn"], ["sector", "Hình quạt"], ["ellipse", "Elip"], ["hyperbola", "Hypebol"], ["parabola", "Parabol"], ["annulus", "Hình vành khăn"]
   ];
   var SHAPES_3D = [
-    ["chop-para", "Hình chóp đáy hình bình hành"], ["chop-para-sa", "Chóp đáy bình hành, SA⊥đáy"], ["chop4", "Hình chóp đáy tứ giác"], ["chop-thang", "Hình chóp đáy hình thang"], ["chop3", "Hình chóp tam giác"], ["chop3-sa", "Chóp tam giác, SA⊥đáy"], ["hop", "Hình hộp"], ["lapphuong", "Hình lập phương"], ["langtru", "Lăng trụ tam giác"], ["non", "Hình nón"], ["tru", "Hình trụ"], ["cau", "Mặt cầu"], ["batdien", "Bát diện đều"]
+    ["chop-para", "Hình chóp đáy hình bình hành"], ["chop-para-sa", "Chóp đáy bình hành, SA⊥đáy"], ["chop4", "Hình chóp đáy tứ giác"], ["chop-thang", "Hình chóp đáy hình thang"], ["chop3", "Hình chóp tam giác"], ["chop3-sa", "Chóp tam giác, SA⊥đáy"], ["hop", "Hình hộp"], ["lapphuong", "Hình lập phương"], ["langtru", "Lăng trụ tam giác"], ["non", "Hình nón"], ["tru", "Hình trụ"], ["cau", "Mặt cầu"], ["batdien", "Bát diện đều"],
+    ["langtru-xien", "Lăng trụ xiên"], ["langtru-para", "Lăng trụ xiên đáy bình hành"],
+    ["chop-cut", "Hình chóp cụt"], ["non-cut", "Hình nón cụt"], ["tru-cut", "Hình trụ cụt"],
+    ["nem1", "Hình nêm (kiểu 1)"], ["nem2", "Hình nêm (kiểu 2)"], ["chom-cau", "Chỏm cầu"], ["plane", "Mặt phẳng"]
   ];
   var LINES = [["segment", "Đoạn thẳng", "L"], ["vector", "Vectơ", "V"], ["line", "Đường thẳng", "Shift+L"], ["ray", "Tia"]];
   function smItem(cls) { var b = document.createElement("button"); b.className = "sm-item" + (cls ? " " + cls : ""); return b; }
@@ -2188,8 +2217,9 @@
     });
     // Cột 3: Hình không gian
     c3.appendChild(head("Hình không gian"));
-    SHAPES_3D.forEach(function (sh) { c3.appendChild(shapeBtn(sh[0], sh[1], null, true)); });
-    host.appendChild(c1); host.appendChild(c2); host.appendChild(c3);
+    var c4 = col(); c4.appendChild(head("Hình không gian (tiếp)"));
+    SHAPES_3D.forEach(function (sh, index) { (index < 13 ? c3 : c4).appendChild(shapeBtn(sh[0], sh[1], null, true)); });
+    host.appendChild(c1); host.appendChild(c2); host.appendChild(c3); host.appendChild(c4);
     shapesMenuBuilt = true;
   }
   if ($("btn-shapes")) $("btn-shapes").onclick = function (e) {
@@ -2197,11 +2227,10 @@
     var m = $("shapes-menu"), r = this.getBoundingClientRect();
     document.querySelectorAll(".nr-menu.show").forEach(function (x) { if (x !== m) x.classList.remove("show"); });
     if (m.classList.contains("show")) { m.classList.remove("show"); return; }
-    m.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 650)) + "px"; m.style.top = (r.bottom + 4) + "px";
+    m.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 840)) + "px"; m.style.top = (r.bottom + 4) + "px";
     m.classList.add("show");
   };
   // Vẽ hình mẫu nhỏ cho từng nút hình 3D (dùng chính VPSolid)
-  var solidThumbsDone = false;
   function drawSolidThumb(cv, kind) {
     var g = cv.getContext("2d"); g.clearRect(0, 0, cv.width, cv.height);
     var o = window.VPSolid.make(kind, 0, 0, 34, "#1d2a33", 1.4);
@@ -2215,17 +2244,10 @@
     g.save(); g.translate(cv.width / 2, cv.height / 2); g.scale(sc, sc); g.translate(-(mnx + mxx) / 2, -(mny + mxy) / 2);
     g.strokeStyle = "#1d2a33"; g.lineWidth = 1.4 / sc; g.lineJoin = g.lineCap = "round";
     (o.segs || []).forEach(function (s) { g.setLineDash(s.dashed ? [4 / sc, 3 / sc] : []); g.beginPath(); g.moveTo(s.x1, s.y1); g.lineTo(s.x2, s.y2); g.stroke(); });
-    (o.ellipses || []).forEach(function (e) { g.setLineDash(e.dashed ? [4 / sc, 3 / sc] : []); g.beginPath(); g.ellipse(e.cx, e.cy, e.rx, e.ry, 0, e.a0 || 0, (e.a1 != null ? e.a1 : Math.PI * 2)); g.stroke(); });
+    (o.ellipses || []).forEach(function (e) { g.setLineDash(e.dashed ? [4 / sc, 3 / sc] : []); g.beginPath(); g.ellipse(e.cx, e.cy, e.rx, e.ry, e.rot || 0, e.a0 || 0, (e.a1 != null ? e.a1 : Math.PI * 2)); g.stroke(); });
     g.restore();
   }
-  function renderSolidThumbs() {
-    if (solidThumbsDone || !window.VPSolid) return;
-    document.querySelectorAll("#dlg-solid [data-solid]").forEach(function (b) {
-      var cv = b.querySelector("canvas.shape-thumb"); if (cv) try { drawSolidThumb(cv, b.dataset.solid); } catch (e) {}
-    });
-    solidThumbsDone = true;
-  }
-  $("btn-solid").onclick = function () { showDialog("dlg-solid"); renderSolidThumbs(); };
+  $("btn-solid").onclick = function (e) { e.stopPropagation(); openGeoMenu(this); };
   $("btn-oxyz").onclick = function () {
     state.tool = "oxyz"; state.drawing = false; state.cur = null; state.selBox = null;
     if (window.VPGeo) window.VPGeo.setTool(null); clearActive(); this.classList.add("active");
@@ -2236,12 +2258,6 @@
     var index = hitItem(pos(e)), item = state.items[index];
     if (!item || item.type !== "oxyz") return;
     window.VPOxyz.open(item.scene, function (scene3) { pushHist(); item.scene = scene3; redraw(); scheduleSave(); });
-  });
-  document.querySelectorAll("[data-solid]").forEach(function (b) {
-    b.onclick = function () {
-      pushHist(); state.items.push(window.VPSolid.make(b.dataset.solid, canvas.clientWidth / 2, canvas.clientHeight / 2, 100, state.color, state.size || 2));
-      hideDialog("dlg-solid"); selectLast();
-    };
   });
   document.querySelectorAll("[data-shape]").forEach(function (b) {
     b.onclick = function () { addShapeTemplate(b.dataset.shape); hideDialog("dlg-shapes"); selectLast(); };
@@ -2448,7 +2464,7 @@
     if (d.ai) {
       // Có AI máy chủ mạnh (Ollama/pix2tex/Claude) -> ưu tiên engine "server" cho nhận dạng toán
       if ($("ai-engine")) $("ai-engine").value = "server";
-      var nm = $("ai-note"); if (nm && d.provider) { nm.textContent = "AI: " + (d.model || d.provider); nm.style.display = "inline"; nm.classList.add("ok"); }
+
     } else { $("ai-note").style.display = "inline"; }
   }).catch(function () {});
 
@@ -2869,6 +2885,7 @@
     if (!window.VPLicense) return;
     var st = window.VPLicense.status(), badge = $("lic-badge"), note = $("lic-state");
     if (badge) badge.hidden = !st.active;
+    if ($("btn-license")) $("btn-license").hidden = !!st.active;
     if (st.active && badge) { var lt = badge.querySelector(".lic-txt"); if (lt) lt.textContent = (st.plan === "free" ? "Đã kích hoạt" : "Bản quyền " + st.plan.toUpperCase()); }
     if (note) {
       if (st.active) {
@@ -2923,9 +2940,10 @@
       else licMsg(r.reason || "Key không hợp lệ.", false);
       refreshLicUI();
     };
-    if ($("lic-deactivate")) $("lic-deactivate").onclick = function () {
+    if ($("lic-deactivate")) $("lic-deactivate").onclick = async function () {
       if (!confirm("Gỡ kích hoạt trên máy này?")) return;
-      window.VPLicense.deactivate(); refreshLicUI(); licMsg("Đã gỡ kích hoạt.", false);
+      try { await window.VPLicense.deactivate(); refreshLicUI(); licMsg("Đã gỡ kích hoạt.", false); }
+      catch (e) { licMsg("Không lưu được thay đổi: " + e.message, false); }
     };
   }
   function movePage(d) { var j = cur + d; if (j < 0 || j >= pages.length) return; capture(); snapshotThumb(); var tmp = pages[cur]; pages[cur] = pages[j]; pages[j] = tmp; cur = j; restore(); makeThumbs(); scheduleSave(); }

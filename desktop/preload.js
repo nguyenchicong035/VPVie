@@ -2,6 +2,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('VPDesktop', {
   isApp: true,
+  embeddedBrowser: true,
+  readActivation: () => ipcRenderer.invoke('license:read'),
+  writeActivation: (record) => ipcRenderer.invoke('license:write', record),
   platform: process.platform,
   defaultFolders: () => ipcRenderer.invoke('folders:default'),
   pickFolder: () => ipcRenderer.invoke('folders:pick'),

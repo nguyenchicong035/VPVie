@@ -12,6 +12,8 @@
 
   var STORE = "vpvie.license";       // key đã kích hoạt (localStorage)
   var SALT = "VPVie-machine-v1";      // trộn vào vân tay
+  var MID_STORE = "vpvie.machineId";
+  var _midPromise = null;
   var _mid = null, _status = { active: false, plan: "free", reason: "chưa kích hoạt" };
 
   // ---- Tiện ích mã hoá ----
@@ -51,10 +53,41 @@
   // Mã máy dạng "VPV-XXXX-XXXX-XXXX" (4 nhóm chữ-số, dễ đọc/đọc qua điện thoại)
   async function computeMachineId() {
     if (_mid) return _mid;
+    if (!_midPromise) _midPromise = resolveMachineId();
+    return _midPromise;
+  }
+  async function persistActivation(key) {
+    if (window.VPDesktop && window.VPDesktop.writeActivation)
+      await window.VPDesktop.writeActivation({ mid: _mid, key: key });
+    localStorage.setItem(STORE, key);
+    localStorage.setItem(MID_STORE, _mid);
+  }
+  async function resolveMachineId() {
+    var record = null;
+    if (window.VPDesktop && window.VPDesktop.readActivation) record = await window.VPDesktop.readActivation();
+    var cached = record && record.mid;
+    if (record && record.key) localStorage.setItem(STORE, record.key);
+    if (!cached) cached = localStorage.getItem(MID_STORE);
+    if (cached && /^VPV-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(cached)) {
+      _mid = cached; return _mid;
+    }
+    // Migrate an existing desktop profile before the UA-dependent fingerprint changes.
+    // Only a signed, unexpired key already stored in this profile can supply the legacy ID.
+    var legacy = localStorage.getItem(STORE);
+    if (legacy && window.VPDesktop && window.VPDesktop.isApp) {
+      try {
+        var payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(legacy.split(".")[1])));
+        if (/^VPV-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(payload.m) && (await verifyKey(legacy, payload.m)).ok) {
+          _mid = payload.m; await persistActivation(legacy); return _mid;
+        }
+      } catch (e) { /* An invalid legacy key must never activate the app. */ }
+    }
     var h = hex(await sha256(utf8(signals())));
     var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", out = "";
     for (var i = 0; i < 12; i++) out += A[parseInt(h.substr(i * 2, 2), 16) % A.length];
     _mid = "VPV-" + out.substr(0, 4) + "-" + out.substr(4, 4) + "-" + out.substr(8, 4);
+    localStorage.setItem(MID_STORE, _mid);
+    if (window.VPDesktop && window.VPDesktop.writeActivation) await window.VPDesktop.writeActivation({ mid: _mid, key: legacy || "" });
     return _mid;
   }
 
@@ -99,6 +132,7 @@
     var saved = null; try { saved = localStorage.getItem(STORE); } catch (e) {}
     if (!saved) { _status = { active: false, plan: "free", reason: "chưa kích hoạt", mid: mid }; return _status; }
     var r = await verifyKey(saved, mid);
+    if (r.ok && window.VPDesktop && window.VPDesktop.writeActivation) await persistActivation(saved);
     if (r.ok) _status = { active: true, plan: r.data.p || "pro", expiry: r.data.e || 0, note: r.data.n || "", mid: mid };
     else _status = { active: false, plan: "free", reason: r.reason, mid: mid };
     return _status;
@@ -128,7 +162,7 @@
     // Thử kích hoạt qua máy chủ trước (nếu có) để đếm số máy với key nhiều máy
     var on = await activateOnline(keyStr, mid);
     if (on.ok) {
-      try { localStorage.setItem(STORE, keyStr.trim()); } catch (e) {}
+      try { await persistActivation(keyStr.trim()); } catch (e) { return { ok: false, reason: "Không lưu được kích hoạt: " + e.message }; }
       _status = { active: true, plan: on.plan || (local.data && local.data.p) || "pro", expiry: on.expiry || (local.data && local.data.e) || 0, note: (local.data && local.data.n) || "", mid: mid, used: on.used, maxm: on.maxm };
       return { ok: true, data: local.data || {}, used: on.used, maxm: on.maxm };
     }
@@ -136,11 +170,11 @@
     // Máy chủ không kết nối được (bản NGOẠI TUYẾN): chấp nhận MỌI key có chữ ký hợp lệ,
     // gồm cả key "Nhiều máy" (khi offline không đếm được số máy nên bỏ qua giới hạn).
     if (!local.ok) return local;   // sai chữ ký / sai máy / hết hạn → trả lý do rõ ràng
-    try { localStorage.setItem(STORE, keyStr.trim()); } catch (e) {}
+    try { await persistActivation(keyStr.trim()); } catch (e) { return { ok: false, reason: "Không lưu được kích hoạt: " + e.message }; }
     _status = { active: true, plan: local.data.p || "pro", expiry: local.data.e || 0, note: local.data.n || "", mid: mid };
     return { ok: true, data: local.data };
   }
-  function deactivate() { try { localStorage.removeItem(STORE); } catch (e) {} _status = { active: false, plan: "free", reason: "đã gỡ kích hoạt" }; }
+  async function deactivate() { await computeMachineId(); await persistActivation(""); try { localStorage.removeItem(STORE); } catch (e) {} _status = { active: false, plan: "free", reason: "đã gỡ kích hoạt" }; }
 
   // Thông tin gửi kèm request AI (để máy chủ kiểm bản quyền nếu bật).
   function creds() {

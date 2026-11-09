@@ -68,3 +68,34 @@ nhật** để kiểm tra ngay.
 
 **Web/PWA** (GitHub Pages/Netlify): service worker dùng network-first cho mã ứng dụng
 nên **mở lại là có bản mới** khi online; menu Kiểm tra cập nhật ép tải bản mới ngay.
+
+## Trình duyệt nhúng và kích hoạt
+
+Bản desktop dùng một webview cách ly cho các địa chỉ HTTP/HTTPS; trang từ xa
+không có Node.js, preload hoặc cầu nối VPDesktop. URL được nhập qua hộp thoại
+trong ứng dụng (Electron không hỗ trợ `window.prompt`). Bản web vẫn dùng iframe;
+website cấm nhúng cần dùng nút **Mở ngoài**. Website có thể yêu cầu đăng nhập hoặc
+có chính sách riêng đối với trình duyệt nhúng.
+
+Mã máy được lưu cố định; phiên bản Electron, màn hình và múi giờ thay đổi không
+làm sinh lại mã. Desktop lưu thêm `activation.json` trong thư mục `userData`
+của Electron, bên ngoài thư mục cài đặt. Khi nâng cấp, giữ nguyên tên ứng dụng
+và thư mục dữ liệu này. Key cũ có chữ ký hợp lệ trong hồ sơ desktop được chuyển
+sang cơ chế lưu mới; việc kiểm chữ ký và hạn sử dụng vẫn được áp dụng.
+
+## Kiểm thử thay đổi thanh công cụ
+
+Từ thư mục gốc repository, với máy chủ đang chạy ở cổng 8000:
+
+```bash
+node --test tests/license-persistence.test.cjs tests/oxyz-math.test.cjs
+node tests/toolbar-browser.cjs
+node tests/formula-browser.cjs
+node tests/oxyz-browser.cjs
+node tests/desktop-browser.cjs
+```
+
+Các kiểm thử trình duyệt cần Playwright và Chromium. Kiểm thử desktop cần cài
+phụ thuộc trong `desktop/` và màn hình X11 trên Linux (biến `DISPLAY`). Fixture
+kiểm thử tạo cặp khóa riêng và chỉ thay khóa công khai trong phản hồi của phiên
+kiểm thử, không sửa khóa công khai của ứng dụng trên đĩa.

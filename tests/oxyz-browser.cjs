@@ -1,3 +1,4 @@
+const { prepareLicensedPage, openBoard } = require("./browser-fixture.cjs");
 // Run against a running VPVie server with Playwright installed:
 // node tests/oxyz-browser.cjs (optional VPVIE_TEST_URL / CHROMIUM_PATH / OXYZ_ARTIFACTS).
 const { chromium } = require("playwright");
@@ -16,9 +17,11 @@ const fs = require("node:fs");
       }),
       errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    await prepareLicensedPage(page);
     await page.goto(
       (process.env.VPVIE_TEST_URL || "http://127.0.0.1:8000") + "/bang.html",
     );
+    await openBoard(page);
     await page.waitForFunction(() => window.__vp && window.VPOxyz);
     await page.evaluate(() => localStorage.removeItem("vpvie.book"));
     const board = await page.locator("#paper").boundingBox();
@@ -128,6 +131,7 @@ const fs = require("node:fs");
     );
     await page.waitForTimeout(800);
     await page.reload();
+    await openBoard(page);
     await page.waitForFunction(() =>
       window.__vp?.state.items.some((i) => i.type === "oxyz"),
     );

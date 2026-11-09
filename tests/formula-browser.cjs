@@ -1,3 +1,4 @@
+const { prepareLicensedPage, openBoard } = require("./browser-fixture.cjs");
 // Requires a running VPVie server, Playwright and Chromium.
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -7,7 +8,9 @@ const assert = require('node:assert/strict');
     const page = await browser.newPage({ viewport: { width: 1365, height: 900 }, serviceWorkers: 'block' });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
+    await prepareLicensedPage(page);
     await page.goto((process.env.VPVIE_TEST_URL || 'http://127.0.0.1:8000') + '/bang.html');
+    await openBoard(page);
     await page.locator('#btn-math').click();
     await page.locator('[data-cat="accent"]').click();
     const sixth = page.locator('#f-grid .fsym').nth(5);
