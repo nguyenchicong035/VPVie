@@ -1170,3 +1170,14 @@ body.theme-dark .lib-backup{border-color:#2d313b}
 
 .nr-row-tools { gap: 2px; padding-inline: 8px; }
 .nr-row-tools .nr-pill { gap: 6px; }
+
+/* Tables sit directly on the paper, including imported or colored backgrounds. */
+.ov.ov-table, .ov-table .ov-body, table.ov-table, table.ov-table td {
+  background: transparent; box-shadow: none;
+}
+.ov.ov-table { border: 0; padding: 0; }
+table.ov-table { padding: 0; }
+table.ov-table td { cursor: text; }
+table.ov-table td:focus { outline: 2px solid var(--teal); outline-offset: -2px; }
+.table-dimensions { display: flex; gap: 16px; }
+.table-dimensions label { flex: 1; }

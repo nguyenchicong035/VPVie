@@ -99,3 +99,18 @@ Các kiểm thử trình duyệt cần Playwright và Chromium. Kiểm thử des
 phụ thuộc trong `desktop/` và màn hình X11 trên Linux (biến `DISPLAY`). Fixture
 kiểm thử tạo cặp khóa riêng và chỉ thay khóa công khai trong phản hồi của phiên
 kiểm thử, không sửa khóa công khai của ứng dụng trên đĩa.
+
+## Bảng và nhập tài liệu (1.1.6)
+
+Nút **Chèn bảng** dùng hộp chọn số hàng/cột trong ứng dụng. Bảng có nền trong
+suốt và nhập chữ trực tiếp vào từng ô. **Mở sổ** (hoặc Ctrl+O) nhận sổ JSON,
+PDF và Word `.docx`; các nút thêm PDF/Word trong Cài đặt dùng cùng bộ đọc.
+PDF nhiều trang được nhập thành nhiều trang bảng dạy học. Word `.doc` cũ cần
+lưu lại thành `.docx` trước khi nhập. Tài liệu Word được chuyển thành nền trang,
+không phải trình soạn thảo Word giữ nguyên toàn bộ định dạng.
+
+Trong **Dạy nét chữ của tôi**, ô ký hiệu nhận tiêu điểm sau khi nhấc bút. Nút
+**Thử nhận dạng** chạy nhận dạng theo yêu cầu, tránh chặn nhập ký hiệu.
+
+Kiểm thử các luồng trên web: `node tests/documents-browser.cjs`.
+Kiểm thử tương tự trong Electron: `node tests/desktop-browser.cjs`.

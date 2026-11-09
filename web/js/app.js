@@ -827,7 +827,7 @@
     if (rz) rz.addEventListener("pointerup", function () { resizing = false; scheduleSave(); });
     // Kéo thân -> di chuyển
     el.addEventListener("pointerdown", function (e) {
-      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors, .text-edit, .mm-node, .ov-resize")) { if (!e.target.closest(".ov-resize")) selectOverlay(el); return; }
+      if (e.target.closest("button, input, textarea, select, label, .tf-cell, .note-edit, .note-colors, .text-edit, [contenteditable], .mm-node, .ov-resize")) { if (!e.target.closest(".ov-resize")) selectOverlay(el); return; }
       moving = true; sx = e.clientX; sy = e.clientY;
       ox = parseFloat(el.style.left); oy = parseFloat(el.style.top);
       el.setPointerCapture(e.pointerId); el.classList.add("dragging"); selectOverlay(el);
@@ -1385,8 +1385,13 @@
   document.addEventListener("pointerdown", function (e) { var mm = $("lib-more"); if (mm && !mm.hidden && !e.target.closest("#lib-more") && !e.target.closest(".lib-more")) mm.hidden = true; }, true);
   // Chèn bảng
   if ($("btn-table")) $("btn-table").onclick = function () {
-    var r = parseInt(prompt("Số hàng:", "3"), 10), c = parseInt(prompt("Số cột:", "3"), 10);
-    if (!r || !c) return; addOverlayData("table", { rows: r, cols: c, cells: [] }, 120, 110);
+    showDialog("dlg-table"); $("table-rows").focus(); $("table-rows").select();
+  };
+  $("table-form").onsubmit = function (e) {
+    e.preventDefault(); if (!this.reportValidity()) return;
+    var r = Number($("table-rows").value), c = Number($("table-cols").value);
+    if (!Number.isInteger(r) || !Number.isInteger(c) || r < 1 || r > 100 || c < 1 || c > 50) return;
+    hideDialog("dlg-table"); addOverlayData("table", { rows: r, cols: c, cells: [] }, 120, 110);
   };
   // Khung văn bản / chữ
   if ($("btn-textbox")) $("btn-textbox").onclick = function () { insertTextBox(); };
@@ -2403,7 +2408,7 @@
     function ppos(e) { var r = pad.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
     pad.addEventListener("pointerdown", function (e) { pad.setPointerCapture(e.pointerId); drawingPad = true; curStroke = [ppos(e)]; });
     pad.addEventListener("pointermove", function (e) { if (!drawingPad) return; curStroke.push(ppos(e)); redrawPad(); });
-    function endPad() { if (!drawingPad) return; drawingPad = false; if (curStroke && curStroke.length > 1) strokes.push(curStroke); curStroke = null; redrawPad(); guess(); }
+    function endPad() { if (!drawingPad) return; drawingPad = false; if (curStroke && curStroke.length > 1) strokes.push(curStroke); curStroke = null; redrawPad(); $("ink-label").focus(); }
     pad.addEventListener("pointerup", endPad); pad.addEventListener("pointercancel", endPad);
     function clearPad() { strokes = []; curStroke = null; redrawPad(); if ($("ink-guess")) $("ink-guess").innerHTML = ""; }
     function guess() {
@@ -2412,7 +2417,7 @@
       $("ink-guess").innerHTML = r.name ? ("AI đoán: <b>" + r.name + "</b> (" + r.score + "%)") : "";
     }
     function updCount() { if ($("ink-count")) $("ink-count").textContent = "Đã dạy " + window.VPInk.templates().length + " mẫu riêng."; }
-    if ($("btn-ink-train")) $("btn-ink-train").onclick = function (e) { e.stopPropagation(); document.querySelectorAll(".nr-menu.show").forEach(function (m) { m.classList.remove("show"); }); clearPad(); updCount(); showDialog("dlg-ink"); };
+    if ($("btn-ink-train")) $("btn-ink-train").onclick = function (e) { e.stopPropagation(); document.querySelectorAll(".nr-menu.show").forEach(function (m) { m.classList.remove("show"); }); clearPad(); updCount(); showDialog("dlg-ink"); $("ink-label").focus(); };
     if ($("ink-clearpad")) $("ink-clearpad").onclick = clearPad;
     if ($("ink-test")) $("ink-test").onclick = guess;
     if ($("ink-learn")) $("ink-learn").onclick = function () {
@@ -2842,8 +2847,14 @@
     var b = new Blob([json], { type: "application/json" }); var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "so-bai-giang.vpvie.json"; a.click();
   }
   function openBookFile() {
-    var inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
-    inp.onchange = function () { var f = inp.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { try { loadBook(JSON.parse(rd.result)); scheduleSave(); toast("Đã mở sổ bài giảng."); } catch (e) { toast("Tệp không hợp lệ."); } }; rd.readAsText(f); };
+    var inp = document.createElement("input"); inp.type = "file";
+    inp.accept = ".json,.pdf,.docx,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    inp.onchange = async function () {
+      var f = inp.files[0]; if (!f) return;
+      if (/\.(pdf|docx|doc)$/i.test(f.name)) { await importDocument(f); return; }
+      try { loadBook(JSON.parse(await f.text())); scheduleSave(); closeLibrary(); toast("Đã mở sổ bài giảng."); }
+      catch (e) { toast("Tệp không hợp lệ. Chọn sổ JSON, PDF hoặc Word (.docx)."); }
+    };
     inp.click();
   }
   if ($("page-prev")) $("page-prev").onclick = function () { gotoPage(cur - 1); };
@@ -3005,52 +3016,57 @@
   if ($("set-img")) $("set-img").onclick = function () { $("imp-img").click(); };
   if ($("imp-img")) $("imp-img").onchange = function () { var f = this.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { setPageBg(rd.result); toast("Đã đặt ảnh làm nền trang."); }; rd.readAsDataURL(f); this.value = ""; hideDialog("dlg-settings"); };
   if ($("set-nobg")) $("set-nobg").onclick = function () { setPageBg(null); toast("Đã bỏ nền trang."); };
-  if ($("set-pdf")) $("set-pdf").onclick = function () { $("imp-pdf").click(); };
-  if ($("imp-pdf")) $("imp-pdf").onchange = function () {
-    var f = this.files[0]; if (!f) return; this.value = ""; hideDialog("dlg-settings");
-    if (!window.pdfjsLib) { toast("Chưa tải được pdf.js."); return; }
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdfjs/pdf.worker.min.js";
-    var rd = new FileReader();
-    rd.onload = async function () {
-      try {
-        toast("Đang mở PDF…");
-        var doc = await window.pdfjsLib.getDocument({ data: new Uint8Array(rd.result) }).promise;
+  var importingDocument = false;
+  async function importDocument(file) {
+    if (importingDocument) { toast("Đang nhập tài liệu. Vui lòng đợi hoàn tất."); return; }
+    importingDocument = true;
+    var doc = null, loadingTask = null, wrap = null;
+    try {
+      var pdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+      var word = /\.docx$/i.test(file.name);
+      if (!pdf && !word) throw new Error("Hãy lưu tệp Word dạng .docx; định dạng .doc cũ chưa được hỗ trợ.");
+      var data = await file.arrayBuffer(), images = [];
+      toast(pdf ? "Đang mở PDF…" : "Đang mở Word…");
+      if (pdf) {
+        if (!window.pdfjsLib) throw new Error("Chưa tải được bộ đọc PDF.");
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("vendor/pdfjs/pdf.worker.min.js", document.baseURI).href;
+        loadingTask = window.pdfjsLib.getDocument({ data: new Uint8Array(data) });
+        doc = await loadingTask.promise;
         for (var i = 1; i <= doc.numPages; i++) {
           var page = await doc.getPage(i), vp = page.getViewport({ scale: 2 });
           var oc = document.createElement("canvas"); oc.width = vp.width; oc.height = vp.height;
           await page.render({ canvasContext: oc.getContext("2d"), viewport: vp }).promise;
-          var url = oc.toDataURL("image/jpeg", 0.8);
-          if (i === 1) { setPageBg(url); }
-          else { capture(); pages.splice(cur + 1, 0, blankPage()); cur++; pages[cur].bg = url; restore(); }
+          images.push(oc.toDataURL("image/jpeg", 0.85)); page.cleanup(); oc.width = oc.height = 0;
         }
-        makeThumbs(); scheduleSave(); toast("Đã nhập " + doc.numPages + " trang PDF. Hãy viết lên đề.");
-      } catch (e) { toast("Không mở được PDF."); }
-    };
-    rd.readAsArrayBuffer(f);
-  };
-
-  // ----- Nhập Word (.docx) làm nền trang (dùng mammoth → HTML → ảnh)
-  if ($("set-docx")) $("set-docx").onclick = function () { $("imp-docx").click(); };
-  if ($("imp-docx")) $("imp-docx").onchange = function () {
-    var f = this.files[0]; if (!f) return; this.value = ""; hideDialog("dlg-settings");
-    if (!window.mammoth) { toast("Chưa tải được bộ đọc Word."); return; }
-    var rd = new FileReader();
-    rd.onload = function () {
-      toast("Đang mở Word…");
-      window.mammoth.convertToHtml({ arrayBuffer: rd.result }).then(function (res) {
-        var wrap = document.createElement("div");
-        wrap.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;padding:48px;background:#fff;font-family:'Times New Roman',serif;font-size:16px;line-height:1.5;color:#111";
-        wrap.innerHTML = res.value || "<p>(Tài liệu trống)</p>";
+      } else {
+        if (!window.mammoth || !window.html2canvas) throw new Error("Chưa tải được bộ đọc Word.");
+        var converted = await window.mammoth.convertToHtml({ arrayBuffer: data });
+        wrap = document.createElement("div");
+        wrap.style.cssText = "position:absolute;left:0;top:0;z-index:-1;width:794px;padding:48px;background:#fff;font-family:'Times New Roman',serif;font-size:16px;line-height:1.5;color:#111";
+        wrap.innerHTML = converted.value || "<p>(Tài liệu trống)</p>";
         document.body.appendChild(wrap);
-        return window.html2canvas(wrap, { scale: 2, backgroundColor: "#fff" }).then(function (cv) {
-          document.body.removeChild(wrap);
-          setPageBg(cv.toDataURL("image/jpeg", 0.85));
-          toast("Đã nhập đề Word. Hãy viết/giải lên trên.");
-        });
-      }).catch(function () { toast("Không mở được tệp Word."); });
-    };
-    rd.readAsArrayBuffer(f);
-  };
+        var cv = await window.html2canvas(wrap, { scale: 2, backgroundColor: "#fff" });
+        images.push(cv.toDataURL("image/jpeg", 0.85));
+      }
+      hideDialog("dlg-settings"); closeLibrary();
+      images.forEach(function (url, index) {
+        if (index) addPage();
+        setPageBg(url);
+      });
+      toast("Đã nhập " + images.length + " trang " + (pdf ? "PDF" : "Word") + ". Hãy viết lên đề.");
+    } catch (e) {
+      console.error("Document import failed:", e);
+      toast("Không mở được tài liệu: " + (e.message || "Tệp hỏng hoặc không đúng định dạng."));
+    } finally {
+      if (wrap) wrap.remove();
+      try { if (doc) await doc.destroy(); else if (loadingTask) await loadingTask.destroy(); }
+      finally { importingDocument = false; }
+    }
+  }
+  [["set-pdf", "imp-pdf"], ["set-docx", "imp-docx"]].forEach(function (ids) {
+    $(ids[0]).onclick = function () { $(ids[1]).click(); };
+    $(ids[1]).onchange = function () { var file = this.files[0]; this.value = ""; if (file) importDocument(file); };
+  });
 
   // ----- Công cụ giảng dạy: rèm che & đèn rọi -----
   var teachMode = null, spotR = 120;

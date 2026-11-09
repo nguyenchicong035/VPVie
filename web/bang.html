@@ -323,6 +323,18 @@
     </div>
   </div>
 
+  <div id="dlg-table" class="dlg">
+    <form id="table-form" class="dlg-card">
+      <div class="dlg-head">Chèn bảng <button type="button" data-close="dlg-table" class="x">✕</button></div>
+      <div class="table-dimensions">
+        <label>Số hàng <input id="table-rows" class="in" type="number" min="1" max="100" step="1" value="3" required /></label>
+        <label>Số cột <input id="table-cols" class="in" type="number" min="1" max="50" step="1" value="3" required /></label>
+      </div>
+      <p class="hint">Bảng có nền trong suốt. Nhấp vào từng ô để nhập nội dung.</p>
+      <div class="dlg-foot"><button type="button" data-close="dlg-table" class="btn ghost">Hủy</button><button type="submit" class="btn">Chèn bảng</button></div>
+    </form>
+  </div>
+
   <div id="dlg-web" class="dlg">
     <div class="dlg-card">
       <div class="dlg-head">Trình duyệt web <button data-close="dlg-web" class="x">✕</button></div>
