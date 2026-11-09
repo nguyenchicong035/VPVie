@@ -124,3 +124,13 @@ khi bảng được phóng to. Các tiêu đề điều khiển không xuất v�
 
 Nền PDF/Word/ảnh được căn giữa, giữ đúng tỷ lệ và vừa toàn bộ khung bảng,
 thay vì phóng theo chiều rộng rồi cắt phần cuối trang.
+
+## Thu phóng trang (1.1.8)
+
+Dùng các nút −/+, bấm phần trăm để về 100%, hoặc Ctrl + cuộn chuột. Khoảng
+thu phóng là 25–400%. Công cụ bàn tay kéo vùng đang xem; hai ngón tay có thể
+chụm/tách để thu phóng và kéo để di chuyển trang. Menu Hiển thị của desktop
+thu phóng nội dung trang, giữ nguyên thanh công cụ. PNG/PDF/in vẫn xuất toàn
+bộ trang gốc, không phụ thuộc mức thu phóng hay vị trí đang xem.
+
+Kiểm thử: `node tests/zoom-browser.cjs` và `node tests/desktop-browser.cjs`.

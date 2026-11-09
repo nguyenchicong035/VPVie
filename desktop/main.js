@@ -117,7 +117,7 @@ function buildMenu() {
   const template = [
     { label: 'Tệp', submenu: [{ role: 'reload', label: 'Tải lại' }, { type: 'separator' }, { role: 'quit', label: 'Thoát' }] },
     { label: 'Sửa', submenu: [{ role: 'undo', label: 'Hoàn tác' }, { role: 'redo', label: 'Làm lại' }, { type: 'separator' }, { role: 'cut', label: 'Cắt' }, { role: 'copy', label: 'Sao chép' }, { role: 'paste', label: 'Dán' }, { role: 'selectAll', label: 'Chọn tất cả' }] },
-    { label: 'Hiển thị', submenu: [{ role: 'resetZoom', label: 'Thu phóng 100%' }, { role: 'zoomIn', label: 'Phóng to' }, { role: 'zoomOut', label: 'Thu nhỏ' }, { type: 'separator' }, { role: 'togglefullscreen', label: 'Toàn màn hình' }] },
+    { label: 'Hiển thị', submenu: [{ label: 'Trang ở mức 100%', accelerator: 'CommandOrControl+0', click: () => win.webContents.send('page:zoom', 'reset') }, { label: 'Phóng to trang', accelerator: 'CommandOrControl+Plus', click: () => win.webContents.send('page:zoom', 'in') }, { label: 'Thu nhỏ trang', accelerator: 'CommandOrControl+-', click: () => win.webContents.send('page:zoom', 'out') }, { type: 'separator' }, { role: 'togglefullscreen', label: 'Toàn màn hình' }] },
     { label: 'Trợ giúp', submenu: [{ label: 'Giới thiệu VPVie', click: () => dialog.showMessageBox(win, { title: 'VPVie', message: 'VPVie – Bảng dạy học', detail: 'Phần mềm văn phòng + dạy học tiếng Việt, mã nguồn mở.' }) }] }
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));

@@ -34,6 +34,11 @@ const {generateKeyPairSync,sign}=require('node:crypto');
   await require('./document-flows.cjs').verifyDocumentFlows(page);
   await require('./table-resize-flows.cjs').verifyTableResize(page);
   await require('./pdf-fit-flows.cjs').verifyPdfFit(page);
+  await app.evaluate(({Menu})=>{const view=Menu.getApplicationMenu().items.find(i=>i.label==='Hiển thị');view.submenu.items.find(i=>i.label==='Phóng to trang').click();});
+  await page.waitForFunction(()=>window.VPViewport.getState().zoom===1.25);
+  await page.locator('#page-zoom-reset').click();
+  await require('./zoom-flows.cjs').verifyZoom(page);
+  await require('./zoom-flows.cjs').verifyPinch(page, await page.context().newCDPSession(page));
   await page.locator('#btn-web').click(); await page.locator('#web-url').fill(`http://127.0.0.2:${server.address().port}`); await page.locator('#web-add').click();
   try { await page.waitForFunction(()=>{const v=document.querySelector('webview');try{return v&&v.getURL().includes('127.0.0.2')&&!v.isLoading();}catch{return false;}},null,{timeout:10000}); } catch(e) { console.log(await page.evaluate(()=>({webview:document.querySelector('webview')?.outerHTML,status:document.querySelector('.ov-web-status')?.textContent,bridge:!!window.VPDesktop,overlays:window.__vp.state.overlays}))); console.log(await app.evaluate(({webContents})=>webContents.getAllWebContents().map(w=>({id:w.id,url:w.getURL(),type:w.getType()})))); throw e; }
   const id=await page.locator('webview').evaluate(v=>v.getWebContentsId());

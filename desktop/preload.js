@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('VPDesktop', {
   pickFolder: () => ipcRenderer.invoke('folders:pick'),
   openFolder: (dir) => ipcRenderer.invoke('folders:open', dir),
   saveFile: (dir, name, data, isBase64) => ipcRenderer.invoke('file:save', dir, name, data, !!isBase64),
+  onPageZoom: (cb) => ipcRenderer.on('page:zoom', (_event, action) => cb(action)),
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   onUpdateStatus: (cb) => ipcRenderer.on('update:status', (e, data) => cb(data)),
 });

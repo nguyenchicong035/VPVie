@@ -40,7 +40,7 @@
     <button id="page-add" class="nr-ic" title="Thêm trang"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h9l5 5v15H5zM14 2v6h5"/></svg></button>
     <button id="btn-settings" class="nr-ic" title="Cài đặt"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v5m0 4v9M12 3v9m0 4v5M18 3v3m0 4v11"/><path d="M3 8h6v4H3zM9 12h6v4H9zM15 6h6v4h-6z"/></svg></button>
     <button id="btn-record" class="nr-ic" title="Quay màn hình"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/></svg></button>
-    <span class="nr-page-ind"><button id="page-prev" class="nr-mini" title="Trang trước">‹</button><span id="page-label">1 / 1</span><button id="page-next" class="nr-mini" title="Trang sau">›</button><span class="nr-zoom">· 100%</span></span>
+    <span class="nr-page-ind"><button id="page-prev" class="nr-mini" title="Trang trước">‹</button><span id="page-label">1 / 1</span><button id="page-next" class="nr-mini" title="Trang sau">›</button><span class="nr-zoom" role="group" aria-label="Thu phóng trang"><button id="page-zoom-out" class="nr-mini" title="Thu nhỏ trang" aria-label="Thu nhỏ trang">−</button><button id="page-zoom-reset" class="nr-mini zoom-percent" title="Về 100%">100%</button><button id="page-zoom-in" class="nr-mini" title="Phóng to trang" aria-label="Phóng to trang">+</button></span></span>
   </div>
 
   <!-- Hàng 2: công cụ vẽ -->
@@ -971,6 +971,7 @@
   <script src="js/ink-recognize.js"></script>
   <script src="js/license.js"></script>
   <script src="js/tools-table.js?v=1.1.7"></script>
+  <script src="js/page-viewport.js?v=1.1.8"></script>
   <script src="js/app.js"></script>
   <script>
   if("serviceWorker" in navigator){
