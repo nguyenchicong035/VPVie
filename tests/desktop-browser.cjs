@@ -32,6 +32,8 @@ const {generateKeyPairSync,sign}=require('node:crypto');
   assert.equal((await page.evaluate(()=>window.VPDesktop.readActivation())).key,key);
   await page.evaluate(()=>window.__vp.closeLibrary());
   await require('./document-flows.cjs').verifyDocumentFlows(page);
+  await require('./table-resize-flows.cjs').verifyTableResize(page);
+  await require('./pdf-fit-flows.cjs').verifyPdfFit(page);
   await page.locator('#btn-web').click(); await page.locator('#web-url').fill(`http://127.0.0.2:${server.address().port}`); await page.locator('#web-add').click();
   try { await page.waitForFunction(()=>{const v=document.querySelector('webview');try{return v&&v.getURL().includes('127.0.0.2')&&!v.isLoading();}catch{return false;}},null,{timeout:10000}); } catch(e) { console.log(await page.evaluate(()=>({webview:document.querySelector('webview')?.outerHTML,status:document.querySelector('.ov-web-status')?.textContent,bridge:!!window.VPDesktop,overlays:window.__vp.state.overlays}))); console.log(await app.evaluate(({webContents})=>webContents.getAllWebContents().map(w=>({id:w.id,url:w.getURL(),type:w.getType()})))); throw e; }
   const id=await page.locator('webview').evaluate(v=>v.getWebContentsId());

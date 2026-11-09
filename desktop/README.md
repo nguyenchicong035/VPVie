@@ -114,3 +114,13 @@ Trong **Dạy nét chữ của tôi**, ô ký hiệu nhận tiêu điểm sau kh
 
 Kiểm thử các luồng trên web: `node tests/documents-browser.cjs`.
 Kiểm thử tương tự trong Electron: `node tests/desktop-browser.cjs`.
+
+## Bảng và PDF (1.1.7)
+
+Chọn bảng để hiện tiêu đề cột A, B, C và số hàng. Kéo ranh giới giữa các tiêu đề
+cột để chỉnh độ rộng; kéo ranh giới giữa số hàng để chỉnh chiều cao. Kích thước
+được lưu cùng nội dung sổ và giữ lại khi nhân bản bảng. Tay kéo vẫn hoạt động
+khi bảng được phóng to. Các tiêu đề điều khiển không xuất vào ảnh/PDF.
+
+Nền PDF/Word/ảnh được căn giữa, giữ đúng tỷ lệ và vừa toàn bộ khung bảng,
+thay vì phóng theo chiều rộng rồi cắt phần cuối trang.
